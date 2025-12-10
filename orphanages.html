@@ -171,7 +171,7 @@
 
     <script>
         // ==========================================
-        // FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE)
+        // FIREBASE CONFIGURATION (PASTE KEYS HERE)
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
@@ -183,7 +183,7 @@
         };
 
         if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-             alert("Developer: Please paste Firebase Config in orphanages.html code.");
+             console.log("Firebase config placeholder detected.");
         } else {
             firebase.initializeApp(firebaseConfig);
         }
@@ -324,16 +324,17 @@
             btn.innerText = "Processing...";
             
             try {
-                // Update Firestore
+                // Update Firestore: sending name and email is key for Restaurant Dashboard
                 await db.collection('donations').doc(docId).update({
                     status: "Claimed",
                     claimedBy: currentUser.uid,
-                    orphanageName: currentUserData.name,
+                    orphanageName: currentUserData.name, // Sending Name
+                    orphanageEmail: currentUserData.email, // Sending Email for contact
                     claimedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 closeModal();
-                showToast("Successfully claimed! Please contact restaurant.");
+                showToast("Successfully claimed! Restaurant has been notified.");
                 
             } catch (error) {
                 console.error("Error claiming:", error);
