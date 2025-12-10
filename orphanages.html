@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orphanage Dashboard | FoodBridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316', 
+                            green: '#10B981',
+                            teal: '#14B8A6',
+                            dark: '#1F2937',
+                            light: '#F0FDFA' // Light teal background
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #F0FDFA 0%, #fff 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans min-h-screen flex flex-col hidden" id="page-body">
+
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-md shadow-sm w-full py-4 px-6 fixed top-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="bg-brand-green/10 p-2 rounded-lg mr-3">
+                    <i class="fa-solid fa-hand-holding-heart text-brand-green text-2xl"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-xl text-brand-dark block leading-none">Food<span class="text-brand-green">Bridge</span></span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Orphanage Portal</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex flex-col items-end">
+                    <span class="text-xs text-gray-400 font-medium uppercase">Logged in as</span>
+                    <span id="nav-username" class="text-sm font-bold text-brand-dark">Loading...</span>
+                </div>
+                <button onclick="logout()" class="group flex items-center justify-center w-10 h-10 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-all duration-300">
+                    <i class="fa-solid fa-power-off group-hover:scale-110 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-28 px-4 pb-12 max-w-7xl mx-auto w-full">
+        
+        <div class="mb-10 animate-fade-in flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl font-bold text-brand-dark mb-2">Find Food Nearby <span class="text-brand-green">🌱</span></h1>
+                <p class="text-gray-500 text-lg">Browse available donations from our restaurant partners.</p>
+            </div>
+            
+            <!-- Simple Filter -->
+            <div class="hidden md:flex gap-2">
+                <span class="px-4 py-2 bg-brand-green text-white rounded-full text-sm font-bold shadow-lg shadow-green-200">Available Now</span>
+                <span class="px-4 py-2 bg-white text-gray-500 rounded-full text-sm font-bold border border-gray-100">Nearby</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT: Available Donations Feed (8 Cols) -->
+            <div class="lg:col-span-8 animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="glass-card p-8 rounded-3xl shadow-xl border border-teal-50 min-h-[500px]">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-brand-green text-white flex items-center justify-center mr-3 font-bold shadow-lg shadow-green-200">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Live Feed</h2>
+                    </div>
+
+                    <!-- FEED CONTAINER -->
+                    <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Loading Skeletons -->
+                        <div class="bg-gray-50 rounded-2xl p-4 animate-pulse h-64"></div>
+                        <div class="bg-gray-50 rounded-2xl p-4 animate-pulse h-64"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: My Claimed History (4 Cols) -->
+            <div class="lg:col-span-4 animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="glass-card p-6 rounded-3xl shadow-lg border border-gray-100 sticky top-28 h-auto">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center mr-3 font-bold shadow-lg shadow-orange-100">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Your Claims</h2>
+                    </div>
+
+                    <!-- CLAIMS CONTAINER -->
+                    <div id="claims-container" class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="text-center py-8">
+                            <p class="text-gray-400 text-sm">Loading history...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Success Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50 min-w-[300px] border-l-4 border-brand-green">
+        <div class="bg-green-500/20 p-2 rounded-full">
+            <i class="fa-solid fa-check text-brand-green text-lg"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm">Action Successful!</h4>
+            <p class="text-xs text-gray-300 mt-0.5" id="toast-message">Donation claimed.</p>
+        </div>
+    </div>
+
+    <!-- Confirm Claim Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-scale-up">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-green text-3xl">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Claim?</h3>
+                <p class="text-gray-500 text-sm mb-6">You are claiming this donation. The restaurant will be notified to expect you.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition">Cancel</button>
+                    <button id="confirm-btn" class="flex-1 py-3 rounded-xl bg-brand-green text-white font-bold hover:bg-green-600 shadow-lg shadow-green-200 transition">Yes, Claim it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
+            authDomain: "panel-9e1a6.firebaseapp.com",
+            projectId: "panel-9e1a6",
+            storageBucket: "panel-9e1a6.firebasestorage.app",
+            messagingSenderId: "491001640513",
+            appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
+        };
+
+        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+             alert("Developer: Please paste Firebase Config in orphanages.html code.");
+        } else {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        let currentUser = null;
+        let currentUserData = null;
+        let selectedDonationId = null;
+
+        // 1. Auth Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    currentUserData = userDoc.data();
+                    document.getElementById('nav-username').innerText = currentUserData.name;
+                    document.getElementById('page-body').classList.remove('hidden');
+                    
+                    // Initialize Data Listeners
+                    loadAvailableDonations();
+                    loadMyClaims();
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // 2. Load Available Donations (The Feed)
+        function loadAvailableDonations() {
+            db.collection('donations')
+              .where("status", "==", "Available") // Only fetch unclaimed food
+              .orderBy("createdAt", "desc")
+              .onSnapshot((snapshot) => {
+                  const container = document.getElementById('feed-container');
+                  container.innerHTML = "";
+
+                  if (snapshot.empty) {
+                      container.innerHTML = `
+                        <div class="col-span-1 md:col-span-2 flex flex-col items-center justify-center text-center py-20">
+                            <div class="bg-gray-100 p-6 rounded-full mb-4">
+                                <i class="fa-solid fa-mug-hot text-gray-300 text-4xl"></i>
+                            </div>
+                            <h3 class="text-gray-900 font-bold text-lg">No food available right now</h3>
+                            <p class="text-gray-400 text-sm mt-1">Please check back later.</p>
+                        </div>
+                      `;
+                      return;
+                  }
+
+                  snapshot.forEach((doc) => {
+                      const data = doc.data();
+                      const imgDisplay = data.imageUrl ? data.imageUrl : 'https://placehold.co/400x300/e2e8f0/94a3b8?text=Food+Image';
+                      const timeAgo = data.createdAt ? getTimeAgo(data.createdAt.seconds) : 'Just now';
+
+                      const html = `
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col">
+                            <div class="h-48 overflow-hidden relative">
+                                <img src="${imgDisplay}" class="w-full h-full object-cover">
+                                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-brand-dark shadow-sm">
+                                    ${timeAgo}
+                                </div>
+                            </div>
+                            <div class="p-5 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1 text-gray-400 text-xs uppercase font-bold tracking-wider">
+                                        <i class="fa-solid fa-store"></i> ${data.restaurantName}
+                                    </div>
+                                    <h3 class="font-bold text-xl text-brand-dark mb-2">${data.foodName}</h3>
+                                    <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                                        <span class="bg-orange-50 text-brand-orange px-2 py-1 rounded-md font-bold">
+                                            <i class="fa-solid fa-users mr-1"></i> Serves ${data.servings}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onclick="openConfirmModal('${doc.id}')" class="w-full py-3 bg-brand-green hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
+                                    Claim Donation
+                                </button>
+                            </div>
+                        </div>
+                      `;
+                      container.innerHTML += html;
+                  });
+              });
+        }
+
+        // 3. Load Claim History (Sidebar)
+        function loadMyClaims() {
+            db.collection('donations')
+              .where("claimedBy", "==", currentUser.uid)
+              .orderBy("claimedAt", "desc")
+              .onSnapshot((snapshot) => {
+                  const container = document.getElementById('claims-container');
+                  container.innerHTML = "";
+
+                  if (snapshot.empty) {
+                      container.innerHTML = '<p class="text-gray-400 text-center text-sm py-4">You haven\'t claimed anything yet.</p>';
+                      return;
+                  }
+
+                  snapshot.forEach((doc) => {
+                      const data = doc.data();
+                      const date = data.claimedAt ? new Date(data.claimedAt.seconds * 1000).toLocaleDateString() : 'Recent';
+                      
+                      const html = `
+                        <div class="flex items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-green-500 text-lg shadow-sm mr-3">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <h4 class="font-bold text-gray-800 text-sm line-clamp-1">${data.foodName}</h4>
+                                <p class="text-xs text-gray-500">${data.restaurantName}</p>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-400">${date}</span>
+                        </div>
+                      `;
+                      container.innerHTML += html;
+                  });
+              });
+        }
+
+        // 4. Claim Logic
+        function openConfirmModal(docId) {
+            selectedDonationId = docId;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('confirm-btn').onclick = () => processClaim(docId);
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            selectedDonationId = null;
+        }
+
+        async function processClaim(docId) {
+            const btn = document.getElementById('confirm-btn');
+            btn.innerText = "Processing...";
+            
+            try {
+                // Update Firestore
+                await db.collection('donations').doc(docId).update({
+                    status: "Claimed",
+                    claimedBy: currentUser.uid,
+                    orphanageName: currentUserData.name,
+                    claimedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                closeModal();
+                showToast("Successfully claimed! Please contact restaurant.");
+                
+            } catch (error) {
+                console.error("Error claiming:", error);
+                alert("Failed to claim. It might have been taken.");
+                closeModal();
+            } finally {
+                btn.innerText = "Yes, Claim it";
+            }
+        }
+
+        // Helper: Time Ago
+        function getTimeAgo(seconds) {
+            const now = Math.floor(Date.now() / 1000);
+            const diff = now - seconds;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-32', 'opacity-0'), 3000);
+        }
+
+        function logout() {
+            auth.signOut().then(() => window.location.href = 'index.html');
+        }
+    </script>
+</body>
+</html>
