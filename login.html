@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs (Compatibility Version for plain HTML) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -129,36 +129,26 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
         // ==========================================
-        // 1. PASTE YOUR FIREBASE CONFIGURATION HERE
+        // PASTE YOUR FIREBASE CONFIGURATION HERE
         // ==========================================
         const firebaseConfig = {
              apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
-             authDomain: "panel-9e1a6.firebaseapp.com",
-             projectId: "panel-9e1a6",
-             storageBucket: "panel-9e1a6.firebasestorage.app",
-             messagingSenderId: "491001640513",
-             appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
+  authDomain: "panel-9e1a6.firebaseapp.com",
+  projectId: "panel-9e1a6",
+  storageBucket: "panel-9e1a6.firebasestorage.app",
+  messagingSenderId: "491001640513",
+  appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
         };
 
-        // Initialize Firebase
-        // NOTE: This check prevents errors if you haven't pasted the config yet
         if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-            console.warn("Please update the firebaseConfig object in login.html with your actual keys.");
-            document.getElementById('auth-message').innerText = "⚠️ Developer: Please configure Firebase in the code.";
+            document.getElementById('auth-message').innerText = "⚠️ Developer: Please paste your Firebase Config in login.html code.";
             document.getElementById('auth-message').className = "text-center text-sm mt-4 text-red-500 font-bold block";
         } else {
             firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
         }
 
-        // ==========================================
-        // 2. UI LOGIC
-        // ==========================================
-        
         function toggleView(view) {
             const loginForm = document.getElementById('login-form');
             const signupForm = document.getElementById('signup-form');
@@ -166,7 +156,7 @@
             const tabSignup = document.getElementById('tab-signup');
             const title = document.getElementById('header-subtitle');
 
-            document.getElementById('auth-message').classList.add('hidden'); // clear errors
+            document.getElementById('auth-message').classList.add('hidden'); 
 
             if (view === 'login') {
                 loginForm.classList.remove('hidden');
@@ -191,11 +181,8 @@
             el.className = `text-center text-sm mt-4 block font-medium ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
         }
 
-        // ==========================================
-        // 3. AUTHENTICATION LOGIC
-        // ==========================================
+        // --- AUTH LOGIC WITH REDIRECTS ---
 
-        // Handle Sign Up
         async function handleSignup(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-signup');
@@ -209,11 +196,10 @@
             const role = document.querySelector('input[name="role"]:checked').value;
 
             try {
-                // 1. Create User in Auth
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // 2. Save User Data (Role & Name) to Firestore Database
+                // Save Role to DB
                 await firebase.firestore().collection('users').doc(user.uid).set({
                     name: name,
                     email: email,
@@ -221,11 +207,15 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                showMessage("Account created successfully! Redirecting...", "success");
+                showMessage("Account created! Redirecting...", "success");
                 
-                // 3. Redirect (In a real app, go to dashboard)
+                // REDIRECT LOGIC
                 setTimeout(() => {
-                    window.location.href = "index.html?status=loggedin"; 
+                    if(role === 'restaurant') {
+                        window.location.href = "restaurant.html";
+                    } else {
+                        window.location.href = "orphanages.html"; // Will exist later
+                    }
                 }, 1500);
 
             } catch (error) {
@@ -236,7 +226,6 @@
             }
         }
 
-        // Handle Login
         async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-login');
@@ -248,22 +237,28 @@
             const password = document.getElementById('login-password').value;
 
             try {
-                // 1. Log In
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // 2. Fetch User Data to know the Role
+                // Check Role in DB
                 const doc = await firebase.firestore().collection('users').doc(user.uid).get();
                 
                 if (doc.exists) {
                     const userData = doc.data();
                     showMessage(`Welcome back, ${userData.name}!`, "success");
                     
+                    // REDIRECT LOGIC
                     setTimeout(() => {
-                        window.location.href = "index.html?status=loggedin";
+                        if (userData.role === 'restaurant') {
+                            window.location.href = "restaurant.html";
+                        } else {
+                            window.location.href = "orphanages.html"; // Will exist later
+                        }
                     }, 1500);
                 } else {
-                    showMessage("User data not found.", "error");
+                    showMessage("User role not found.", "error");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
                 }
 
             } catch (error) {
