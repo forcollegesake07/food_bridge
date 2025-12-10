@@ -29,6 +29,16 @@
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
                     }
                 }
             }
@@ -135,13 +145,20 @@
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-store"></i></div>
                 <h3 class="text-xl font-bold text-gray-800">Account Settings</h3>
-                <p class="text-sm text-gray-500">Update your contact details.</p>
+                <p class="text-sm text-gray-500">Update your restaurant details.</p>
             </div>
             <form onsubmit="saveProfile(event)" class="space-y-4">
+                <!-- Name Field -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Restaurant Name</label>
+                    <input type="text" id="profile-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Enter Restaurant Name" required>
+                </div>
+                <!-- Phone Field -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label>
                     <input type="tel" id="profile-phone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="+91 98765 43210">
                 </div>
+                <!-- Address Field -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Full Address</label>
                     <textarea id="profile-address" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Street, Area, City"></textarea>
@@ -182,10 +199,13 @@
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
+                    // Update UI with user data
                     document.getElementById('nav-username').innerText = userData.name;
-                    document.getElementById('page-body').classList.remove('hidden');
+                    document.getElementById('profile-name').value = userData.name || "";
                     document.getElementById('profile-phone').value = userData.phone || "";
                     document.getElementById('profile-address').value = userData.address || "";
+                    
+                    document.getElementById('page-body').classList.remove('hidden');
                     loadMyDonations();
                 }
             } else {
@@ -194,13 +214,26 @@
         });
 
         function toggleProfileModal() { document.getElementById('profile-modal').classList.toggle('hidden'); }
+        
         async function saveProfile(e) {
             e.preventDefault();
+            const name = document.getElementById('profile-name').value;
             const phone = document.getElementById('profile-phone').value;
             const address = document.getElementById('profile-address').value;
             try {
-                await db.collection('users').doc(currentUser.uid).update({ phone, address });
-                userData.phone = phone; userData.address = address;
+                // Update everything in Firestore
+                await db.collection('users').doc(currentUser.uid).update({ 
+                    name: name,
+                    phone: phone, 
+                    address: address 
+                });
+                
+                // Update local data and UI immediately
+                userData.name = name;
+                userData.phone = phone; 
+                userData.address = address;
+                document.getElementById('nav-username').innerText = name;
+                
                 toggleProfileModal();
                 showToast("Profile updated!");
             } catch (err) { alert("Error: " + err.message); }
@@ -225,7 +258,7 @@
                 await db.collection('donations').add({
                     restaurantId: currentUser.uid,
                     restaurantName: userData.name,
-                    restaurantEmail: currentUser.email, // Added Email
+                    restaurantEmail: currentUser.email,
                     restaurantAddress: userData.address,
                     restaurantPhone: userData.phone,
                     foodName: name,
