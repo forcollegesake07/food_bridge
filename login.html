@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | FoodBridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (Compatibility Version for plain HTML) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316', 
+                            green: '#10B981',
+                            dark: '#1F2937'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Simple Navigation -->
+    <nav class="bg-white shadow-sm w-full py-4 px-6 fixed top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center hover:opacity-80 transition">
+                <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl mr-2"></i>
+                <span class="font-bold text-xl text-brand-dark">Food<span class="text-brand-green">Bridge</span></span>
+            </a>
+            <a href="index.html" class="text-sm text-gray-500 hover:text-brand-orange">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <!-- Auth Container -->
+    <div class="flex-grow flex items-center justify-center p-4 pt-24">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            
+            <!-- Header -->
+            <div class="bg-brand-orange p-8 text-center text-white relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full bg-black opacity-10"></div>
+                <h2 class="text-3xl font-bold relative z-10">Welcome</h2>
+                <p class="text-orange-100 text-sm mt-1 relative z-10" id="header-subtitle">Sign in to start connecting.</p>
+            </div>
+
+            <!-- Toggle Buttons -->
+            <div class="flex border-b border-gray-200">
+                <button onclick="toggleView('login')" id="tab-login" class="w-1/2 py-4 font-bold text-sm text-brand-orange border-b-2 border-brand-orange transition-colors">
+                    LOG IN
+                </button>
+                <button onclick="toggleView('signup')" id="tab-signup" class="w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                    SIGN UP
+                </button>
+            </div>
+
+            <div class="p-8">
+                
+                <!-- LOGIN FORM -->
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5 block">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="name@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="••••••••">
+                    </div>
+                    <button type="submit" id="btn-login" class="w-full bg-brand-dark hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- SIGNUP FORM -->
+                <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+                    
+                    <!-- Role Selection -->
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <div class="relative">
+                            <input type="radio" name="role" value="restaurant" id="role-rest" class="peer hidden" checked>
+                            <label for="role-rest" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-orange peer-checked:bg-orange-50 transition hover:bg-gray-50">
+                                <i class="fa-solid fa-utensils text-lg mb-1 text-gray-400 peer-checked:text-brand-orange"></i>
+                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Restaurant</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" name="role" value="orphanage" id="role-orph" class="peer hidden">
+                            <label for="role-orph" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-green peer-checked:bg-green-50 transition hover:bg-gray-50">
+                                <i class="fa-solid fa-child-reaching text-lg mb-1 text-gray-400 peer-checked:text-brand-green"></i>
+                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Orphanage</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Organization Name</label>
+                        <input type="text" id="signup-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="e.g. Tasty Bites">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
+                        <input type="email" id="signup-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="name@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                        <input type="password" id="signup-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="Create password">
+                    </div>
+                    
+                    <button type="submit" id="btn-signup" class="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">
+                        Create Account
+                    </button>
+                </form>
+
+                <!-- Status/Error Message -->
+                <p id="auth-message" class="text-center text-sm mt-4 hidden"></p>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. PASTE YOUR FIREBASE CONFIGURATION HERE
+        // ==========================================
+        const firebaseConfig = {
+             apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
+  authDomain: "panel-9e1a6.firebaseapp.com",
+  projectId: "panel-9e1a6",
+  storageBucket: "panel-9e1a6.firebasestorage.app",
+  messagingSenderId: "491001640513",
+  appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
+        };
+
+        // Initialize Firebase
+        // NOTE: This check prevents errors if you haven't pasted the config yet
+        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+            console.warn("Please update the firebaseConfig object in login.html with your actual keys.");
+            document.getElementById('auth-message').innerText = "⚠️ Developer: Please configure Firebase in the code.";
+            document.getElementById('auth-message').className = "text-center text-sm mt-4 text-red-500 font-bold block";
+        } else {
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+        }
+
+        // ==========================================
+        // 2. UI LOGIC
+        // ==========================================
+        
+        function toggleView(view) {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const tabLogin = document.getElementById('tab-login');
+            const tabSignup = document.getElementById('tab-signup');
+            const title = document.getElementById('header-subtitle');
+
+            document.getElementById('auth-message').classList.add('hidden'); // clear errors
+
+            if (view === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                
+                tabLogin.className = "w-1/2 py-4 font-bold text-sm text-brand-orange border-b-2 border-brand-orange transition-colors";
+                tabSignup.className = "w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors";
+                title.innerText = "Sign in to start connecting.";
+            } else {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                
+                tabSignup.className = "w-1/2 py-4 font-bold text-sm text-brand-green border-b-2 border-brand-green transition-colors";
+                tabLogin.className = "w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors";
+                title.innerText = "Join the community today.";
+            }
+        }
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('auth-message');
+            el.innerText = msg;
+            el.className = `text-center text-sm mt-4 block font-medium ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
+        }
+
+        // ==========================================
+        // 3. AUTHENTICATION LOGIC
+        // ==========================================
+
+        // Handle Sign Up
+        async function handleSignup(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-signup');
+            const originalText = btn.innerText;
+            btn.innerText = "Creating Account...";
+            btn.disabled = true;
+
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.querySelector('input[name="role"]:checked').value;
+
+            try {
+                // 1. Create User in Auth
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. Save User Data (Role & Name) to Firestore Database
+                await firebase.firestore().collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    role: role,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showMessage("Account created successfully! Redirecting...", "success");
+                
+                // 3. Redirect (In a real app, go to dashboard)
+                setTimeout(() => {
+                    window.location.href = "index.html?status=loggedin"; 
+                }, 1500);
+
+            } catch (error) {
+                console.error(error);
+                showMessage(error.message, "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Handle Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            const originalText = btn.innerText;
+            btn.innerText = "Signing In...";
+            btn.disabled = true;
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                // 1. Log In
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. Fetch User Data to know the Role
+                const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+                
+                if (doc.exists) {
+                    const userData = doc.data();
+                    showMessage(`Welcome back, ${userData.name}!`, "success");
+                    
+                    setTimeout(() => {
+                        window.location.href = "index.html?status=loggedin";
+                    }, 1500);
+                } else {
+                    showMessage("User data not found.", "error");
+                }
+
+            } catch (error) {
+                console.error(error);
+                showMessage("Invalid email or password.", "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
