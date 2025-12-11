@@ -2,101 +2,531 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Dashboard | FoodBridge</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937', light: '#FFF7ED' } }, animation: { 'fade-in': 'fadeIn 0.3s ease-out', 'slide-up': 'slideUp 0.4s ease-out' }, keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } } } } }
-    </script>
-    <style> body { background: linear-gradient(135deg, #FFF7ED 0%, #fff 100%); } .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); } </style>
-</head>
-<body class="text-gray-800 font-sans min-h-screen flex flex-col hidden" id="page-body">
-    <nav class="bg-white/90 backdrop-blur-md shadow-sm w-full py-4 px-6 fixed top-0 z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center"><div class="bg-brand-orange/10 p-2 rounded-lg mr-3"><i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i></div><div><span class="font-bold text-xl text-brand-dark block leading-none">Food<span class="text-brand-green">Bridge</span></span><span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Restaurant Partner</span></div></div>
-            <div class="flex items-center gap-4"><div class="relative"><button onclick="toggleProfileModal()" class="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-full transition"><div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold"><i class="fa-solid fa-user"></i></div><span id="nav-username" class="text-sm font-bold text-brand-dark hidden md:block">Loading...</span></button></div></div>
-        </div>
-    </nav>
-    <main class="flex-grow pt-28 px-4 pb-12 max-w-7xl mx-auto w-full">
-        <div class="mb-10 animate-fade-in"><h1 class="text-4xl font-bold text-brand-dark mb-2">Share the Love <span class="text-brand-orange">❤</span></h1><p class="text-gray-500 text-lg">Post your surplus food updates here.</p></div>
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 animate-slide-up" style="animation-delay: 0.1s;"><div class="glass-card p-8 rounded-3xl shadow-xl border border-orange-100 sticky top-28"><div class="flex items-center mb-6"><div class="w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center mr-3 font-bold shadow-lg shadow-orange-200">1</div><h2 class="text-xl font-bold text-gray-800">New Donation</h2></div><form id="donation-form" onsubmit="submitDonation(event)" class="space-y-6"><div class="group"><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dish Name</label><input type="text" id="food-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="What are you serving?"></div><div class="group"><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Servings Available</label><input type="number" id="food-qty" required min="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="How many people?"></div><div id="drop-zone" class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-brand-orange hover:bg-orange-50/50 transition-all cursor-pointer relative overflow-hidden"><input type="file" id="food-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)"><div id="upload-placeholder"><i class="fa-solid fa-camera text-gray-400 text-2xl mb-2"></i><p class="text-sm font-medium text-gray-600">Tap to upload photo</p></div><img id="image-preview" class="hidden w-full h-40 object-cover rounded-xl mt-2 mx-auto relative z-10"></div><button type="submit" id="btn-submit" class="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2"><span>Post Donation</span><i class="fa-solid fa-paper-plane"></i></button></form></div></div>
-            <div class="lg:col-span-8 animate-slide-up" style="animation-delay: 0.2s;"><div class="glass-card p-8 rounded-3xl shadow-xl border border-gray-100 h-full"><div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-gray-800">Your History</h2></div><div id="donations-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"><div class="bg-gray-50 rounded-xl p-4 animate-pulse h-32"></div></div></div></div>
-        </div>
-    </main>
-    <div id="profile-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"><div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-fade-in relative"><button onclick="toggleProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button><div class="text-center mb-6"><div class="w-16 h-16 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-store"></i></div><h3 class="text-xl font-bold text-gray-800">Account Settings</h3><p class="text-sm text-gray-500">Update details.</p></div><form onsubmit="saveProfile(event)" class="space-y-4"><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Restaurant Name</label><input type="text" id="profile-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" required></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label><input type="tel" id="profile-phone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="+91..."></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Full Address</label><textarea id="profile-address" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none"></textarea></div><button type="submit" class="w-full py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition">Save Changes</button><button type="button" onclick="logout()" class="w-full py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition">Log Out</button></form></div></div>
-    <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50"><i class="fa-solid fa-circle-check text-green-400 text-lg"></i><p class="text-sm" id="toast-message">Success</p></div>
-    <script>
-        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(); const db = firebase.firestore();
-        let currentUser = null; let userData = {}; let base64Image = "";
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316', 
+                            green: '#10B981',
+                            dark: '#1F2937',
+                            light: '#FFF7ED'
+                        }
+                    },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-out' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fixed-bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 h-screen flex overflow-hidden">
+
+    <div class="fixed-bg-layer"></div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full">
+        <!-- Sidebar Header -->
+        <div class="p-6 flex items-center border-b border-gray-100">
+            <div class="bg-brand-orange/10 p-2 rounded-lg mr-3">
+                <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
+            </div>
+            <div>
+                <span class="font-bold text-lg text-brand-dark block leading-none">Food<span class="text-brand-green">Bridge</span></span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-grow p-4 space-y-2">
+            <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all bg-brand-orange text-white shadow-md">
+                <i class="fa-solid fa-chart-pie w-5 mr-3"></i> Overview
+            </button>
+            <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-brand-orange transition-all">
+                <i class="fa-solid fa-clock-rotate-left w-5 mr-3"></i> History
+            </button>
+            <button onclick="switchTab('details')" id="btn-details" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-brand-orange transition-all">
+                <i class="fa-solid fa-store w-5 mr-3"></i> Restaurant Details
+            </button>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 mb-4 px-2">
+                <div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold">R</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-gray-800 truncate" id="sidebar-name">Loading...</p>
+                    <p class="text-xs text-gray-500 truncate" id="sidebar-id">ID: ...</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 text-sm font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow overflow-y-auto p-4 md:p-8 relative z-10">
+        
+        <!-- TAB: OVERVIEW -->
+        <div id="tab-overview" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-white drop-shadow-md">Dashboard Overview</h1>
+                    <p class="text-gray-200 text-sm">Welcome back! Here is your impact summary.</p>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-gray-700">Status: Active Donor</span>
+                </div>
+            </div>
+
+            <!-- Stats & Motivation Block -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Key Metrics -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-orange flex flex-col justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium uppercase tracking-wide">Total Meals Donated</p>
+                        <h3 class="text-4xl font-bold text-brand-dark mt-2" id="stat-meals">0</h3>
+                    </div>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-bold">
+                        <i class="fa-solid fa-arrow-trend-up mr-1"></i> Growing Impact
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-green flex flex-col justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium uppercase tracking-wide">Food Waste Prevented</p>
+                        <h3 class="text-4xl font-bold text-brand-dark mt-2"><span id="stat-waste">0</span> kg</h3>
+                    </div>
+                    <div class="mt-4 flex items-center text-brand-green text-sm font-bold">
+                        <i class="fa-solid fa-leaf mr-1"></i> Eco-Hero Level
+                    </div>
+                </div>
+
+                <!-- Comparison Chart (Motivational) -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg lg:col-span-1">
+                    <h4 class="text-gray-700 font-bold mb-4 flex justify-between items-center">
+                        Community Impact
+                        <span class="text-[10px] bg-brand-light text-brand-orange px-2 py-1 rounded">Avg vs. You</span>
+                    </h4>
+                    <div class="relative h-32 w-full">
+                        <canvas id="motivationChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-400 mt-2">Compare your contributions to the city average!</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Post Donation Form -->
+                <div class="lg:col-span-5 bg-white rounded-2xl shadow-xl p-6 border-t-4 border-brand-orange">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center mr-3 shadow-lg shadow-orange-200">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Donate Food</h2>
+                    </div>
+                    <form onsubmit="submitDonation(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dish Name</label>
+                            <input type="text" id="food-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="e.g. Rice & Curry">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantity (People)</label>
+                            <input type="number" id="food-qty" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="25">
+                        </div>
+                        <div id="drop-zone" class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-gray-400 text-sm hover:border-brand-orange hover:bg-orange-50 cursor-pointer transition relative overflow-hidden">
+                             <input type="file" id="food-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
+                             <div id="upload-placeholder">
+                                <i class="fa-solid fa-camera mb-1 block text-lg"></i> Add Photo (Optional)
+                             </div>
+                             <img id="image-preview" class="hidden w-full h-20 object-cover rounded-lg mx-auto relative z-10">
+                        </div>
+                        <button type="submit" id="btn-submit" class="w-full py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-lg">Post Donation</button>
+                    </form>
+                </div>
+
+                <!-- Recent Activity (Limit 5) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-xl p-6 h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
+                        <span class="text-xs text-gray-400">Last 5 Donations</span>
+                    </div>
+                    <div class="space-y-4" id="recent-list">
+                        <p class="text-center text-gray-400 py-4">Loading activities...</p>
+                    </div>
+                    <button onclick="switchTab('history')" class="w-full mt-4 text-center text-sm text-brand-orange font-bold hover:underline">View Full History</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: HISTORY -->
+        <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 animate-fade-in">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-white drop-shadow-md">Full Donation History</h1>
+                <div class="bg-white px-4 py-2 rounded-lg shadow-sm">
+                    <span class="text-brand-orange font-bold text-lg" id="history-count">0</span> <span class="text-sm text-gray-500">Records</span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Food Item</th>
+                                <th class="px-6 py-4">Quantity</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Recipient</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: DETAILS -->
+        <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 border-t-4 border-brand-orange">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Restaurant Profile</h2>
+                    <p class="text-gray-500">Manage your public information</p>
+                </div>
+                
+                <form onsubmit="saveProfile(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Restaurant Name</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-utensils absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="detail-name" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Phone Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="tel" id="detail-phone" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-location-dot absolute left-4 top-3.5 text-gray-400"></i>
+                            <textarea id="detail-address" rows="3" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 transition shadow-lg transform active:scale-95">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50">
+        <i class="fa-solid fa-circle-check text-green-400 text-lg"></i>
+        <p class="text-sm" id="toast-message">Success</p>
+    </div>
+
+    <script>
+        // ==========================================
+        // FIREBASE CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
+            authDomain: "panel-9e1a6.firebaseapp.com",
+            projectId: "panel-9e1a6",
+            storageBucket: "panel-9e1a6.firebasestorage.app",
+            messagingSenderId: "491001640513",
+            appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
+        };
+
+        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+            // Placeholder logic if keys are missing
+            console.log("Firebase config missing. Add keys to enable functionality.");
+        } else {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let currentUser = null;
+        let userData = {};
+        let base64Image = "";
+        let totalMeals = 0;
+
+        // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
-                    document.getElementById('nav-username').innerText = userData.name;
-                    document.getElementById('profile-name').value = userData.name || "";
-                    document.getElementById('profile-phone').value = userData.phone || "";
-                    document.getElementById('profile-address').value = userData.address || "";
-                    document.getElementById('page-body').classList.remove('hidden');
-                    loadMyDonations();
+                    // Update UI info
+                    document.getElementById('nav-username').innerText = userData.name || "Restaurant";
+                    document.getElementById('sidebar-name').innerText = userData.name || "Restaurant";
+                    document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
+                    
+                    // Pre-fill details form
+                    document.getElementById('detail-name').value = userData.name || "";
+                    document.getElementById('detail-phone').value = userData.phone || "";
+                    document.getElementById('detail-address').value = userData.address || "";
+
+                    document.getElementById('tab-overview').classList.remove('hidden'); // Show content
+                    loadData();
                 }
-            } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
+            } else {
+                window.location.href = 'https://foodbridge.qzz.io/login.html';
+            }
         });
 
-        function toggleProfileModal() { document.getElementById('profile-modal').classList.toggle('hidden'); }
-        async function saveProfile(e) {
-            e.preventDefault();
-            const name = document.getElementById('profile-name').value; const phone = document.getElementById('profile-phone').value; const address = document.getElementById('profile-address').value;
-            try {
-                await db.collection('users').doc(currentUser.uid).update({ name, phone, address });
-                userData.name = name; userData.phone = phone; userData.address = address;
-                document.getElementById('nav-username').innerText = name;
-                toggleProfileModal(); showToast("Profile updated!");
-            } catch (err) { alert("Error: " + err.message); }
+        // TAB SWITCHER
+        function switchTab(tab) {
+            ['overview', 'history', 'details'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                const btn = document.getElementById('btn-' + t);
+                btn.classList.remove('bg-brand-orange', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
+            });
+            
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tab);
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
+            activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
         }
 
+        // LOAD DATA & STATS
+        function loadData() {
+            db.collection('donations')
+              .where("restaurantId", "==", currentUser.uid)
+              .orderBy("createdAt", "desc")
+              .onSnapshot((snapshot) => {
+                  
+                  const recentList = document.getElementById('recent-list');
+                  const historyBody = document.getElementById('history-table-body');
+                  
+                  recentList.innerHTML = "";
+                  historyBody.innerHTML = "";
+                  
+                  totalMeals = 0;
+                  let docCount = 0;
+
+                  if (snapshot.empty) {
+                      recentList.innerHTML = "<p class='text-center text-gray-400'>No donations yet.</p>";
+                      historyBody.innerHTML = "<tr><td colspan='5' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
+                  }
+
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      docCount++;
+                      totalMeals += parseInt(data.servings || 0);
+
+                      const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
+                      const isClaimed = data.status === 'Claimed';
+                      const statusColor = isClaimed ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100';
+                      const statusIcon = isClaimed ? 'fa-check' : 'fa-clock';
+                      const recipient = data.orphanageName || '-';
+
+                      // Recent Activity (Limit 5)
+                      if (docCount <= 5) {
+                          recentList.innerHTML += `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100">
+                                        <i class="fa-solid fa-utensils"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4>
+                                        <p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p>
+                                    </div>
+                                </div>
+                                <span class="${statusColor} px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
+                                    <i class="fa-solid ${statusIcon}"></i> ${data.status}
+                                </span>
+                            </div>
+                          `;
+                      }
+
+                      // Full History Table
+                      historyBody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 text-gray-500 text-sm">${date}</td>
+                            <td class="px-6 py-4 font-bold text-gray-800 text-sm">${data.foodName}</td>
+                            <td class="px-6 py-4 text-gray-600 text-sm">${data.servings}</td>
+                            <td class="px-6 py-4"><span class="${statusColor} px-2 py-1 rounded text-xs font-bold">${data.status}</span></td>
+                            <td class="px-6 py-4 text-gray-500 text-sm">${recipient}</td>
+                        </tr>
+                      `;
+                  });
+
+                  // Update Stats
+                  document.getElementById('stat-meals').innerText = totalMeals;
+                  document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); // Approx 0.5kg per meal
+                  document.getElementById('history-count').innerText = docCount;
+                  
+                  updateChart(totalMeals);
+              });
+        }
+
+        // SUBMIT DONATION
         async function submitDonation(e) {
-            e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.innerHTML = "Posting..."; btn.disabled = true;
-            const name = document.getElementById('food-name').value; const qty = document.getElementById('food-qty').value;
-            if(!userData.address || !userData.phone) { alert("Please update Address/Phone first!"); toggleProfileModal(); btn.innerHTML = "Post Donation"; btn.disabled = false; return; }
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Posting...';
+            btn.disabled = true;
+
+            const name = document.getElementById('food-name').value;
+            const qty = document.getElementById('food-qty').value;
+
+            if(!userData.address || !userData.phone) {
+                alert("Please update your Address and Phone in the 'Details' tab first!");
+                btn.innerHTML = "Post Donation";
+                btn.disabled = false;
+                switchTab('details');
+                return;
+            }
+
             try {
                 await db.collection('donations').add({
-                    restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email,
-                    restaurantAddress: userData.address, restaurantPhone: userData.phone,
-                    foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available",
+                    restaurantId: currentUser.uid,
+                    restaurantName: userData.name,
+                    restaurantEmail: currentUser.email,
+                    restaurantAddress: userData.address,
+                    restaurantPhone: userData.phone,
+                    foodName: name,
+                    servings: parseInt(qty),
+                    imageUrl: base64Image || null,
+                    status: "Available",
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                showToast("Donation posted!"); e.target.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden');
-            } catch (err) { console.error(err); } finally { btn.innerHTML = `<span>Post Donation</span><i class="fa-solid fa-paper-plane"></i>`; btn.disabled = false; }
+                showToast("Donation posted successfully!");
+                e.target.reset();
+                base64Image = "";
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('upload-placeholder').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                alert("Error posting: " + err.message);
+            } finally {
+                btn.innerHTML = '<span>Post Donation</span><i class="fa-solid fa-paper-plane text-brand-orange"></i>';
+                btn.disabled = false;
+            }
         }
 
-        async function deleteDonation(id) { if(confirm("Delete record?")) { try { await db.collection('donations').doc(id).delete(); showToast("Deleted"); } catch(e) { alert("Error"); } } }
+        // UPDATE PROFILE
+        async function saveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('detail-name').value;
+            const phone = document.getElementById('detail-phone').value;
+            const address = document.getElementById('detail-address').value;
 
-        function loadMyDonations() {
-            db.collection('donations').where("restaurantId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const list = document.getElementById('donations-list'); list.innerHTML = "";
-                if(snapshot.empty) { list.innerHTML = "<p class='p-4 text-gray-400'>No donations yet.</p>"; return; }
-                snapshot.forEach(doc => {
-                    const data = doc.data(); const isClaimed = data.status === 'Claimed';
-                    const statusBadge = isClaimed ? `<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">Claimed</span>` : `<span class="bg-gray-100 text-gray-500 text-xs font-bold px-2 py-1 rounded">Waiting</span>`;
-                    let claimDetails = '';
-                    if(isClaimed) { claimDetails = `<div class="mt-3 bg-green-50 p-3 rounded-lg border border-green-100 text-sm animate-fade-in"><p class="font-bold text-green-800 flex items-center gap-2"><i class="fa-solid fa-check-circle"></i> Claimed by: ${data.orphanageName}</p><p class="text-gray-600 mt-1"><i class="fa-solid fa-phone text-xs mr-1 text-green-600"></i> ${data.orphanagePhone || 'No Phone'}</p><p class="text-gray-600"><i class="fa-solid fa-envelope text-xs mr-1 text-green-600"></i> ${data.orphanageEmail || 'No Email'}</p></div>`; }
-                    list.innerHTML += `<div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition relative group"><button onclick="deleteDonation('${doc.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 z-10 p-1"><i class="fa-solid fa-trash-can"></i></button><div class="flex gap-4"><img src="${data.imageUrl || 'https://placehold.co/400x300?text=No+Img'}" class="w-20 h-20 object-cover rounded-lg bg-gray-100"><div class="flex-grow"><div class="flex justify-between items-start mr-6"><h3 class="font-bold text-gray-800">${data.foodName}</h3>${statusBadge}</div><p class="text-sm text-gray-500">${data.servings} Servings</p><p class="text-xs text-gray-400 mt-1">${new Date(data.createdAt?.seconds*1000).toLocaleDateString()}</p></div></div>${claimDetails}</div>`;
-                });
+            try {
+                await db.collection('users').doc(currentUser.uid).update({ name, phone, address });
+                userData.name = name; 
+                userData.phone = phone; 
+                userData.address = address;
+                
+                document.getElementById('nav-username').innerText = name;
+                document.getElementById('sidebar-name').innerText = name;
+                showToast("Profile Updated!");
+            } catch (err) {
+                alert("Error updating profile: " + err.message);
+            }
+        }
+
+        // UTILS
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').src = e.target.result;
+                    document.getElementById('image-preview').classList.remove('hidden');
+                    document.getElementById('upload-placeholder').classList.add('hidden');
+                    base64Image = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            t.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'https://foodbridge.qzz.io/index.html';
             });
         }
-        function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('image-preview').src = e.target.result; document.getElementById('image-preview').classList.remove('hidden'); document.getElementById('upload-placeholder').classList.add('hidden'); base64Image = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
-        function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); }
-        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/index.html'); }
+
+        // CHART
+        let myChart;
+        function updateChart(userTotal) {
+            const ctx = document.getElementById('motivationChart').getContext('2d');
+            const avg = 500; // Hardcoded benchmark for motivation
+
+            if(myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['City Avg.', 'You'],
+                    datasets: [{
+                        label: 'Meals',
+                        data: [avg, userTotal],
+                        backgroundColor: ['#E5E7EB', '#F97316'],
+                        borderRadius: 6,
+                        barThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { display: false, grid: { display: false } }, 
+                        x: { grid: { display: false } } 
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
