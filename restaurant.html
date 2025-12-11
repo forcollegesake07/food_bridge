@@ -66,9 +66,6 @@
             <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all bg-brand-orange text-white shadow-md">
                 <i class="fa-solid fa-chart-pie w-5 mr-3"></i> Overview
             </button>
-            <button onclick="switchTab('alerts')" id="btn-alerts" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
-                <i class="fa-solid fa-bell w-5 mr-3"></i> Urgent Alerts
-            </button>
             <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-brand-orange transition-all">
                 <i class="fa-solid fa-clock-rotate-left w-5 mr-3"></i> History
             </button>
@@ -92,7 +89,7 @@
         </div>
     </aside>
 
-    <!-- CONTENT -->
+    <!-- MAIN CONTENT AREA -->
     <main class="flex-grow overflow-y-auto p-4 md:p-8 relative z-10">
         
         <!-- TAB: OVERVIEW -->
@@ -185,20 +182,6 @@
             </div>
         </div>
 
-        <!-- TAB: URGENT ALERTS -->
-        <div id="tab-alerts" class="max-w-6xl mx-auto space-y-6 animate-fade-in hidden">
-             <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold text-white drop-shadow-md">Urgent Food Requests</h1>
-                <div class="bg-red-500 px-4 py-2 rounded-lg shadow-md animate-pulse">
-                    <span class="text-white font-bold"><i class="fa-solid fa-bell mr-2"></i> Live Feed</span>
-                </div>
-            </div>
-
-            <div id="requests-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Request Cards -->
-            </div>
-        </div>
-
         <!-- TAB: HISTORY -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 animate-fade-in">
             <div class="flex items-center justify-between">
@@ -208,7 +191,7 @@
                 </div>
             </div>
             
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
@@ -218,6 +201,7 @@
                                 <th class="px-6 py-4">Quantity</th>
                                 <th class="px-6 py-4">Status</th>
                                 <th class="px-6 py-4">Recipient</th>
+                                <th class="px-6 py-4">Contact</th> <!-- Added Contact Column -->
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100">
@@ -320,7 +304,6 @@
 
                     document.getElementById('tab-overview').classList.remove('hidden');
                     loadData();
-                    loadUrgentRequests(); // Listener for urgent alerts
                 }
             } else {
                 window.location.href = 'https://foodbridge.qzz.io/login.html';
@@ -329,120 +312,18 @@
 
         // TAB SWITCHER
         function switchTab(tab) {
-            ['overview', 'history', 'details', 'alerts'].forEach(t => {
+            ['overview', 'history', 'details'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 const btn = document.getElementById('btn-' + t);
                 btn.classList.remove('bg-brand-orange', 'text-white', 'shadow-md');
                 btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
-                if(t === 'alerts') btn.classList.remove('bg-red-500', 'text-white'); // Reset alert btn style
             });
             
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
-            
-            if(tab === 'alerts') {
-                activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
-                activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md');
-            } else {
-                activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
-                activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
-            }
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-orange');
+            activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
         }
-
-        // --- URGENT REQUESTS ---
-        function loadUrgentRequests() {
-            db.collection('requests')
-              .where('status', '==', 'Pending')
-              .onSnapshot(snap => {
-                  const container = document.getElementById('requests-container');
-                  container.innerHTML = '';
-                  
-                  if (snap.empty) {
-                      container.innerHTML = `
-                        <div class="col-span-full bg-white rounded-2xl p-10 text-center shadow-lg">
-                            <i class="fa-solid fa-check-circle text-4xl text-green-400 mb-3"></i>
-                            <h3 class="text-xl font-bold text-gray-800">All Clear!</h3>
-                            <p class="text-gray-500">No urgent requests at the moment.</p>
-                        </div>`;
-                      return;
-                  }
-
-                  snap.forEach(doc => {
-                      const d = doc.data();
-                      container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-red-500 relative overflow-hidden">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4>
-                                        <p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg">
-                                <p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p>
-                                <p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'Address not listed'}</p>
-                                <p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'Phone not listed'}</p>
-                            </div>
-
-                            <button onclick="fulfillRequest('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition shadow-md flex items-center justify-center gap-2">
-                                <span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i>
-                            </button>
-                        </div>
-                      `;
-                  });
-              });
-        }
-
-        async function fulfillRequest(reqId, item, qty, orphId, orphName) {
-            // Check Profile First
-            if(!userData.address || !userData.phone) {
-                alert("Please update your restaurant details (Address & Phone) before donating!");
-                switchTab('details');
-                return;
-            }
-
-            if(!confirm(`Confirm donation of ${qty} ${item} to ${orphName}?`)) return;
-
-            try {
-                // 1. Update Request Status
-                await db.collection('requests').doc(reqId).update({
-                    status: 'Fulfilled',
-                    fulfilledBy: currentUser.uid,
-                    restaurantName: userData.name,
-                    fulfilledAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                // 2. Create Donation Record (So it appears in history & stats)
-                await db.collection('donations').add({
-                    restaurantId: currentUser.uid,
-                    restaurantName: userData.name,
-                    restaurantEmail: currentUser.email,
-                    restaurantAddress: userData.address,
-                    restaurantPhone: userData.phone,
-                    foodName: item,
-                    servings: parseInt(qty),
-                    imageUrl: null, // No image for quick fulfillment
-                    status: "Claimed", // Immediate claim
-                    claimedBy: orphId,
-                    orphanageName: orphName,
-                    // Use server timestamps for consistency
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    claimedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                showToast("Thank you! Donation confirmed.");
-                switchTab('history'); // Redirect to see it in history
-            } catch(e) {
-                console.error(e);
-                alert("Error fulfilling request: " + e.message);
-            }
-        }
-        // -----------------------
 
         // DATA LOADER
         function loadData() {
@@ -463,7 +344,7 @@
 
                   if (snapshot.empty) {
                       if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400'>No donations yet.</p>";
-                      if (historyBody) historyBody.innerHTML = "<tr><td colspan='5' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
+                      if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
                   }
 
                   snapshot.forEach(doc => {
@@ -476,6 +357,17 @@
                       const statusColor = isClaimed ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100';
                       const statusIcon = isClaimed ? 'fa-check' : 'fa-clock';
                       const recipient = data.orphanageName || '-';
+
+                      // Contact Info
+                      let contactInfo = '-';
+                      if(isClaimed) {
+                          contactInfo = `
+                             <div class="text-xs">
+                                <p><i class="fa-solid fa-phone text-brand-orange"></i> ${data.orphanagePhone || 'N/A'}</p>
+                                <p><i class="fa-solid fa-envelope text-brand-orange"></i> ${data.orphanageEmail || 'N/A'}</p>
+                             </div>
+                          `;
+                      }
 
                       // Recent Activity (Limit 5)
                       if (docCount <= 5 && recentList) {
@@ -506,6 +398,7 @@
                                 <td class="px-6 py-4 text-gray-600 text-sm">${data.servings}</td>
                                 <td class="px-6 py-4"><span class="${statusColor} px-2 py-1 rounded text-xs font-bold">${data.status}</span></td>
                                 <td class="px-6 py-4 text-gray-500 text-sm">${recipient}</td>
+                                <td class="px-6 py-4 text-gray-600 text-sm">${contactInfo}</td>
                             </tr>
                           `;
                       }
