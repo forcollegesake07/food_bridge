@@ -7,24 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: {
-                        brand: {
-                            orange: '#F97316', 
-                            green: '#10B981',
-                            dark: '#1F2937'
-                        }
-                    }
+                    colors: { brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937' } }
                 }
             }
         }
@@ -32,199 +23,93 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Simple Navigation -->
     <nav class="bg-white shadow-sm w-full py-4 px-6 fixed top-0 z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="flex items-center hover:opacity-80 transition">
+            <a href="https://foodbridge.qzz.io/index.html" class="flex items-center hover:opacity-80 transition">
                 <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl mr-2"></i>
                 <span class="font-bold text-xl text-brand-dark">Food<span class="text-brand-green">Bridge</span></span>
             </a>
-            <a href="index.html" class="text-sm text-gray-500 hover:text-brand-orange">
-                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Home
-            </a>
+            <a href="https://foodbridge.qzz.io/index.html" class="text-sm text-gray-500 hover:text-brand-orange"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Home</a>
         </div>
     </nav>
 
-    <!-- Auth Container -->
     <div class="flex-grow flex items-center justify-center p-4 pt-24">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            
-            <!-- Header -->
             <div class="bg-brand-orange p-8 text-center text-white relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-full bg-black opacity-10"></div>
                 <h2 class="text-3xl font-bold relative z-10">Welcome</h2>
                 <p class="text-orange-100 text-sm mt-1 relative z-10" id="header-subtitle">Sign in to start connecting.</p>
             </div>
-
-            <!-- Toggle Buttons -->
             <div class="flex border-b border-gray-200">
-                <button onclick="toggleView('login')" id="tab-login" class="w-1/2 py-4 font-bold text-sm text-brand-orange border-b-2 border-brand-orange transition-colors">
-                    LOG IN
-                </button>
-                <button onclick="toggleView('signup')" id="tab-signup" class="w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                    SIGN UP
-                </button>
+                <button onclick="toggleView('login')" id="tab-login" class="w-1/2 py-4 font-bold text-sm text-brand-orange border-b-2 border-brand-orange transition-colors">LOG IN</button>
+                <button onclick="toggleView('signup')" id="tab-signup" class="w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors">SIGN UP</button>
             </div>
-
             <div class="p-8">
-                
-                <!-- LOGIN FORM -->
                 <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5 block">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
-                        <input type="email" id="login-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="name@example.com">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                        <input type="password" id="login-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="••••••••">
-                    </div>
-                    <button type="submit" id="btn-login" class="w-full bg-brand-dark hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">
-                        Sign In
-                    </button>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label><input type="email" id="login-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label><input type="password" id="login-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none"></div>
+                    <button type="submit" id="btn-login" class="w-full bg-brand-dark hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">Sign In</button>
                 </form>
-
-                <!-- SIGNUP FORM -->
                 <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
-                    <!-- Role Selection -->
                     <div class="grid grid-cols-2 gap-3 mb-2">
-                        <div class="relative">
-                            <input type="radio" name="role" value="restaurant" id="role-rest" class="peer hidden" checked>
-                            <label for="role-rest" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-orange peer-checked:bg-orange-50 transition hover:bg-gray-50">
-                                <i class="fa-solid fa-utensils text-lg mb-1 text-gray-400 peer-checked:text-brand-orange"></i>
-                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Restaurant</span>
-                            </label>
-                        </div>
-                        <div class="relative">
-                            <input type="radio" name="role" value="orphanage" id="role-orph" class="peer hidden">
-                            <label for="role-orph" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-green peer-checked:bg-green-50 transition hover:bg-gray-50">
-                                <i class="fa-solid fa-child-reaching text-lg mb-1 text-gray-400 peer-checked:text-brand-green"></i>
-                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Orphanage</span>
-                            </label>
-                        </div>
+                        <div class="relative"><input type="radio" name="role" value="restaurant" id="role-rest" class="peer hidden" checked><label for="role-rest" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-orange peer-checked:bg-orange-50"><i class="fa-solid fa-utensils text-lg mb-1 text-gray-400 peer-checked:text-brand-orange"></i><span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Restaurant</span></label></div>
+                        <div class="relative"><input type="radio" name="role" value="orphanage" id="role-orph" class="peer hidden"><label for="role-orph" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-green peer-checked:bg-green-50"><i class="fa-solid fa-child-reaching text-lg mb-1 text-gray-400 peer-checked:text-brand-green"></i><span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Orphanage</span></label></div>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Organization Name</label>
-                        <input type="text" id="signup-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="e.g. Tasty Bites">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
-                        <input type="email" id="signup-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="name@example.com">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                        <input type="password" id="signup-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="Create password">
-                    </div>
-                    
-                    <button type="submit" id="btn-signup" class="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">
-                        Create Account
-                    </button>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Org Name</label><input type="text" id="signup-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label><input type="email" id="signup-email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label><input type="password" id="signup-password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none"></div>
+                    <button type="submit" id="btn-signup" class="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-lg mt-2">Create Account</button>
                 </form>
-
-                <!-- GOOGLE SIGN IN BUTTON -->
                 <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
-                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400 font-bold">Or continue with</span></div>
-                    </div>
-                    <button onclick="handleGoogleLogin()" class="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 rounded-lg transition shadow-sm">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-                        Google
-                    </button>
+                    <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400 font-bold">Or continue with</span></div></div>
+                    <button onclick="handleGoogleLogin()" class="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 rounded-lg transition shadow-sm"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Google</button>
                 </div>
-
-                <!-- Status/Error Message -->
                 <p id="auth-message" class="text-center text-sm mt-4 hidden"></p>
-
             </div>
         </div>
     </div>
 
-    <!-- ROLE SELECTION MODAL (For New Google Users) -->
+    <!-- Google Role Modal -->
     <div id="google-role-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fade-in text-center">
-            <div class="w-16 h-16 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                <i class="fa-solid fa-user-tag"></i>
-            </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">Complete Profile</h3>
-            <p class="text-sm text-gray-500 mb-6">Enter your details to continue.</p>
-            
-            <div class="mb-4 text-left">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Organization Name</label>
-                <input type="text" id="google-org-name" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. Tasty Bites or Sunshine Home">
-            </div>
-
+            <div class="mb-4 text-left"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Organization Name</label><input type="text" id="google-org-name" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Tasty Bites"></div>
             <p class="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Select Account Type</p>
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="finalizeGoogleRole('restaurant')" class="p-4 border-2 border-orange-100 bg-orange-50 hover:bg-orange-100 hover:border-brand-orange rounded-xl transition group">
-                    <i class="fa-solid fa-utensils text-2xl text-brand-orange mb-2 block"></i>
-                    <span class="text-xs font-bold text-gray-700">Restaurant</span>
-                </button>
-                <button onclick="finalizeGoogleRole('orphanage')" class="p-4 border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-brand-green rounded-xl transition group">
-                    <i class="fa-solid fa-child-reaching text-2xl text-brand-green mb-2 block"></i>
-                    <span class="text-xs font-bold text-gray-700">Orphanage</span>
-                </button>
+                <button onclick="finalizeGoogleRole('restaurant')" class="p-4 border-2 border-orange-100 bg-orange-50 hover:bg-orange-100 hover:border-brand-orange rounded-xl transition group"><i class="fa-solid fa-utensils text-2xl text-brand-orange mb-2 block"></i><span class="text-xs font-bold text-gray-700">Restaurant</span></button>
+                <button onclick="finalizeGoogleRole('orphanage')" class="p-4 border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-brand-green rounded-xl transition group"><i class="fa-solid fa-child-reaching text-2xl text-brand-green mb-2 block"></i><span class="text-xs font-bold text-gray-700">Orphanage</span></button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // FIREBASE CONFIGURATION
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
-            authDomain: "panel-9e1a6.firebaseapp.com",
-            projectId: "panel-9e1a6",
-            storageBucket: "panel-9e1a6.firebasestorage.app",
-            messagingSenderId: "491001640513",
-            appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
-        };
-
-        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-            document.getElementById('auth-message').innerText = "⚠️ Developer: Please paste your Firebase Config in login.html code.";
-            document.getElementById('auth-message').className = "text-center text-sm mt-4 text-red-500 font-bold block";
-        } else {
-            firebase.initializeApp(firebaseConfig);
-        }
-
+        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         let pendingGoogleUser = null; 
 
         function toggleView(view) {
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const tabLogin = document.getElementById('tab-login');
-            const tabSignup = document.getElementById('tab-signup');
-            const title = document.getElementById('header-subtitle');
-
+            const loginForm = document.getElementById('login-form'); const signupForm = document.getElementById('signup-form');
+            const tabLogin = document.getElementById('tab-login'); const tabSignup = document.getElementById('tab-signup');
             document.getElementById('auth-message').classList.add('hidden'); 
-
             if (view === 'login') {
-                loginForm.classList.remove('hidden');
-                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
                 tabLogin.className = "w-1/2 py-4 font-bold text-sm text-brand-orange border-b-2 border-brand-orange transition-colors";
                 tabSignup.className = "w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors";
-                title.innerText = "Sign in to start connecting.";
             } else {
-                loginForm.classList.add('hidden');
-                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden'); signupForm.classList.remove('hidden');
                 tabSignup.className = "w-1/2 py-4 font-bold text-sm text-brand-green border-b-2 border-brand-green transition-colors";
                 tabLogin.className = "w-1/2 py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors";
-                title.innerText = "Join the community today.";
             }
         }
 
         function showMessage(msg, type) {
-            const el = document.getElementById('auth-message');
-            el.innerText = msg;
-            el.className = `text-center text-sm mt-4 block font-medium ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
-            el.classList.remove('hidden');
+            const el = document.getElementById('auth-message'); el.innerText = msg;
+            el.className = `text-center text-sm mt-4 block font-medium ${type === 'error' ? 'text-red-500' : 'text-green-600'}`; el.classList.remove('hidden');
         }
 
         function performRedirect(role) {
-            const base = "https://forcollegesake07.github.io/Food_Bridge/";
+            const base = "https://foodbridge.qzz.io/";
             setTimeout(() => {
                 if (role === 'restaurant') window.location.href = base + "restaurant.html";
                 else if (role === 'orphanage') window.location.href = base + "orphanages.html";
@@ -232,144 +117,61 @@
             }, 1000);
         }
 
-        // --- GOOGLE SIGN IN LOGIC ---
-
         async function handleGoogleLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            
             try {
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
-
-                // Check if user exists in Firestore
                 const doc = await db.collection('users').doc(user.uid).get();
-
                 if (doc.exists) {
                     const userData = doc.data();
-                    
-                    // CHECK IF DISABLED
-                    if (userData.isDisabled === true) {
-                        showMessage("Your account has been disabled by Admin.", "error");
-                        await firebase.auth().signOut();
-                        return;
-                    }
-
-                    showMessage(`Welcome back, ${userData.name}!`, "success");
-                    performRedirect(userData.role);
+                    if (userData.isDisabled === true) { showMessage("Account disabled by Admin.", "error"); await firebase.auth().signOut(); return; }
+                    showMessage(`Welcome back, ${userData.name}!`, "success"); performRedirect(userData.role);
                 } else {
-                    // NEW USER
-                    pendingGoogleUser = user;
-                    document.getElementById('google-role-modal').classList.remove('hidden');
+                    pendingGoogleUser = user; document.getElementById('google-role-modal').classList.remove('hidden');
                 }
-
-            } catch (error) {
-                console.error(error);
-                showMessage(error.message, "error");
-            }
+            } catch (error) { showMessage(error.message, "error"); }
         }
 
         async function finalizeGoogleRole(role) {
-            if (!pendingGoogleUser) return;
-            
             const orgName = document.getElementById('google-org-name').value.trim();
-            if (!orgName) {
-                alert("Please enter your Organization Name.");
-                return;
-            }
-
+            if (!orgName) { alert("Please enter Organization Name."); return; }
             try {
                 await db.collection('users').doc(pendingGoogleUser.uid).set({
-                    name: orgName,
-                    email: pendingGoogleUser.email,
-                    role: role,
-                    googleDisplayName: pendingGoogleUser.displayName,
-                    isDisabled: false, // Explicitly set to false on creation
+                    name: orgName, email: pendingGoogleUser.email, role: role,
+                    googleDisplayName: pendingGoogleUser.displayName, isDisabled: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
                 document.getElementById('google-role-modal').classList.add('hidden');
-                showMessage("Account setup complete!", "success");
-                performRedirect(role);
-
-            } catch (error) {
-                console.error(error);
-                alert("Error saving role: " + error.message);
-            }
+                showMessage("Account setup complete!", "success"); performRedirect(role);
+            } catch (error) { alert("Error: " + error.message); }
         }
-
-        // --- EMAIL/PASSWORD SIGNUP ---
 
         async function handleSignup(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-signup');
-            btn.innerText = "Creating Account..."; btn.disabled = true;
-
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const role = document.querySelector('input[name="role"]:checked').value;
-
+            const name = document.getElementById('signup-name').value; const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value; const role = document.querySelector('input[name="role"]:checked').value;
             try {
-                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-
-                await firebase.firestore().collection('users').doc(user.uid).set({
-                    name: name,
-                    email: email,
-                    role: role,
-                    isDisabled: false, // Default active
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                await db.collection('users').doc(cred.user.uid).set({
+                    name: name, email: email, role: role, isDisabled: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                showMessage("Account created! Redirecting...", "success");
-                performRedirect(role);
-
-            } catch (error) {
-                console.error(error);
-                showMessage(error.message, "error");
-                btn.innerText = "Create Account"; btn.disabled = false;
-            }
+                showMessage("Account created!", "success"); performRedirect(role);
+            } catch (error) { showMessage(error.message, "error"); }
         }
-
-        // --- EMAIL/PASSWORD LOGIN (WITH DISABLE CHECK) ---
 
         async function handleLogin(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-login');
-            btn.innerText = "Signing In..."; btn.disabled = true;
-
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
+            const email = document.getElementById('login-email').value; const password = document.getElementById('login-password').value;
             try {
-                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-
-                const doc = await db.collection('users').doc(user.uid).get();
-                
+                const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const doc = await db.collection('users').doc(cred.user.uid).get();
                 if (doc.exists) {
-                    const userData = doc.data();
-
-                    // CHECK IF DISABLED
-                    if (userData.isDisabled === true) {
-                        showMessage("Your account has been disabled by Admin.", "error");
-                        await firebase.auth().signOut(); // Force logout
-                        btn.innerText = "Sign In"; btn.disabled = false;
-                        return; // Stop execution
-                    }
-
-                    showMessage(`Welcome back, ${userData.name}!`, "success");
-                    performRedirect(userData.role);
-                } else {
-                    showMessage("User role not found.", "error");
-                    btn.innerText = "Sign In"; btn.disabled = false;
-                }
-
-            } catch (error) {
-                console.error(error);
-                showMessage("Invalid email or password.", "error");
-                btn.innerText = "Sign In"; btn.disabled = false;
-            }
+                    const data = doc.data();
+                    if (data.isDisabled === true) { showMessage("Account disabled by Admin.", "error"); await firebase.auth().signOut(); return; }
+                    showMessage(`Welcome back, ${data.name}!`, "success"); performRedirect(data.role);
+                } else { showMessage("User role not found.", "error"); }
+            } catch (error) { showMessage("Invalid credentials.", "error"); }
         }
     </script>
 </body>
