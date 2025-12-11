@@ -289,13 +289,20 @@
                 if (doc.exists) {
                     userData = doc.data();
                     
-                    document.getElementById('nav-username').innerText = userData.name || "Orphanage";
-                    document.getElementById('sidebar-name').innerText = userData.name || "Orphanage";
-                    document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
+                    // SAFE DOM UPDATE: Check existence before assignment
+                    const navUser = document.getElementById('nav-username');
+                    if (navUser) navUser.innerText = userData.name || "Orphanage";
+
+                    const sideName = document.getElementById('sidebar-name');
+                    if (sideName) sideName.innerText = userData.name || "Orphanage";
                     
-                    document.getElementById('detail-name').value = userData.name || "";
-                    document.getElementById('detail-phone').value = userData.phone || "";
-                    document.getElementById('detail-address').value = userData.address || "";
+                    const sideId = document.getElementById('sidebar-id');
+                    if (sideId) sideId.innerText = "ID: " + user.uid.slice(0, 6);
+                    
+                    // Pre-fill fields if they exist
+                    if(document.getElementById('detail-name')) document.getElementById('detail-name').value = userData.name || "";
+                    if(document.getElementById('detail-phone')) document.getElementById('detail-phone').value = userData.phone || "";
+                    if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
 
                     document.getElementById('tab-overview').classList.remove('hidden');
                     loadData();
@@ -328,6 +335,7 @@
               .orderBy("createdAt", "desc")
               .onSnapshot((snapshot) => {
                   const feed = document.getElementById('feed-container');
+                  if (!feed) return;
                   feed.innerHTML = "";
                   
                   if (snapshot.empty) {
@@ -430,10 +438,15 @@
                       }
                   });
 
-                  // Update Stats
-                  document.getElementById('stat-received').innerText = totalReceived;
-                  document.getElementById('stat-donors').innerText = uniqueDonors.size;
-                  document.getElementById('history-count').innerText = docCount;
+                  // Update Stats safely
+                  const elReceived = document.getElementById('stat-received');
+                  if (elReceived) elReceived.innerText = totalReceived;
+
+                  const elDonors = document.getElementById('stat-donors');
+                  if (elDonors) elDonors.innerText = uniqueDonors.size;
+
+                  const elCount = document.getElementById('history-count');
+                  if (elCount) elCount.innerText = docCount;
                   
                   updateChart(totalReceived);
               });
@@ -493,10 +506,19 @@
             try {
                 await db.collection('users').doc(currentUser.uid).update({ name, phone, address });
                 userData.name = name; userData.phone = phone; userData.address = address;
-                document.getElementById('nav-username').innerText = name;
-                document.getElementById('sidebar-name').innerText = name;
+                
+                // Safe DOM updates
+                const navUser = document.getElementById('nav-username');
+                if (navUser) navUser.innerText = name;
+                
+                const sideName = document.getElementById('sidebar-name');
+                if (sideName) sideName.innerText = name;
+
                 showToast("Profile Updated!");
-            } catch(err) { alert("Error: " + err.message); }
+            } catch(err) { 
+                console.error(err);
+                showToast("Error updating profile");
+            }
         }
 
         function showToast(msg) {
