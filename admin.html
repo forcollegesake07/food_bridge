@@ -2,547 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | FoodBridge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: {
-                        brand: {
-                            orange: '#F97316', 
-                            green: '#10B981',
-                            dark: '#1F2937',
-                            light: '#F3F4F6',
-                            danger: '#EF4444'
-                        }
-                    }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937', light: '#F3F4F6', danger: '#EF4444' } } } }
     </script>
-    <style>
-        /* Mobile Optimization for Tables */
-        @media (max-width: 768px) {
-            .mobile-card-view thead { display: none; }
-            .mobile-card-view tr { display: flex; flex-direction: column; background: white; margin-bottom: 1rem; border-radius: 1rem; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
-            .mobile-card-view td { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #F3F4F6; }
-            .mobile-card-view td:last-child { border-bottom: none; justify-content: flex-end; gap: 0.5rem; }
-            .mobile-card-view td::before { content: attr(data-label); font-weight: 600; color: #6B7280; font-size: 0.85rem; }
-        }
-    </style>
+    <style> @media (max-width: 768px) { .mobile-card-view thead { display: none; } .mobile-card-view tr { display: flex; flex-direction: column; background: white; margin-bottom: 1rem; border-radius: 1rem; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; } .mobile-card-view td { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #F3F4F6; } .mobile-card-view td:last-child { border-bottom: none; justify-content: flex-end; gap: 0.5rem; } .mobile-card-view td::before { content: attr(data-label); font-weight: 600; color: #6B7280; font-size: 0.85rem; } } </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
-
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-brand-orange mb-4"></div>
-        <p class="text-brand-dark font-medium animate-pulse">Verifying Admin Access...</p>
-    </div>
-
+    <div id="loading-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center transition-opacity duration-500"><div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-brand-orange mb-4"></div><p class="text-brand-dark font-medium animate-pulse">Verifying Admin Access...</p></div>
     <div id="dashboard-layout" class="hidden flex h-screen overflow-hidden">
-        
-        <!-- SIDEBAR -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark text-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl">
-            <div class="p-6 flex items-center justify-between border-b border-gray-700">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-shield-halved text-brand-orange text-xl mr-3"></i>
-                    <span class="font-bold text-lg">Admin<span class="text-brand-green">Panel</span></span>
-                </div>
-                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-
-            <nav class="flex-grow p-4 space-y-2 overflow-y-auto">
-                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center p-3 rounded-xl bg-gray-800 text-brand-orange transition-all hover:bg-gray-700">
-                    <i class="fa-solid fa-chart-pie w-6"></i> Overview
-                </button>
-                <div class="pt-4 pb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Analytics</div>
-                <button onclick="switchTab('restaurants')" id="nav-restaurants" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all">
-                    <i class="fa-solid fa-utensils w-6"></i> Restaurants
-                </button>
-                <button onclick="switchTab('orphanages')" id="nav-orphanages" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all">
-                    <i class="fa-solid fa-child-reaching w-6"></i> Orphanages
-                </button>
-                <div class="pt-4 pb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Records</div>
-                <button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all">
-                    <i class="fa-solid fa-clock-rotate-left w-6"></i> Donation History
-                </button>
-            </nav>
-
-            <div class="p-4 border-t border-gray-700 bg-gray-900/50">
-                <button onclick="logout()" class="flex items-center justify-center w-full py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600 hover:text-white transition">
-                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Sign Out
-                </button>
-            </div>
+            <div class="p-6 flex items-center justify-between border-b border-gray-700"><div class="flex items-center"><i class="fa-solid fa-shield-halved text-brand-orange text-xl mr-3"></i><span class="font-bold text-lg">Admin<span class="text-brand-green">Panel</span></span></div><button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+            <nav class="flex-grow p-4 space-y-2 overflow-y-auto"><button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center p-3 rounded-xl bg-gray-800 text-brand-orange transition-all hover:bg-gray-700"><i class="fa-solid fa-chart-pie w-6"></i> Overview</button><button onclick="switchTab('restaurants')" id="nav-restaurants" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><i class="fa-solid fa-utensils w-6"></i> Restaurants</button><button onclick="switchTab('orphanages')" id="nav-orphanages" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><i class="fa-solid fa-child-reaching w-6"></i> Orphanages</button><button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center p-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><i class="fa-solid fa-database w-6"></i> Logs</button></nav>
+            <div class="p-4 border-t border-gray-700 bg-gray-900/50"><button onclick="logout()" class="flex items-center justify-center w-full py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-right-from-bracket mr-2"></i> Sign Out</button></div>
         </aside>
-
-        <!-- CONTENT AREA -->
         <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300">
-            
-            <!-- Mobile Header -->
-            <header class="bg-white shadow-sm py-3 px-6 flex justify-between items-center md:hidden sticky top-0 z-30">
-                <button onclick="toggleSidebar()" class="text-brand-dark p-2 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-bars text-xl"></i></button>
-                <span class="font-bold text-lg text-brand-dark">Dashboard</span>
-                <div class="w-8"></div>
-            </header>
-
+            <header class="bg-white shadow-sm py-3 px-6 flex justify-between items-center md:hidden sticky top-0 z-30"><button onclick="toggleSidebar()" class="text-brand-dark p-2 rounded-lg hover:bg-gray-100"><i class="fa-solid fa-bars text-xl"></i></button><span class="font-bold text-lg text-brand-dark">Dashboard</span><div class="w-8"></div></header>
             <main class="flex-1 overflow-y-auto p-4 md:p-8">
-                
-                <!-- Desktop Header -->
-                <div class="hidden md:flex justify-between items-center mb-8">
-                    <div>
-                        <h1 class="text-3xl font-bold text-brand-dark" id="page-title">Overview</h1>
-                        <p class="text-gray-500 text-sm mt-1">Manage your platform efficiently.</p>
-                    </div>
-                </div>
-
-                <!-- TAB: OVERVIEW -->
                 <div id="tab-overview" class="space-y-6">
-                    <!-- Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm font-medium">Total Donations</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-total">--</h3></div>
-                            <div class="w-12 h-12 bg-orange-100 text-brand-orange rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-box-open"></i></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm font-medium">Restaurants</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-rest">--</h3></div>
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-utensils"></i></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm font-medium">Orphanages</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-orph">--</h3></div>
-                            <div class="w-12 h-12 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-child-reaching"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
-                            <h3 class="font-bold text-gray-800 mb-4">Platform Overview</h3>
-                            <div class="relative h-64 flex justify-center"><canvas id="impactChart"></canvas></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2 overflow-hidden">
-                            <h3 class="font-bold text-gray-800 mb-4">Recent System Logs</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left"><tbody id="recent-table-body"></tbody></table>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium">Total Donations</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-total">--</h3></div><div class="w-12 h-12 bg-orange-100 text-brand-orange rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-box-open"></i></div></div><div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium">Restaurants</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-rest">--</h3></div><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-utensils"></i></div></div><div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium">Orphanages</p><h3 class="text-3xl font-bold text-brand-dark mt-1" id="stat-orph">--</h3></div><div class="w-12 h-12 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-child-reaching"></i></div></div></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1"><h3 class="font-bold text-gray-800 mb-4">Activity</h3><div class="relative h-64 flex justify-center"><canvas id="impactChart"></canvas></div></div><div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2 overflow-hidden"><h3 class="font-bold text-gray-800 mb-4">Recent</h3><div class="overflow-x-auto"><table class="w-full text-sm text-left"><tbody id="recent-table-body"></tbody></table></div></div></div>
                 </div>
-
-                <!-- TAB: USERS (Restaurants / Orphanages) -->
-                <div id="tab-users" class="hidden space-y-6">
-                    <div class="flex flex-col md:flex-row justify-between gap-4">
-                        <div class="relative w-full md:w-96">
-                            <input type="text" id="user-search" placeholder="Search..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-orange outline-none shadow-sm" onkeyup="filterUsers()">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
-                        </div>
-                        <button onclick="refreshUsers()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"><i class="fa-solid fa-rotate mr-2"></i>Refresh</button>
-                    </div>
-
-                    <!-- Table -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <table class="w-full text-sm text-left mobile-card-view">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 hidden md:table-header-group">
-                                <tr>
-                                    <th class="px-6 py-4">Profile</th>
-                                    <th class="px-6 py-4">Contact</th>
-                                    <th class="px-6 py-4">Address</th>
-                                    <th class="px-6 py-4 text-right">Analytics</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body" class="bg-transparent md:bg-white divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TAB: HISTORY -->
-                <div id="tab-history" class="hidden space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800">Donation Database</h3>
-                            <button onclick="fetchHistory()" class="text-brand-orange text-xs font-bold hover:underline"><i class="fa-solid fa-rotate"></i> Refresh</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left mobile-card-view">
-                                <thead class="text-xs text-gray-500 uppercase bg-gray-50">
-                                    <tr><th class="px-6 py-3">Date</th><th class="px-6 py-3">Restaurant</th><th class="px-6 py-3">Food</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">To Orphanage</th></tr>
-                                </thead>
-                                <tbody id="history-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
+                <div id="tab-users" class="hidden space-y-6"><div class="flex flex-col md:flex-row justify-between gap-4"><div class="relative w-full md:w-96"><input type="text" id="user-search" placeholder="Search..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-orange outline-none shadow-sm" onkeyup="filterUsers()"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i></div><button onclick="refreshUsers()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"><i class="fa-solid fa-rotate mr-2"></i>Refresh</button></div><table class="w-full text-sm text-left mobile-card-view"><thead class="text-xs text-gray-500 uppercase bg-gray-100 hidden md:table-header-group"><tr><th class="px-6 py-4 rounded-tl-xl">Profile</th><th class="px-6 py-4">Contact</th><th class="px-6 py-4">Address</th><th class="px-6 py-4 rounded-tr-xl text-right">Analytics</th></tr></thead><tbody id="users-table-body" class="bg-transparent md:bg-white divide-y divide-gray-100"></tbody></table></div>
+                <div id="tab-history" class="hidden space-y-6"><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-gray-800">Donation Database</h3><button onclick="fetchHistory()" class="text-brand-orange text-xs font-bold hover:underline"><i class="fa-solid fa-rotate"></i> Refresh</button></div><div class="overflow-x-auto"><table class="w-full text-sm text-left mobile-card-view"><thead class="text-xs text-gray-500 uppercase bg-gray-50"><tr><th class="px-6 py-3">Date</th><th class="px-6 py-3">Restaurant</th><th class="px-6 py-3">Food</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">To Orphanage</th></tr></thead><tbody id="history-table-body"></tbody></table></div></div></div>
             </main>
         </div>
     </div>
-
-    <!-- ENTITY DETAIL MODAL (ANALYTICS) -->
-    <div id="detail-modal" class="fixed inset-0 z-[60] hidden bg-black/50 backdrop-blur-sm overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-3xl w-full max-w-5xl shadow-2xl relative overflow-hidden animate-fade-in">
-                <!-- Header -->
-                <div class="bg-brand-dark p-6 text-white flex justify-between items-start">
-                    <div>
-                        <h2 class="text-2xl font-bold" id="detail-name">User Name</h2>
-                        <div class="flex gap-4 mt-2 text-sm text-gray-400">
-                            <p id="detail-email"><i class="fa-solid fa-envelope mr-1"></i> email@test.com</p>
-                            <p id="detail-phone"><i class="fa-solid fa-phone mr-1"></i> +91 0000000</p>
-                        </div>
-                    </div>
-                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white bg-white/10 p-2 rounded-full"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-
-                <div class="p-6 md:p-8 space-y-8 bg-gray-50">
-                    <!-- 3 Pie Charts -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                            <h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">All Time</h4>
-                            <div class="relative w-32 h-32"><canvas id="chart-total"></canvas></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                            <h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">This Month</h4>
-                            <div class="relative w-32 h-32"><canvas id="chart-month"></canvas></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                            <h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">This Week</h4>
-                            <div class="relative w-32 h-32"><canvas id="chart-week"></canvas></div>
-                        </div>
-                    </div>
-
-                    <!-- Specific History Table -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-4 border-b border-gray-100 bg-gray-50/50">
-                            <h3 class="font-bold text-gray-800">Transaction History</h3>
-                        </div>
-                        <div class="max-h-64 overflow-y-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
-                                    <tr>
-                                        <th class="px-6 py-3">Date</th>
-                                        <th class="px-6 py-3">Item</th>
-                                        <th class="px-6 py-3">Status</th>
-                                        <th class="px-6 py-3">Counterparty</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="detail-history-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <div id="detail-modal" class="fixed inset-0 z-[60] hidden bg-black/50 backdrop-blur-sm overflow-y-auto"><div class="flex items-center justify-center min-h-screen p-4"><div class="bg-white rounded-3xl w-full max-w-5xl shadow-2xl relative overflow-hidden animate-fade-in"><div class="bg-brand-dark p-6 text-white flex justify-between items-start"><div><h2 class="text-2xl font-bold" id="detail-name">User Name</h2><div class="flex gap-4 mt-2 text-sm text-gray-400"><p id="detail-email"></p><p id="detail-phone"></p></div></div><button onclick="closeDetailModal()" class="text-gray-400 hover:text-white bg-white/10 p-2 rounded-full"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="p-6 md:p-8 space-y-8 bg-gray-50"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center"><h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">All Time</h4><div class="relative w-32 h-32"><canvas id="chart-total"></canvas></div></div><div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center"><h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">This Month</h4><div class="relative w-32 h-32"><canvas id="chart-month"></canvas></div></div><div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center"><h4 class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">This Week</h4><div class="relative w-32 h-32"><canvas id="chart-week"></canvas></div></div></div><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-4 border-b border-gray-100 bg-gray-50/50"><h3 class="font-bold text-gray-800">Transaction History</h3></div><div class="max-h-64 overflow-y-auto"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0"><tr><th class="px-6 py-3">Date</th><th class="px-6 py-3">Item</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Counterparty</th></tr></thead><tbody id="detail-history-body"></tbody></table></div></div></div></div></div></div>
     <script>
-        // ==========================================
-        // FIREBASE CONFIGURATION
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
-            authDomain: "panel-9e1a6.firebaseapp.com",
-            projectId: "panel-9e1a6",
-            storageBucket: "panel-9e1a6.firebasestorage.app",
-            messagingSenderId: "491001640513",
-            appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore();
+        let currentTabRole = ''; let detailCharts = { total: null, month: null, week: null };
 
-        if(firebaseConfig.apiKey === "YOUR_API_KEY") console.log("Missing Config");
-        else firebase.initializeApp(firebaseConfig);
-
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let currentTabRole = '';
-        
-        // Chart instances storage
-        let detailCharts = { total: null, month: null, week: null };
-
-        // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
             const loading = document.getElementById('loading-screen');
             if (user) {
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists && doc.data().role === 'admin') {
-                    loading.classList.add('opacity-0');
-                    setTimeout(() => { 
-                        loading.classList.add('hidden');
-                        document.getElementById('dashboard-layout').classList.remove('hidden');
-                        initDashboard();
-                    }, 500);
-                } else {
-                    alert("Unauthorized Access"); window.location.href = 'login.html';
-                }
-            } else {
-                window.location.href = 'login.html';
-            }
+                    loading.classList.add('opacity-0'); setTimeout(() => { loading.classList.add('hidden'); document.getElementById('dashboard-layout').classList.remove('hidden'); initDashboard(); }, 500);
+                } else { alert("Unauthorized Access"); window.location.href = 'https://foodbridge.qzz.io/login.html'; }
+            } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
 
         function initDashboard() { fetchStats(); fetchHistory(); }
-
-        // TABS LOGIC
         function switchTab(tab) {
-            const sidebar = document.getElementById('sidebar');
-            if(!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) toggleSidebar();
-
-            document.querySelectorAll('nav button').forEach(b => {
-                b.classList.remove('bg-gray-800', 'text-brand-orange');
-                b.classList.add('text-gray-400');
-            });
-            document.getElementById('nav-'+tab).classList.add('bg-gray-800', 'text-brand-orange');
-            document.getElementById('nav-'+tab).classList.remove('text-gray-400');
-
-            document.getElementById('tab-overview').classList.add('hidden');
-            document.getElementById('tab-users').classList.add('hidden');
-            document.getElementById('tab-history').classList.add('hidden');
-
-            const titles = { overview: 'Overview', restaurants: 'Restaurants', orphanages: 'Orphanages', history: 'History' };
-            document.getElementById('page-title').innerText = titles[tab];
-
-            if(tab === 'overview') {
-                document.getElementById('tab-overview').classList.remove('hidden'); fetchStats();
-            } else if (tab === 'history') {
-                document.getElementById('tab-history').classList.remove('hidden'); fetchHistory();
-            } else {
-                document.getElementById('tab-users').classList.remove('hidden');
-                currentTabRole = tab === 'restaurants' ? 'restaurant' : 'orphanage';
-                fetchUsers(currentTabRole);
-            }
+            if(!document.getElementById('sidebar').classList.contains('-translate-x-full') && window.innerWidth < 768) toggleSidebar();
+            document.querySelectorAll('nav button').forEach(b => { b.classList.remove('bg-gray-800', 'text-brand-orange'); b.classList.add('text-gray-400'); });
+            document.getElementById('nav-'+tab).classList.add('bg-gray-800', 'text-brand-orange'); document.getElementById('nav-'+tab).classList.remove('text-gray-400');
+            ['overview', 'users', 'history'].forEach(id => document.getElementById('tab-'+id).classList.add('hidden'));
+            if(tab === 'overview') { document.getElementById('tab-overview').classList.remove('hidden'); fetchStats(); }
+            else if (tab === 'history') { document.getElementById('tab-history').classList.remove('hidden'); fetchHistory(); }
+            else { document.getElementById('tab-users').classList.remove('hidden'); currentTabRole = tab === 'restaurants' ? 'restaurant' : 'orphanage'; fetchUsers(currentTabRole); }
         }
-
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
 
-        // --- FETCH USERS ---
-        function fetchUsers(role) {
-            const tbody = document.getElementById('users-table-body');
-            tbody.innerHTML = '<div class="p-4 text-center w-full col-span-4"><i class="fa-solid fa-circle-notch fa-spin text-brand-orange"></i> Loading...</div>';
-            
-            db.collection('users').where('role', '==', role).get().then(snap => {
-                tbody.innerHTML = '';
-                if(snap.empty) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">No ${role}s found.</td></tr>`; return; }
-
-                snap.forEach(doc => {
-                    const u = doc.data();
-                    // Store user data in button for easy access
-                    const userDataStr = encodeURIComponent(JSON.stringify({...u, id: doc.id}));
-                    
-                    tbody.innerHTML += `
-                        <tr class="group hover:bg-gray-50 transition-colors cursor-pointer" onclick="openDetailModal('${userDataStr}', '${role}')">
-                            <td class="px-6 py-4" data-label="Profile">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold mr-3 border border-gray-200 uppercase">
-                                        ${u.name ? u.name[0] : '?'}
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-gray-900 group-hover:text-brand-orange transition-colors">${u.name}</div>
-                                        <div class="text-xs text-gray-400">ID: ...${doc.id.slice(-4)}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4" data-label="Contact">
-                                <div class="text-sm text-gray-600 space-y-1">
-                                    <p><i class="fa-solid fa-envelope w-5 text-gray-400"></i> ${u.email}</p>
-                                    <p><i class="fa-solid fa-phone w-5 text-gray-400"></i> ${u.phone || 'N/A'}</p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-500" data-label="Address">${u.address || 'N/A'}</td>
-                            <td class="px-6 py-4 text-right" data-label="Analytics">
-                                <button class="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold transition hover:bg-blue-100">
-                                    View Report <i class="fa-solid fa-arrow-right ml-1"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
-        }
-
-        // --- DETAIL MODAL LOGIC (ANALYTICS) ---
-        function openDetailModal(userStr, role) {
-            const user = JSON.parse(decodeURIComponent(userStr));
-            
-            // Set Header Info
-            document.getElementById('detail-name').innerText = user.name;
-            document.getElementById('detail-email').innerHTML = `<i class="fa-solid fa-envelope mr-1"></i> ${user.email}`;
-            document.getElementById('detail-phone').innerHTML = `<i class="fa-solid fa-phone mr-1"></i> ${user.phone || 'N/A'}`;
-            
-            document.getElementById('detail-modal').classList.remove('hidden');
-            
-            // Determine Query Field based on role
-            const queryField = role === 'restaurant' ? 'restaurantId' : 'claimedBy';
-            
-            // Fetch Specific History
-            db.collection('donations').where(queryField, '==', user.id).orderBy('createdAt', 'desc').get().then(snap => {
-                const tbody = document.getElementById('detail-history-body');
-                tbody.innerHTML = '';
-                
-                let total = { available: 0, claimed: 0 };
-                let month = { available: 0, claimed: 0 };
-                let week = { available: 0, claimed: 0 };
-                
-                const now = new Date();
-                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-                if(snap.empty) { tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No records found for this user.</td></tr>'; }
-
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const statusClass = d.status === 'Claimed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
-                    const counterParty = role === 'restaurant' ? (d.orphanageName || 'Waiting...') : d.restaurantName;
-                    const date = d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date();
-
-                    // Count Stats
-                    const isClaimed = d.status === 'Claimed';
-                    // For Restaurants: Count Available vs Claimed posts
-                    // For Orphanages: They only have 'Claimed' usually, but data model might evolve. 
-                    // Assuming for Orphanages, if they are 'claimedBy', status is Claimed.
-                    
-                    if (role === 'restaurant') {
-                        if (isClaimed) total.claimed++; else total.available++;
-                        if (date >= oneMonthAgo) { if(isClaimed) month.claimed++; else month.available++; }
-                        if (date >= oneWeekAgo) { if(isClaimed) week.claimed++; else week.available++; }
-                    } else {
-                        // For Orphanages, "Available" doesn't make sense as they only interact when claiming
-                        // So charts might just be 100% "Claimed" vs 0% "Pending" or maybe break down by food type later.
-                        // For now, we will just show "Claimed" counts vs 0 for Available to keep chart logic simple
-                        total.claimed++; 
-                        if (date >= oneMonthAgo) month.claimed++;
-                        if (date >= oneWeekAgo) week.claimed++;
-                    }
-
-                    tbody.innerHTML += `
-                        <tr class="border-b border-gray-50 hover:bg-gray-50">
-                            <td class="px-6 py-3 text-gray-500">${date.toLocaleDateString()}</td>
-                            <td class="px-6 py-3 font-medium">${d.foodName} (${d.servings})</td>
-                            <td class="px-6 py-3"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td>
-                            <td class="px-6 py-3 text-gray-500">${counterParty}</td>
-                        </tr>
-                    `;
-                });
-
-                // Render Charts
-                renderPieChart('chart-total', total);
-                renderPieChart('chart-month', month);
-                renderPieChart('chart-week', week);
-            });
-        }
-
-        function renderPieChart(canvasId, data) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            
-            // Destroy previous chart if exists
-            if (detailCharts[canvasId.split('-')[1]]) {
-                detailCharts[canvasId.split('-')[1]].destroy();
-            }
-
-            // Handle empty data
-            if (data.available === 0 && data.claimed === 0) {
-                // Show empty chart placeholder
-                detailCharts[canvasId.split('-')[1]] = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: { labels: ['No Data'], datasets: [{ data: [1], backgroundColor: ['#E5E7EB'], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
-                });
-                return;
-            }
-
-            detailCharts[canvasId.split('-')[1]] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Claimed'],
-                    datasets: [{
-                        data: [data.available, data.claimed],
-                        backgroundColor: ['#F97316', '#10B981'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    cutout: '70%',
-                    plugins: { legend: { display: false } } // Hide legend for cleaner look in small cards
-                }
-            });
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detail-modal').classList.add('hidden');
-        }
-
-        // --- OVERVIEW STATS ---
         function fetchStats() {
             db.collection('donations').get().then(snap => {
-                const total = snap.size;
-                const claimed = snap.docs.filter(d => d.data().status === 'Claimed').length;
+                const total = snap.size; const claimed = snap.docs.filter(d => d.data().status === 'Claimed').length;
                 document.getElementById('stat-total').innerText = total;
-                
                 const ctx = document.getElementById('impactChart').getContext('2d');
                 if(window.myChart) window.myChart.destroy();
-                window.myChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Available', 'Claimed'],
-                        datasets: [{ data: [total-claimed, claimed], backgroundColor: ['#F97316', '#10B981'], borderWidth: 0 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
-                });
-
+                window.myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Available', 'Claimed'], datasets: [{ data: [total-claimed, claimed], backgroundColor: ['#F97316', '#10B981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } });
                 const sorted = snap.docs.sort((a,b) => b.data().createdAt - a.data().createdAt).slice(0, 5);
-                const tbody = document.getElementById('recent-table-body');
-                tbody.innerHTML = '';
-                sorted.forEach(doc => {
-                    const d = doc.data();
-                    const statusClass = d.status === 'Claimed' ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50';
-                    tbody.innerHTML += `
-                        <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50">
-                            <td class="px-4 py-3 font-medium text-gray-900">${d.restaurantName}</td>
-                            <td class="px-4 py-3 text-gray-500">${d.foodName}</td>
-                            <td class="px-4 py-3"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td>
-                            <td class="px-4 py-3 text-gray-500">${d.orphanageName || '-'}</td>
-                        </tr>`;
-                });
+                const tbody = document.getElementById('recent-table-body'); tbody.innerHTML = '';
+                sorted.forEach(doc => { const d = doc.data(); const statusClass = d.status === 'Claimed' ? 'text-green-600 bg-green-50' : 'text-orange-600 bg-orange-50'; tbody.innerHTML += `<tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50"><td class="px-4 py-3 font-medium text-gray-900">${d.restaurantName}</td><td class="px-4 py-3 text-gray-500">${d.foodName}</td><td class="px-4 py-3"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td><td class="px-4 py-3 text-gray-500">${d.orphanageName || '-'}</td></tr>`; });
             });
             db.collection('users').where('role', '==', 'restaurant').get().then(s => document.getElementById('stat-rest').innerText = s.size);
             db.collection('users').where('role', '==', 'orphanage').get().then(s => document.getElementById('stat-orph').innerText = s.size);
         }
 
-        function fetchHistory() {
-            db.collection('donations').orderBy('createdAt', 'desc').get().then(snap => {
-                const tbody = document.getElementById('history-table-body');
-                tbody.innerHTML = '';
+        function fetchUsers(role) {
+            const tbody = document.getElementById('users-table-body'); tbody.innerHTML = '<div class="p-4 text-center w-full col-span-4"><i class="fa-solid fa-circle-notch fa-spin text-brand-orange"></i> Loading...</div>';
+            db.collection('users').where('role', '==', role).get().then(snap => {
+                tbody.innerHTML = ''; if(snap.empty) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">No ${role}s found.</td></tr>`; return; }
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    const statusClass = d.status === 'Claimed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
-                    tbody.innerHTML += `
-                        <tr class="mobile-card-view border-b border-gray-50 hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 text-gray-500 text-xs" data-label="Date">${new Date(d.createdAt.seconds*1000).toLocaleDateString()}</td>
-                            <td class="px-6 py-4 font-medium" data-label="Restaurant">${d.restaurantName}</td>
-                            <td class="px-6 py-4" data-label="Item">${d.foodName} (${d.servings})</td>
-                            <td class="px-6 py-4" data-label="Status"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td>
-                            <td class="px-6 py-4 text-gray-500 text-xs" data-label="Recipient">${d.orphanageName || '-'}</td>
-                        </tr>`;
+                    const u = doc.data(); const userDataStr = encodeURIComponent(JSON.stringify({...u, id: doc.id}));
+                    tbody.innerHTML += `<tr class="group hover:bg-gray-50 transition-colors cursor-pointer" onclick="openDetailModal('${userDataStr}', '${role}')"><td class="px-6 py-4" data-label="Profile"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold mr-3 border border-gray-200 uppercase">${u.name ? u.name[0] : '?'}</div><div><div class="font-bold text-gray-900 group-hover:text-brand-orange transition-colors">${u.name}</div><div class="text-xs text-gray-400">ID: ...${doc.id.slice(-4)}</div></div></div></td><td class="px-6 py-4" data-label="Contact"><div class="text-sm text-gray-600 space-y-1"><p><i class="fa-solid fa-envelope w-5 text-gray-400"></i> ${u.email}</p><p><i class="fa-solid fa-phone w-5 text-gray-400"></i> ${u.phone || 'N/A'}</p></div></td><td class="px-6 py-4 text-sm text-gray-500" data-label="Address">${u.address || 'N/A'}</td><td class="px-6 py-4 text-right" data-label="Analytics"><button class="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold transition hover:bg-blue-100">View Report <i class="fa-solid fa-arrow-right ml-1"></i></button></td></tr>`;
                 });
             });
         }
 
-        // UTILS
-        function filterUsers() {
-            const term = document.getElementById('user-search').value.toLowerCase();
-            const rows = document.getElementById('users-table-body').getElementsByTagName('tr');
-            Array.from(rows).forEach(row => { row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none'; });
+        function openDetailModal(userStr, role) {
+            const user = JSON.parse(decodeURIComponent(userStr));
+            document.getElementById('detail-name').innerText = user.name; document.getElementById('detail-email').innerHTML = `<i class="fa-solid fa-envelope mr-1"></i> ${user.email}`; document.getElementById('detail-phone').innerHTML = `<i class="fa-solid fa-phone mr-1"></i> ${user.phone || 'N/A'}`;
+            document.getElementById('detail-modal').classList.remove('hidden');
+            const queryField = role === 'restaurant' ? 'restaurantId' : 'claimedBy';
+            db.collection('donations').where(queryField, '==', user.id).orderBy('createdAt', 'desc').get().then(snap => {
+                const tbody = document.getElementById('detail-history-body'); tbody.innerHTML = '';
+                let total = { available: 0, claimed: 0 }; let month = { available: 0, claimed: 0 }; let week = { available: 0, claimed: 0 };
+                const now = new Date(); const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                if(snap.empty) { tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No records found.</td></tr>'; }
+                snap.forEach(doc => {
+                    const d = doc.data(); const statusClass = d.status === 'Claimed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'; const counterParty = role === 'restaurant' ? (d.orphanageName || 'Waiting...') : d.restaurantName; const date = d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date();
+                    const isClaimed = d.status === 'Claimed';
+                    if (role === 'restaurant') { if (isClaimed) total.claimed++; else total.available++; if (date >= oneMonthAgo) { if(isClaimed) month.claimed++; else month.available++; } if (date >= oneWeekAgo) { if(isClaimed) week.claimed++; else week.available++; } } else { total.claimed++; if (date >= oneMonthAgo) month.claimed++; if (date >= oneWeekAgo) week.claimed++; }
+                    tbody.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50"><td class="px-6 py-3 text-gray-500">${date.toLocaleDateString()}</td><td class="px-6 py-3 font-medium">${d.foodName} (${d.servings})</td><td class="px-6 py-3"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td><td class="px-6 py-3 text-gray-500">${counterParty}</td></tr>`;
+                });
+                renderPieChart('chart-total', total); renderPieChart('chart-month', month); renderPieChart('chart-week', week);
+            });
         }
+
+        function renderPieChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (detailCharts[canvasId.split('-')[1]]) detailCharts[canvasId.split('-')[1]].destroy();
+            if (data.available === 0 && data.claimed === 0) { detailCharts[canvasId.split('-')[1]] = new Chart(ctx, { type: 'doughnut', data: { labels: ['No Data'], datasets: [{ data: [1], backgroundColor: ['#E5E7EB'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' } }); return; }
+            detailCharts[canvasId.split('-')[1]] = new Chart(ctx, { type: 'doughnut', data: { labels: ['Pending', 'Claimed'], datasets: [{ data: [data.available, data.claimed], backgroundColor: ['#F97316', '#10B981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } });
+        }
+
+        function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+        function fetchHistory() { db.collection('donations').orderBy('createdAt', 'desc').get().then(snap => { const tbody = document.getElementById('history-table-body'); tbody.innerHTML = ''; snap.forEach(doc => { const d = doc.data(); const statusClass = d.status === 'Claimed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'; tbody.innerHTML += `<tr class="mobile-card-view border-b border-gray-50 hover:bg-gray-50 transition"><td class="px-6 py-4 text-gray-500 text-xs" data-label="Date">${new Date(d.createdAt.seconds*1000).toLocaleDateString()}</td><td class="px-6 py-4 font-medium" data-label="Restaurant">${d.restaurantName}</td><td class="px-6 py-4" data-label="Item">${d.foodName} (${d.servings})</td><td class="px-6 py-4" data-label="Status"><span class="${statusClass} px-2 py-1 rounded text-xs font-bold">${d.status}</span></td><td class="px-6 py-4 text-gray-500 text-xs" data-label="Recipient">${d.orphanageName || '-'}</td></tr>`; }); }); }
+        function filterUsers() { const term = document.getElementById('user-search').value.toLowerCase(); Array.from(document.getElementById('users-table-body').getElementsByTagName('tr')).forEach(row => { row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none'; }); }
         function refreshUsers() { fetchUsers(currentTabRole); }
-        function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
+        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/login.html'); }
     </script>
 </body>
 </html>
