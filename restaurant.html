@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Dashboard | FoodBridge</title>
-    
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
@@ -24,12 +22,7 @@
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            orange: '#F97316', 
-                            green: '#10B981',
-                            dark: '#1F2937',
-                            light: '#FFF7ED'
-                        }
+                        brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937', light: '#FFF7ED' }
                     },
                     animation: { 'fade-in': 'fadeIn 0.3s ease-out' },
                     keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
@@ -38,21 +31,15 @@
         }
     </script>
     <style>
-        .fixed-bg-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-            background-size: cover; background-position: center;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fixed-bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); background-size: cover; background-position: center; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex overflow-hidden">
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- SIDEBAR NAVIGATION -->
-    <aside class="w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full">
-        <!-- Sidebar Header -->
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full flex-shrink-0">
         <div class="p-6 flex items-center border-b border-gray-100">
             <div class="bg-brand-orange/10 p-2 rounded-lg mr-3">
                 <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
@@ -62,8 +49,6 @@
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
             </div>
         </div>
-
-        <!-- Navigation Links -->
         <nav class="flex-grow p-4 space-y-2">
             <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all bg-brand-orange text-white shadow-md">
                 <i class="fa-solid fa-chart-pie w-5 mr-3"></i> Overview
@@ -75,8 +60,6 @@
                 <i class="fa-solid fa-store w-5 mr-3"></i> Restaurant Details
             </button>
         </nav>
-
-        <!-- Sidebar Footer -->
         <div class="p-4 border-t border-gray-100">
             <div class="flex items-center gap-3 mb-4 px-2">
                 <div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold">R</div>
@@ -91,12 +74,11 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- CONTENT -->
     <main class="flex-grow overflow-y-auto p-4 md:p-8 relative z-10">
         
         <!-- TAB: OVERVIEW -->
         <div id="tab-overview" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
-            <!-- Header -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 class="text-3xl font-bold text-white drop-shadow-md">Dashboard Overview</h1>
@@ -108,9 +90,39 @@
                 </div>
             </div>
 
-            <!-- Stats & Motivation Block -->
+            <!-- Post Donation Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-brand-orange">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center mr-3 shadow-lg shadow-orange-200">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Donate Food</h2>
+                </div>
+                <form onsubmit="submitDonation(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dish Name</label>
+                            <input type="text" id="food-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="e.g. Rice & Curry">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantity (People)</label>
+                            <input type="number" id="food-qty" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="25">
+                        </div>
+                    </div>
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-gray-400 text-sm hover:border-brand-orange hover:bg-orange-50 cursor-pointer transition relative overflow-hidden">
+                        <input type="file" id="food-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
+                        <div id="upload-placeholder">
+                            <i class="fa-solid fa-camera mb-1 block text-lg"></i> Add Photo (Optional)
+                        </div>
+                        <img id="image-preview" class="hidden w-full h-20 object-cover rounded-lg mx-auto relative z-10">
+                    </div>
+                    <button type="submit" id="btn-submit" class="w-full py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-lg">Post Donation</button>
+                </form>
+            </div>
+
+            <!-- Stats & Motivation -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Key Metrics -->
+                <!-- Metrics -->
                 <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-orange flex flex-col justify-between">
                     <div>
                         <p class="text-gray-500 text-sm font-medium uppercase tracking-wide">Total Meals Donated</p>
@@ -129,8 +141,7 @@
                         <i class="fa-solid fa-leaf mr-1"></i> Eco-Hero Level
                     </div>
                 </div>
-
-                <!-- Comparison Chart (Motivational) -->
+                <!-- Chart -->
                 <div class="bg-white rounded-2xl p-6 shadow-lg lg:col-span-1">
                     <h4 class="text-gray-700 font-bold mb-4 flex justify-between items-center">
                         Community Impact
@@ -143,46 +154,16 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Post Donation Form -->
-                <div class="lg:col-span-5 bg-white rounded-2xl shadow-xl p-6 border-t-4 border-brand-orange">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center mr-3 shadow-lg shadow-orange-200">
-                            <i class="fa-solid fa-plus"></i>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">Donate Food</h2>
-                    </div>
-                    <form onsubmit="submitDonation(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dish Name</label>
-                            <input type="text" id="food-name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="e.g. Rice & Curry">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantity (People)</label>
-                            <input type="number" id="food-qty" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none" placeholder="25">
-                        </div>
-                        <div id="drop-zone" class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-gray-400 text-sm hover:border-brand-orange hover:bg-orange-50 cursor-pointer transition relative overflow-hidden">
-                             <input type="file" id="food-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
-                             <div id="upload-placeholder">
-                                <i class="fa-solid fa-camera mb-1 block text-lg"></i> Add Photo (Optional)
-                             </div>
-                             <img id="image-preview" class="hidden w-full h-20 object-cover rounded-lg mx-auto relative z-10">
-                        </div>
-                        <button type="submit" id="btn-submit" class="w-full py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-lg">Post Donation</button>
-                    </form>
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 h-full">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
+                    <span class="text-xs text-gray-400">Last 5 Donations</span>
                 </div>
-
-                <!-- Recent Activity (Limit 5) -->
-                <div class="lg:col-span-7 bg-white rounded-2xl shadow-xl p-6 h-full">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
-                        <span class="text-xs text-gray-400">Last 5 Donations</span>
-                    </div>
-                    <div class="space-y-4" id="recent-list">
-                        <p class="text-center text-gray-400 py-4">Loading activities...</p>
-                    </div>
-                    <button onclick="switchTab('history')" class="w-full mt-4 text-center text-sm text-brand-orange font-bold hover:underline">View Full History</button>
+                <div class="space-y-4" id="recent-list">
+                    <p class="text-center text-gray-400 py-4">Loading activities...</p>
                 </div>
+                <button onclick="switchTab('history')" class="w-full mt-4 text-center text-sm text-brand-orange font-bold hover:underline">View Full History</button>
             </div>
         </div>
 
@@ -275,14 +256,8 @@
             messagingSenderId: "491001640513",
             appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
         };
-
-        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-            // Placeholder logic if keys are missing
-            console.log("Firebase config missing. Add keys to enable functionality.");
-        } else {
-            firebase.initializeApp(firebaseConfig);
-        }
-
+        
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         let currentUser = null;
@@ -297,17 +272,17 @@
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
-                    // Update UI info
+                    
+                    // Populate UI
                     document.getElementById('nav-username').innerText = userData.name || "Restaurant";
                     document.getElementById('sidebar-name').innerText = userData.name || "Restaurant";
                     document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
                     
-                    // Pre-fill details form
                     document.getElementById('detail-name').value = userData.name || "";
                     document.getElementById('detail-phone').value = userData.phone || "";
                     document.getElementById('detail-address').value = userData.address || "";
 
-                    document.getElementById('tab-overview').classList.remove('hidden'); // Show content
+                    document.getElementById('tab-overview').classList.remove('hidden');
                     loadData();
                 }
             } else {
@@ -330,8 +305,9 @@
             activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
         }
 
-        // LOAD DATA & STATS
+        // DATA LOADER
         function loadData() {
+            // Listen to Donations Collection
             db.collection('donations')
               .where("restaurantId", "==", currentUser.uid)
               .orderBy("createdAt", "desc")
@@ -382,7 +358,7 @@
                           `;
                       }
 
-                      // Full History Table
+                      // History Table
                       historyBody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 text-gray-500 text-sm">${date}</td>
@@ -396,7 +372,7 @@
 
                   // Update Stats
                   document.getElementById('stat-meals').innerText = totalMeals;
-                  document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); // Approx 0.5kg per meal
+                  document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1);
                   document.getElementById('history-count').innerText = docCount;
                   
                   updateChart(totalMeals);
@@ -414,7 +390,7 @@
             const qty = document.getElementById('food-qty').value;
 
             if(!userData.address || !userData.phone) {
-                alert("Please update your Address and Phone in the 'Details' tab first!");
+                alert("Please update your Address and Phone in 'Restaurant Details' first!");
                 btn.innerHTML = "Post Donation";
                 btn.disabled = false;
                 switchTab('details');
@@ -422,6 +398,7 @@
             }
 
             try {
+                // IMPORTANT: This automatically creates 'donations' collection if it doesn't exist
                 await db.collection('donations').add({
                     restaurantId: currentUser.uid,
                     restaurantName: userData.name,
@@ -496,11 +473,11 @@
             });
         }
 
-        // CHART
+        // CHART CONFIG
         let myChart;
         function updateChart(userTotal) {
             const ctx = document.getElementById('motivationChart').getContext('2d');
-            const avg = 500; // Hardcoded benchmark for motivation
+            const avg = 500; // Benchmark
 
             if(myChart) myChart.destroy();
 
