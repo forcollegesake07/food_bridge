@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FoodBridge | Zero Waste Initiative</title>
     
-    <!-- Favicon: Hand Holding Heart (SVG Data URI) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤲🧡</text></svg>">
+    <!-- Favicon: Hand Holding Heart -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -46,46 +46,31 @@
             background-position: center;
             background-repeat: no-repeat;
         }
-        
-        /* Prevent horizontal scroll */
         body { overflow-x: hidden; }
-        
-        /* Smooth scrolling for anchor links */
         html { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="text-gray-800 font-sans min-h-screen flex flex-col relative">
 
-    <!-- Stable Background Layer -->
     <div class="fixed-bg-layer"></div>
 
-    <!-- Navigation -->
     <nav class="bg-white/95 backdrop-blur-md shadow-md fixed w-full z-50 transition-all">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20 items-center">
-                
-                <!-- Logo (Resets to Home) -->
                 <button onclick="showPage('home')" class="flex items-center cursor-pointer group focus:outline-none">
                     <div class="bg-brand-orange/10 p-2 rounded-lg mr-2 group-hover:bg-brand-orange/20 transition">
-                        <!-- Hand Holding Heart Icon as requested -->
                         <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
                     </div>
                     <span class="font-bold text-xl text-brand-dark tracking-wide">Food<span class="text-brand-green">Bridge</span></span>
                 </button>
-
-                <!-- Desktop Nav Links -->
                 <div class="hidden md:flex items-center space-x-8">
                     <button onclick="showPage('home')" id="nav-home" class="text-brand-orange font-bold text-sm uppercase tracking-wide transition border-b-2 border-brand-orange pb-1">Home</button>
                     <button onclick="showPage('about')" id="nav-about" class="text-gray-600 hover:text-brand-orange font-medium text-sm uppercase tracking-wide transition pb-1 border-b-2 border-transparent">About Us</button>
                 </div>
-
-                <!-- Desktop Auth Buttons -->
                 <div class="hidden md:flex items-center space-x-4">
                     <a href="https://foodbridge.qzz.io/login.html" class="text-brand-dark hover:text-brand-orange font-bold transition">Log In</a>
                     <a href="https://foodbridge.qzz.io/login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg shadow-orange-200 transform hover:-translate-y-0.5">Sign Up</a>
                 </div>
-                
-                <!-- Mobile Menu Button -->
                 <div class="md:hidden">
                     <button onclick="toggleMobileMenu()" class="text-gray-600 text-2xl p-2 focus:outline-none">
                         <i class="fa-solid fa-bars" id="menu-icon"></i>
@@ -93,8 +78,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-20 shadow-lg animate-fade-in">
             <div class="flex flex-col p-4 space-y-4">
                 <button onclick="showPage('home'); toggleMobileMenu()" class="text-left font-bold text-brand-dark hover:text-brand-orange py-2 border-b border-gray-50">Home</button>
@@ -107,31 +90,21 @@
         </div>
     </nav>
 
-    <!-- PAGE CONTENT CONTAINER -->
     <div id="main-content" class="flex-grow">
-        
-        <!-- === VIEW: HOME === -->
         <div id="view-home" class="animate-fade-in block">
-            <!-- Hero Section -->
-            <!-- pt-32 ensures content isn't hidden behind fixed nav on mobile -->
             <section class="min-h-screen flex items-center justify-center text-center text-white px-4 pt-32 pb-20 relative">
                 <div class="max-w-4xl mx-auto">
-                    <!-- Hero Icon -->
                     <div class="mb-6 inline-block">
                         <i class="fa-solid fa-hand-holding-heart text-5xl md:text-6xl text-brand-orange animate-bounce-slow"></i>
                     </div>
-
                     <span class="block text-brand-green font-bold tracking-widest uppercase mb-4 text-xs md:text-sm bg-white/10 w-fit mx-auto px-4 py-1 rounded-full backdrop-blur-sm border border-white/20">Zero Waste Initiative</span>
-                    
                     <h1 class="text-4xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">
                         Connect Surplus to <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-yellow-400">Those in Need</span>
                     </h1>
-                    
                     <p class="text-lg md:text-2xl mb-10 text-gray-200 max-w-2xl mx-auto font-light leading-relaxed">
                         A real-time platform connecting restaurants with orphanages. 
                         Stop wasting food. Start saving lives.
                     </p>
-                    
                     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center w-full px-4">
                         <button onclick="showPage('about')" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold py-4 px-10 rounded-full transition transform hover:scale-105 text-lg">
                             About Us
@@ -141,14 +114,11 @@
                         </a>
                     </div>
                 </div>
-                
-                <!-- Scroll Indicator -->
                 <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce text-white/50 hidden md:block">
                     <i class="fa-solid fa-chevron-down text-2xl"></i>
                 </div>
             </section>
             
-            <!-- How It Works Section -->
             <section class="py-20 bg-gray-50 border-t border-gray-200 rounded-t-3xl md:rounded-none relative z-10">
                 <div class="max-w-7xl mx-auto px-4">
                     <div class="text-center mb-12">
@@ -156,67 +126,43 @@
                         <h2 class="text-3xl font-bold text-brand-dark mt-2">How It Works</h2>
                         <div class="w-16 h-1 bg-brand-orange mx-auto rounded mt-4"></div>
                     </div>
-                    
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <!-- Step 1: Orange Hover -->
                         <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:bg-orange-50 transition-all duration-300 border-b-4 border-brand-orange text-center group cursor-default">
-                            <div class="w-16 h-16 mx-auto bg-orange-50 rounded-full flex items-center justify-center text-brand-orange text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300">
-                                <i class="fa-solid fa-bowl-food"></i>
-                            </div>
+                            <div class="w-16 h-16 mx-auto bg-orange-50 rounded-full flex items-center justify-center text-brand-orange text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300"><i class="fa-solid fa-bowl-food"></i></div>
                             <h3 class="font-bold text-xl mb-3 text-brand-dark group-hover:text-orange-700 transition">1. Post Surplus</h3>
-                            <p class="text-gray-600 text-sm">Restaurants upload details of leftover edible food instantly via a simple dashboard.</p>
+                            <p class="text-gray-600 text-sm">Restaurants upload details of leftover edible food instantly.</p>
                         </div>
-
-                        <!-- Step 2: Green Hover -->
                         <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:bg-green-50 transition-all duration-300 border-b-4 border-brand-green text-center group cursor-default">
-                            <div class="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center text-brand-green text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300">
-                                <i class="fa-solid fa-bolt"></i>
-                            </div>
+                            <div class="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center text-brand-green text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300"><i class="fa-solid fa-bolt"></i></div>
                             <h3 class="font-bold text-xl mb-3 text-brand-dark group-hover:text-green-700 transition">2. Real-Time Alert</h3>
-                            <p class="text-gray-600 text-sm">Registered orphanages nearby receive immediate updates on their live feed.</p>
+                            <p class="text-gray-600 text-sm">Registered orphanages nearby receive immediate updates.</p>
                         </div>
-
-                        <!-- Step 3: Blue Hover -->
                         <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:bg-blue-50 transition-all duration-300 border-b-4 border-blue-500 text-center group cursor-default">
-                            <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-blue-500 text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300">
-                                <i class="fa-solid fa-hand-pointer"></i>
-                            </div>
+                            <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-blue-500 text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300"><i class="fa-solid fa-hand-pointer"></i></div>
                             <h3 class="font-bold text-xl mb-3 text-brand-dark group-hover:text-blue-700 transition">3. One-Click Claim</h3>
-                            <p class="text-gray-600 text-sm">Orphanages claim the donation, instantly reserving the food for pickup.</p>
+                            <p class="text-gray-600 text-sm">Orphanages claim the donation, reserving the food instantly.</p>
                         </div>
-
-                        <!-- Step 4: Purple Hover -->
                         <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:bg-purple-50 transition-all duration-300 border-b-4 border-purple-500 text-center group cursor-default">
-                            <div class="w-16 h-16 mx-auto bg-purple-50 rounded-full flex items-center justify-center text-purple-500 text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300">
-                                <i class="fa-solid fa-handshake"></i>
-                            </div>
+                            <div class="w-16 h-16 mx-auto bg-purple-50 rounded-full flex items-center justify-center text-purple-500 text-2xl mb-6 group-hover:scale-110 group-hover:bg-white transition duration-300"><i class="fa-solid fa-handshake"></i></div>
                             <h3 class="font-bold text-xl mb-3 text-brand-dark group-hover:text-purple-700 transition">4. Connection</h3>
-                            <p class="text-gray-600 text-sm">Contact details are shared instantly to coordinate the pickup logistics.</p>
+                            <p class="text-gray-600 text-sm">Contact details are shared instantly for coordination.</p>
                         </div>
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- === VIEW: ABOUT US === -->
         <div id="view-about" class="hidden animate-fade-in bg-white min-h-screen pt-20">
             <section class="py-12 md:py-20 relative overflow-hidden">
-                <!-- Decor Elements -->
                 <div class="absolute top-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-brand-orange/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-brand-green/5 rounded-full -ml-20 -mb-20 blur-3xl"></div>
-
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    
-                    <!-- Header -->
                     <div class="text-center mb-12">
                         <span class="text-brand-orange font-bold uppercase tracking-wider text-sm mb-2 block">Our Mission</span>
                         <h1 class="text-4xl md:text-5xl font-bold text-brand-dark mb-4">Bridging the Gap</h1>
                         <p class="text-lg text-gray-500 max-w-3xl mx-auto">We are building a world where excess food doesn't fill landfills, but fills stomachs.</p>
                     </div>
-
-                    <!-- Content Grid -->
                     <div class="grid md:grid-cols-2 gap-10 md:gap-16 items-start">
-                        <!-- Left: Image -->
                         <div class="relative group">
                             <div class="absolute -top-4 -left-4 w-24 h-24 bg-brand-orange/20 rounded-full -z-10 group-hover:scale-110 transition duration-500 hidden md:block"></div>
                             <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Volunteers serving food" class="rounded-3xl shadow-xl w-full object-cover h-[300px] md:h-[500px]">
@@ -224,48 +170,29 @@
                                 <p class="font-bold text-gray-800 text-lg italic">"Hunger is not a scarcity issue, it's a logistics issue."</p>
                             </div>
                         </div>
-                        
-                        <!-- Right: Story -->
                         <div class="space-y-6 md:space-y-8">
                             <div>
                                 <h3 class="text-2xl font-bold text-brand-dark mb-3">The Paradox of Plenty</h3>
-                                <p class="text-base md:text-lg text-gray-600 leading-relaxed">
-                                    It started with a simple observation in our local community: restaurants often prepare significantly more food than they sell. Due to unpredictable demand and stringent freshness standards, perfectly edible, high-quality meals end up in the trash at the end of every shift.
-                                </p>
+                                <p class="text-base md:text-lg text-gray-600 leading-relaxed">It started with a simple observation in our local community: restaurants often prepare significantly more food than they sell. Due to unpredictable demand and stringent freshness standards, perfectly edible, high-quality meals end up in the trash at the end of every shift.</p>
                             </div>
-                            
-                            <!-- Stats Box -->
                             <div class="bg-brand-light p-6 md:p-8 rounded-2xl border border-orange-100 shadow-sm hover:shadow-md transition">
                                 <div class="flex items-start">
                                     <i class="fa-solid fa-chart-pie text-brand-orange text-3xl mr-5 mt-1"></i>
-                                    <div>
-                                        <h4 class="font-bold text-brand-dark text-xl mb-2">The Data</h4>
-                                        <p class="text-sm md:text-base text-gray-600">Research indicates that nearly <span class="font-bold text-brand-dark">40% of food produced</span> is wasted globally. In the restaurant industry specifically, surplus food accounts for a massive portion of this waste.</p>
-                                    </div>
+                                    <div><h4 class="font-bold text-brand-dark text-xl mb-2">The Data</h4><p class="text-sm md:text-base text-gray-600">Research indicates that nearly <span class="font-bold text-brand-dark">40% of food produced</span> is wasted globally. In the restaurant industry specifically, surplus food accounts for a massive portion of this waste.</p></div>
                                 </div>
                             </div>
-
                             <div>
                                 <h3 class="text-2xl font-bold text-brand-dark mb-3">Our Solution</h3>
-                                <p class="text-base md:text-lg text-gray-600 leading-relaxed">
-                                    <strong>FoodBridge</strong> creates a digital highway. We empower restaurants to turn potential waste into immediate aid, ensuring that surplus food reaches the plates of those who need it most, instantly and efficiently.
-                                </p>
+                                <p class="text-base md:text-lg text-gray-600 leading-relaxed"><strong>FoodBridge</strong> creates a digital highway. We empower restaurants to turn potential waste into immediate aid, ensuring that surplus food reaches the plates of those who need it most, instantly and efficiently.</p>
                             </div>
-
-                            <div class="pt-2 text-center md:text-left">
-                                <a href="https://foodbridge.qzz.io/login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline p-2">
-                                    Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
+                            <div class="pt-2 text-center md:text-left"><a href="https://foodbridge.qzz.io/login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline p-2">Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i></a></div>
                         </div>
                     </div>
                 </div>
             </section>
         </div>
-
     </div>
 
-    <!-- Footer -->
     <footer class="bg-brand-dark text-white py-12 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
@@ -282,9 +209,7 @@
                     <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110"><i class="fa-brands fa-instagram text-2xl"></i></a>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-500">
-                &copy; 2025 FoodBridge Project. Built for a better world.
-            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-500">&copy; 2025 FoodBridge Project. Built for a better world.</div>
         </div>
     </footer>
 
@@ -293,53 +218,22 @@
             const menu = document.getElementById('mobile-menu');
             const icon = document.getElementById('menu-icon');
             menu.classList.toggle('hidden');
-            
-            if (menu.classList.contains('hidden')) {
-                icon.classList.remove('fa-xmark');
-                icon.classList.add('fa-bars');
-            } else {
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-xmark');
-            }
+            if (menu.classList.contains('hidden')) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); } else { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
         }
-
         function showPage(pageId) {
-            // Get view containers
-            const homeView = document.getElementById('view-home');
-            const aboutView = document.getElementById('view-about');
-            
-            // Get Nav Buttons
-            const navHome = document.getElementById('nav-home');
-            const navAbout = document.getElementById('nav-about');
-
+            const homeView = document.getElementById('view-home'); const aboutView = document.getElementById('view-about');
+            const navHome = document.getElementById('nav-home'); const navAbout = document.getElementById('nav-about');
             if (pageId === 'home') {
-                // Show Home
-                homeView.classList.remove('hidden');
-                aboutView.classList.add('hidden');
-                
-                // Update Nav Styling
-                navHome.classList.add('text-brand-orange', 'border-brand-orange');
-                navHome.classList.remove('text-gray-600', 'border-transparent');
-                
-                navAbout.classList.remove('text-brand-orange', 'border-brand-orange');
-                navAbout.classList.add('text-gray-600', 'border-transparent');
+                homeView.classList.remove('hidden'); aboutView.classList.add('hidden');
+                navHome.classList.add('text-brand-orange', 'border-brand-orange'); navHome.classList.remove('text-gray-600', 'border-transparent');
+                navAbout.classList.remove('text-brand-orange', 'border-brand-orange'); navAbout.classList.add('text-gray-600', 'border-transparent');
             } else {
-                // Show About
-                homeView.classList.add('hidden');
-                aboutView.classList.remove('hidden');
-                
-                // Update Nav Styling
-                navAbout.classList.add('text-brand-orange', 'border-brand-orange');
-                navAbout.classList.remove('text-gray-600', 'border-transparent');
-                
-                navHome.classList.remove('text-brand-orange', 'border-brand-orange');
-                navHome.classList.add('text-gray-600', 'border-transparent');
+                homeView.classList.add('hidden'); aboutView.classList.remove('hidden');
+                navAbout.classList.add('text-brand-orange', 'border-brand-orange'); navAbout.classList.remove('text-gray-600', 'border-transparent');
+                navHome.classList.remove('text-brand-orange', 'border-brand-orange'); navHome.classList.add('text-gray-600', 'border-transparent');
             }
-            
-            // Scroll to top
             window.scrollTo(0, 0);
         }
     </script>
-
 </body>
 </html>
