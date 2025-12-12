@@ -265,7 +265,6 @@
             <form onsubmit="submitUrgentRequest(event)" class="p-6 space-y-4">
                 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Item Needed</label><input type="text" id="req-item" required placeholder="e.g. 50 Rice Meals" class="w-full p-3 border rounded-lg focus:border-orange-500 outline-none"></div>
                 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantity</label><input type="number" id="req-qty" required placeholder="e.g. 50" class="w-full p-3 border rounded-lg focus:border-orange-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Notes</label><textarea id="req-note" rows="3" placeholder="Additional details..." class="w-full p-3 border rounded-lg focus:border-orange-500 outline-none"></textarea></div>
                 <button type="submit" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 shadow-md">Post Request</button>
             </form>
         </div>
@@ -433,7 +432,6 @@
                                         <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold">Active</span>
                                     </div>
                                     <div class="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        <p class="italic">"${d.note || 'No additional notes'}"</p>
                                         <p class="text-xs text-gray-400 mt-2 text-right">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : 'Just now'}</p>
                                     </div>
                                     <button onclick="confirmAction('delete_req', '${doc.id}')" class="w-full py-3 bg-red-50 text-red-500 font-bold rounded-xl hover:bg-red-100 border border-red-100 flex items-center justify-center gap-2 transition">
@@ -449,15 +447,6 @@
             const historyDonations = db.collection('donations').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc');
             const historyRequests = db.collection('requests').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc');
 
-            // Simplified: Just use Donations collection for main history as per standard flow, but ensure it captures everything.
-            // If requests are fulfilled, they usually update status in Requests collection. 
-            // For a unified history, we will fetch both and merge in memory.
-            
-            // However, real-time merging of two queries is complex in vanilla JS without RxJS.
-            // We'll stick to a robust implementation using `donations` primarily, and append `requests` history if feasible, 
-            // OR simpler: just fetch both and re-render.
-            
-            // Let's implement a unified render function that is called whenever either snapshot updates.
             let allHistoryItems = [];
 
             function updateUnifiedHistory() {
@@ -513,17 +502,22 @@
 
             // Listener 1: Donations
             db.collection('donations').where('orphanageId', '==', currentUser.uid).onSnapshot(async snap => {
-                // We need to fetch user details for each to get contact info if not present
                 const newItems = await Promise.all(snap.docs.map(async doc => {
                     const d = doc.data();
                     let rName = d.restaurantName || 'Unknown';
                     let rPhone = d.restaurantPhone || 'N/A';
                     let rAddr = d.restaurantAddress || 'N/A';
 
-                    if(!d.restaurantPhone && d.restaurantId) {
+                    // Fetch details if missing
+                    if((!d.restaurantPhone || !d.restaurantAddress) && d.restaurantId) {
                         try {
                             const u = await db.collection('users').doc(d.restaurantId).get();
-                            if(u.exists) { rName = u.data().name; rPhone = u.data().phone; rAddr = u.data().address; }
+                            if(u.exists) { 
+                                const uData = u.data();
+                                rName = uData.name || rName; 
+                                rPhone = uData.phone || rPhone; 
+                                rAddr = uData.address || rAddr; 
+                            }
                         } catch(e){}
                     }
 
@@ -542,7 +536,6 @@
                     };
                 }));
                 
-                // Update gloal list (remove old donations, add new)
                 allHistoryItems = allHistoryItems.filter(i => i.type !== 'donation').concat(newItems);
                 updateUnifiedHistory();
             });
@@ -559,7 +552,12 @@
                     if(d.fulfilledBy) {
                         try {
                             const u = await db.collection('users').doc(d.fulfilledBy).get();
-                            if(u.exists) { rName = u.data().name; rPhone = u.data().phone; rAddr = u.data().address; }
+                            if(u.exists) { 
+                                const uData = u.data();
+                                rName = uData.name || rName; 
+                                rPhone = uData.phone || rPhone; 
+                                rAddr = uData.address || rAddr; 
+                            }
                         } catch(e){}
                     }
 
@@ -607,7 +605,7 @@
 
                 // Fetch missing contact info
                 const targetId = type === 'donation' ? d.restaurantId : d.fulfilledBy;
-                if (targetId && (!d.restaurantPhone || type === 'request')) {
+                if (targetId) {
                      try {
                          const uDoc = await db.collection('users').doc(targetId).get();
                          if(uDoc.exists) {
@@ -768,7 +766,6 @@
             e.preventDefault();
             const item = document.getElementById('req-item').value;
             const qty = document.getElementById('req-qty').value;
-            const note = document.getElementById('req-note').value;
             
             try {
                 await db.collection('requests').add({
@@ -777,7 +774,7 @@
                     orphanageAddress: userData.address,
                     orphanagePhone: userData.phone,
                     orphanageEmail: currentUser.email,
-                    itemNeeded: item, quantity: qty, note: note,
+                    itemNeeded: item, quantity: qty,
                     status: 'Pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
