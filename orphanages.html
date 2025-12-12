@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Orphanage Dashboard | FoodBridge</title>
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2310B981' d='M243.4 2.6l-224 96c-14 6-21.8 21-18.7 35.8S16.8 160 32 160v8c0 13.3 10.7 24 24 24h400c13.3 0 24-10.7 24-24v-8c15.2 0 28.3-10.7 31.3-25.6s-4.8-29.9-18.7-35.8l-224-96c-8-3.4-17.2-3.4-25.2 0zM128 224H64V420.3c-.6 .3-1.2 .7-1.8 1.1l-48 32c-11.7 7.8-17 22.4-12.9 35.9S17.9 512 32 512H480c14.1 0 26.5-9.2 30.6-22.7s-1.1-28.1-12.9-35.9l-48-32c-.6-.4-1.2-.7-1.8-1.1V224H384V416H344V224H280V416H232V224H168V416H128V224zM256 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%2310B981' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -54,9 +54,9 @@
     <aside class="w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full flex-shrink-0 transition-transform duration-300 transform md:translate-x-0 -translate-x-full absolute md:relative" id="sidebar">
         <div class="p-8 flex items-center border-b border-gray-100">
             <div class="bg-brand-green/10 p-2.5 rounded-xl mr-3 shadow-sm">
-                 <!-- Header Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-8 h-8 fill-brand-green">
-                    <path d="M243.4 2.6l-224 96c-14 6-21.8 21-18.7 35.8S16.8 160 32 160v8c0 13.3 10.7 24 24 24h400c13.3 0 24-10.7 24-24v-8c15.2 0 28.3-10.7 31.3-25.6s-4.8-29.9-18.7-35.8l-224-96c-8-3.4-17.2-3.4-25.2 0zM128 224H64V420.3c-.6 .3-1.2 .7-1.8 1.1l-48 32c-11.7 7.8-17 22.4-12.9 35.9S17.9 512 32 512H480c14.1 0 26.5-9.2 30.6-22.7s-1.1-28.1-12.9-35.9l-48-32c-.6-.4-1.2-.7-1.8-1.1V224H384V416H344V224H280V416H232V224H168V416H128V224zM256 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/>
+                 <!-- Header Icon (Updated to match Index/Restaurant) -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-8 h-8 fill-brand-green">
+                    <path d="M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z"/>
                 </svg>
             </div>
             <div>
@@ -156,16 +156,16 @@
                 </div>
             </div>
 
-            <!-- Active Requests & Stats -->
+            <!-- Available Food (Overview) & Stats -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- My Requests List -->
+                <!-- Available Food List -->
                 <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 h-96 flex flex-col">
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <h2 class="text-lg font-bold text-gray-800">My Active Requests</h2>
-                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center border text-gray-400 shadow-sm"><i class="fa-solid fa-list"></i></div>
+                        <h2 class="text-lg font-bold text-gray-800">Available Food</h2>
+                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center border text-green-500 shadow-sm"><i class="fa-solid fa-utensils"></i></div>
                     </div>
-                    <div class="p-4 flex-grow overflow-y-auto space-y-3" id="my-requests-list">
-                        <p class="text-center text-gray-400 py-10">No active requests.</p>
+                    <div class="p-4 flex-grow overflow-y-auto space-y-3" id="overview-donations-list">
+                        <p class="text-center text-gray-400 py-10">Searching for food...</p>
                     </div>
                 </div>
 
@@ -207,7 +207,7 @@
         <!-- TAB: HISTORY -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-8 animate-fade-in">
             <div class="flex items-center justify-between">
-                <h1 class="text-4xl font-extrabold text-white drop-shadow-md">History</h1>
+                <h1 class="text-4xl font-extrabold text-white drop-shadow-md">Claim History</h1>
             </div>
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
@@ -215,10 +215,10 @@
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-6 py-5 font-bold tracking-wider">Type</th>
-                                <th class="px-6 py-5 font-bold tracking-wider">Details</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Food Item</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Restaurant</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Contact Info</th>
                                 <th class="px-6 py-5 font-bold tracking-wider">Status</th>
-                                <th class="px-6 py-5 font-bold tracking-wider">Partner</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -290,9 +290,13 @@
                     if(document.getElementById('detail-email')) document.getElementById('detail-email').value = userData.email || "";
                     if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
                     document.getElementById('tab-overview').classList.remove('hidden');
-                    loadMyRequests();
                     loadAvailableDonations();
                     loadHistory();
+                    // Load stats for pending requests
+                    db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(snap => {
+                        let p = 0; snap.forEach(d => { if(d.data().status === 'Pending') p++; });
+                        const el = document.getElementById('stat-pending'); if(el) el.innerText = p;
+                    });
                 }
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
@@ -313,59 +317,66 @@
 
         // --- DATA LOADERS ---
 
-        function loadMyRequests() {
-            db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(snap => {
-                const list = document.getElementById('my-requests-list');
-                const statPending = document.getElementById('stat-pending');
-                if(!list) return;
-                list.innerHTML = '';
-                
-                let count = 0; let pendingCount = 0;
-                let docs = [];
-                snap.forEach(d => docs.push({ ...d.data(), id: d.id }));
-                docs.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-                docs.forEach(data => {
-                    if (data.status !== 'Fulfilled' && data.status !== 'Cancelled') {
-                        count++;
-                        if(data.status === 'Pending') pendingCount++;
-                        const isPending = data.status === 'Pending';
-                        const cancelBtn = isPending ? `<button onclick="confirmCancelRequest('${data.id}', '${data.itemNeeded}')" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded border border-red-200 transition">Cancel</button>` : '';
-
-                        list.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200"><div><p class="font-bold text-gray-800 text-sm">${data.itemNeeded} <span class="text-gray-500 font-normal">(${data.quantity})</span></p><p class="text-xs text-brand-green font-medium"><i class="fa-solid fa-rss"></i> ${data.status}</p></div>${cancelBtn}</div>`;
-                    }
-                });
-                if(count === 0) list.innerHTML = `<p class="text-center text-gray-400 py-10 text-sm">No active requests.</p>`;
-                if(statPending) statPending.innerText = pendingCount;
-            });
-        }
-
         function loadAvailableDonations() {
             db.collection('donations').where('status', '==', 'Available').onSnapshot(snap => {
                 const container = document.getElementById('donations-container');
-                if(!container) return;
-                container.innerHTML = '';
-                if(snap.empty) { container.innerHTML = `<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-box-open text-4xl mb-2'></i><p class='font-medium'>No donations available right now.</p></div>`; return; }
+                const overviewList = document.getElementById('overview-donations-list');
+                
+                if (container) container.innerHTML = '';
+                if (overviewList) overviewList.innerHTML = '';
+                
+                if(snap.empty) { 
+                    const msg = `<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-box-open text-4xl mb-2'></i><p class='font-medium'>No donations available right now.</p></div>`;
+                    if(container) container.innerHTML = msg;
+                    if(overviewList) overviewList.innerHTML = "<p class='text-center text-gray-400 py-10 text-sm'>No food available currently.</p>";
+                    return; 
+                }
 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.foodName}</h4><p class="text-xs text-green-600 font-bold uppercase tracking-wide">Qty: ${d.servings}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-store mr-2 text-brand-green"></i> ${d.restaurantName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.restaurantAddress || 'N/A'}</p></div><button onclick="initiateClaim('${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}')" class="w-full py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"><span>Accept Donation</span> <i class="fa-solid fa-check"></i></button></div>`;
+                    // Populate Card (Donations Tab)
+                    if(container) {
+                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.foodName}</h4><p class="text-xs text-green-600 font-bold uppercase tracking-wide">Qty: ${d.servings}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-store mr-2 text-brand-green"></i> ${d.restaurantName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.restaurantAddress || 'N/A'}</p></div><button onclick="initiateClaim('${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}')" class="w-full py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"><span>Accept Donation</span> <i class="fa-solid fa-check"></i></button></div>`;
+                    }
+                    // Populate List (Overview Tab)
+                    if(overviewList) {
+                        overviewList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200"><div><p class="font-bold text-gray-800 text-sm">${d.foodName} <span class="text-green-600 font-normal">(${d.servings})</span></p><p class="text-xs text-gray-500"><i class="fa-solid fa-store"></i> ${d.restaurantName}</p></div><button onclick="initiateClaim('${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}')" class="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-2 rounded-lg font-bold transition">Accept</button></div>`;
+                    }
                 });
             });
         }
 
         function loadHistory() {
-            db.collection('requests').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Fulfilled').onSnapshot(snap => {
+            // Fetch claimed donations
+            db.collection('donations').where('claimedBy', '==', currentUser.uid).onSnapshot(snap => {
                 const tbody = document.getElementById('history-table-body');
                 const statReceived = document.getElementById('stat-received');
                 if(!tbody) return;
                 tbody.innerHTML = '';
+                
                 let count = 0;
-                snap.forEach(d => {
+                let docs = [];
+                snap.forEach(d => docs.push(d.data()));
+                docs.sort((a,b) => (b.claimedAt?.seconds || 0) - (a.claimedAt?.seconds || 0));
+
+                docs.forEach(data => {
                     count++;
-                    const data = d.data();
-                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
-                    tbody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-100"><td class="px-6 py-4 text-gray-500 text-sm">${date}</td><td class="px-6 py-4"><span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">Request</span></td><td class="px-6 py-4 font-bold text-gray-800 text-sm">${data.itemNeeded} (${data.quantity})</td><td class="px-6 py-4"><span class="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold border border-green-100">Fulfilled</span></td><td class="px-6 py-4 text-gray-600 text-sm">${data.restaurantName || 'Unknown'}</td></tr>`;
+                    const date = data.claimedAt ? new Date(data.claimedAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                    
+                    let contactInfo = `<div class="text-xs text-gray-500">
+                        <p><i class="fa-solid fa-phone text-green-500 mr-1"></i> ${data.restaurantPhone || 'N/A'}</p>
+                        <p><i class="fa-solid fa-location-dot text-green-500 mr-1"></i> ${data.restaurantAddress || 'N/A'}</p>
+                    </div>`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                            <td class="px-6 py-4 text-gray-500 text-sm">${date}</td>
+                            <td class="px-6 py-4 font-bold text-gray-800 text-sm">${data.foodName} (${data.servings})</td>
+                            <td class="px-6 py-4 text-gray-700 text-sm font-medium">${data.restaurantName}</td>
+                            <td class="px-6 py-4">${contactInfo}</td>
+                            <td class="px-6 py-4"><span class="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold border border-green-100">Claimed</span></td>
+                        </tr>
+                    `;
                 });
                 if(statReceived) statReceived.innerText = count;
             });
@@ -394,15 +405,7 @@
         };
 
         window.confirmCancelRequest = function(reqId, itemName) {
-            pendingAction = { type: 'cancel', data: { reqId } };
-            document.getElementById('confirm-title').innerText = "Cancel Request?";
-            document.getElementById('confirm-message').innerText = `Are you sure you want to cancel the request for ${itemName}? This action cannot be undone.`;
-            const btn = document.getElementById('confirm-yes-btn');
-            btn.className = "flex-1 py-3.5 bg-gray-800 text-white font-bold rounded-xl hover:bg-black shadow-lg transition-all transform active:scale-95";
-            btn.innerText = "Yes, Cancel Request";
-            document.getElementById('confirm-icon-container').className = "w-16 h-16 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl shadow-sm";
-            document.getElementById('confirm-icon').className = "fa-solid fa-ban";
-            toggleModal('confirm-modal', true);
+            // ... (Only relevant if we kept the "My Requests" UI, which is now replaced by donations in overview, but functional for future)
         }
 
         window.initiateClaim = function(donId, item, qty, restName) {
@@ -430,10 +433,6 @@
                     });
                     showToast("Request broadcasted successfully!"); form.reset();
                 } 
-                else if (pendingAction.type === 'cancel') {
-                    await db.collection('requests').doc(pendingAction.data.reqId).delete();
-                    showToast("Request cancelled.");
-                }
                 else if (pendingAction.type === 'claim') {
                     await db.collection('donations').doc(pendingAction.data.donId).update({
                         status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageEmail: userData.email || '', claimedAt: firebase.firestore.FieldValue.serverTimestamp()
