@@ -39,7 +39,6 @@
     <style>
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            /* Softer background for Orphanage View */
             background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
@@ -110,13 +109,11 @@
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full">
         
         <!-- TAB: OVERVIEW -->
-        <div id="tab-overview" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
-            
-            <!-- Header & Post Request Button -->
+        <div id="tab-overview" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Overview</h1>
-                    <p class="text-gray-100 text-sm md:text-base font-medium mt-1">Track your orders and community impact.</p>
+                    <p class="text-gray-100 text-sm md:text-base font-medium mt-1">Track incoming orders and community impact.</p>
                 </div>
                 <button onclick="switchTab('requests')" class="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 animate-pulse">
                     <i class="fa-solid fa-bullhorn"></i>
@@ -124,45 +121,27 @@
                 </button>
             </div>
 
-            <!-- 1. ACTIVE ORDERS (INCOMING) - TOP PRIORITY -->
-            <!-- Hidden by default, toggled by JS if data exists -->
-            <div id="incoming-section" class="hidden space-y-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="bg-blue-500 p-2 rounded-lg text-white shadow-lg animate-bounce">
-                        <i class="fa-solid fa-truck-fast"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-white drop-shadow-md">Incoming Orders</h2>
-                </div>
-                <div id="incoming-orders-container" class="space-y-4">
-                    <!-- Dynamically Populated -->
-                </div>
-            </div>
-
-            <!-- 2. STATS & GRAPH -->
+            <!-- Stats & Motivation (Mirrors Restaurant Stats) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Metrics Column -->
-                <div class="space-y-6">
-                    <!-- Total Received Card -->
+                <!-- Metrics -->
+                <div class="space-y-4 md:space-y-6">
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-green flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Received</p>
                             <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-received">0</h3>
-                            <p class="text-xs text-green-600 font-bold mt-1">Meals Secured</p>
                         </div>
-                        <div class="w-12 h-12 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-check-circle"></i></div>
                     </div>
-                    <!-- Active Requests Card -->
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-orange-500 flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Active Requests</p>
                             <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-requests">0</h3>
-                            <p class="text-xs text-orange-500 font-bold mt-1">Urgent Needs</p>
                         </div>
-                        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-bullhorn"></i></div>
+                        <div class="w-12 h-12 md:w-14 md:h-14 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-bullhorn"></i></div>
                     </div>
                 </div>
 
-                <!-- Chart Column -->
+                <!-- Chart -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-bold text-gray-800 text-base md:text-lg">Impact Analytics</h4>
@@ -171,35 +150,61 @@
                             <span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-green-100 text-brand-green rounded-full">Received</span>
                         </div>
                     </div>
-                    <div class="relative h-48 w-full"><canvas id="impactChart"></canvas></div>
+                    <div class="relative h-40 md:h-48 w-full"><canvas id="impactChart"></canvas></div>
                 </div>
             </div>
 
-            <!-- 3. AVAILABLE DONATIONS FEED -->
-            <div>
-                <h2 class="text-xl font-bold text-white drop-shadow-md mb-4 flex items-center"><i class="fa-solid fa-utensils mr-2"></i> Available for Claiming</h2>
-                <div id="donations-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Populated by JS -->
-                    <div class="col-span-full py-12 text-center text-white/80">
-                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p>Looking for available food...</p>
+            <!-- INCOMING ORDERS (Mirrors "Scheduled Pickups") -->
+            <!-- This section shows orders CLAIMED by this orphanage -->
+            <div id="incoming-orders-container" class="space-y-4">
+                <!-- Dynamically Populated -->
+            </div>
+
+            <!-- AVAILABLE DONATIONS FEED (Mirrors "Post Donation" area functionality) -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="p-5 md:p-6 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 text-brand-green flex items-center justify-center text-base md:text-lg shadow-sm">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <h2 class="text-lg md:text-xl font-bold text-gray-800">Available Donations</h2>
                     </div>
+                    <span class="text-xs font-bold text-green-600 bg-white px-2 py-1 rounded border border-green-100 animate-pulse">Live Feed</span>
+                </div>
+                <div id="donations-container" class="p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated by JS -->
+                    <div class="col-span-full py-8 text-center text-gray-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>Looking for nearby food...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity (Mirrors Restaurant) -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
+                    <span class="text-xs font-bold text-gray-400 uppercase bg-white px-2 py-1 rounded border">Last 5</span>
+                </div>
+                <div class="p-5 md:p-6 space-y-4" id="recent-list"><p class="text-center text-gray-400 py-4">Loading activities...</p></div>
+                <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
+                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-green hover:text-green-700 transition">View Full History &rarr;</button>
                 </div>
             </div>
         </div>
 
         <!-- TAB: URGENT NEEDS (REQUESTS) -->
-        <div id="tab-requests" class="max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div id="tab-requests" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">My Urgent Requests</h1>
                 <button onclick="openRequestModal()" class="w-full md:w-auto bg-white text-brand-dark px-5 py-3 rounded-xl shadow-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition">
                     <i class="fa-solid fa-plus text-brand-green"></i> Create New Request
                 </button>
             </div>
-
-            <!-- My Requests List -->
-            <div id="my-requests-list" class="space-y-4">
-                <!-- Populated by JS -->
+            
+            <div id="my-requests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Request Cards Populated JS -->
+                <p class="col-span-full text-center text-white text-lg py-10">No active requests found.</p>
             </div>
         </div>
 
@@ -207,8 +212,8 @@
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Donation History</h1>
-                <div class="bg-white px-4 py-2 rounded-xl shadow-md">
-                    <span class="text-brand-green font-bold text-lg" id="history-count">0</span> <span class="text-xs text-gray-600">Records</span>
+                <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
+                    <span class="text-brand-green font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
                 </div>
             </div>
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
@@ -216,10 +221,10 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th class="px-6 py-4 font-bold">Date</th>
-                                <th class="px-6 py-4 font-bold">Restaurant Info</th>
-                                <th class="px-6 py-4 font-bold">Food Details</th>
-                                <th class="px-6 py-4 font-bold">Status</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Restaurant Info</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Food Details</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -242,11 +247,11 @@
                     <h2 class="text-xl md:text-2xl font-bold text-gray-800">Orphanage Profile</h2>
                     <p class="text-gray-500 text-xs mt-1">Manage contact information</p>
                 </div>
-                <form onsubmit="saveProfile(event)" class="px-6 pb-8 space-y-5">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Orphanage Name</label><input type="text" id="detail-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Address</label><textarea id="detail-address" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm"></textarea></div>
-                    <button type="submit" class="w-full py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 transition-all shadow-lg">Save Changes</button>
+                <form onsubmit="saveProfile(event)" class="px-6 md:px-8 pb-8 md:pb-10 space-y-5 md:space-y-6">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Orphanage Name</label><input type="text" id="detail-name" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm md:text-base"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm md:text-base"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Address</label><textarea id="detail-address" rows="3" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-sm md:text-base"></textarea></div>
+                    <button type="submit" class="w-full py-3.5 md:py-4 bg-brand-green text-white font-bold text-base md:text-lg rounded-xl hover:bg-green-700 transition-all shadow-lg transform active:scale-[0.99]">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -345,22 +350,64 @@
             ['overview', 'history', 'details', 'requests'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 const btn = document.getElementById('btn-' + t);
-                btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all duration-200";
+                btn.classList.remove('bg-brand-green', 'text-white', 'shadow-md', 'bg-orange-500');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-orange-500');
             });
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
-            activeBtn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl transition-all duration-200 bg-brand-green text-white shadow-md";
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-orange-500');
+            
+            // Highlight color based on tab
+            if(tab === 'requests') activeBtn.classList.add('bg-orange-500', 'text-white', 'shadow-md');
+            else activeBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
+            
             if (window.innerWidth < 768) toggleSidebar();
         }
 
         // --- Data Loading ---
         function loadDashboardData() {
-            // 1. Available Donations (Feed)
+            // 1. Incoming Orders (My Claims) - TOP SECTION
+            db.collection('donations').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
+                const container = document.getElementById('incoming-orders-container');
+                if(!container) return;
+                container.innerHTML = '';
+                
+                if(snap.empty) { 
+                    // Optional: Hide container or show nothing
+                    return; 
+                }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const contact = d.restaurantPhone ? `<i class="fa-solid fa-phone mr-1"></i> ${d.restaurantPhone}` : `<i class="fa-solid fa-store mr-1"></i> ${d.restaurantName}`;
+                    const address = d.restaurantAddress ? `<div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${d.restaurantAddress}</div>` : '';
+
+                    container.innerHTML += `
+                        <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-blue-500 relative transform hover:-translate-y-1 transition duration-300">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i> Incoming Order</h3>
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
+                                <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
+                                <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Contact</p>
+                                    <p class="text-sm font-bold text-gray-700">${contact}</p>
+                                    ${address}
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="confirmAction('receive', '${doc.id}')" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-sm shadow transition"><i class="fa-solid fa-check mr-1"></i> Mark Received</button>
+                                <button onclick="openReportModal('${doc.id}')" class="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-triangle-exclamation"></i> Report</button>
+                            </div>
+                        </div>`;
+                });
+            });
+
+            // 2. Available Donations (Feed)
             db.collection('donations').where('status', '==', 'Available').onSnapshot(snap => {
                 const container = document.getElementById('donations-container');
                 if(!container) return;
                 container.innerHTML = '';
-                if(snap.empty) { container.innerHTML = `<div class="col-span-full py-12 text-center text-white/80"><i class="fa-solid fa-utensils text-4xl mb-2 opacity-50"></i><p>No donations available.</p></div>`; return; }
+                if(snap.empty) { container.innerHTML = `<div class="col-span-full py-8 text-center text-gray-400"><i class="fa-solid fa-utensils text-2xl mb-2 opacity-50"></i><p>No donations available.</p></div>`; return; }
                 
                 snap.forEach(doc => {
                     const d = doc.data();
@@ -378,82 +425,59 @@
                 });
             });
 
-            // 2. Incoming Orders (My Claims) - TOP SECTION
-            db.collection('donations').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
-                const section = document.getElementById('incoming-section');
-                const container = document.getElementById('incoming-orders-container');
-                if(!container) return;
-                
-                if(snap.empty) { 
-                    section.classList.add('hidden');
-                    container.innerHTML = '';
-                    return; 
-                }
-
-                // Show section header if we have items
-                section.classList.remove('hidden');
-                container.innerHTML = '';
-
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const contact = d.restaurantPhone ? `<i class="fa-solid fa-phone mr-1"></i> ${d.restaurantPhone}` : `<i class="fa-solid fa-store mr-1"></i> ${d.restaurantName}`;
-                    const address = d.restaurantAddress ? `<div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${d.restaurantAddress}</div>` : '';
-
-                    container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-blue-500 relative transform hover:-translate-y-1 transition duration-300">
-                            <div class="flex justify-between items-start mb-3">
-                                <h3 class="text-lg font-bold text-gray-800">${d.foodName} <span class="text-sm font-normal text-gray-500">(${d.servings} qty)</span></h3>
-                                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded animate-pulse">On Way</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
-                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Contact</p>
-                                <p class="text-sm font-bold text-gray-700">${contact}</p>
-                                ${address}
-                            </div>
-                            <div class="flex gap-3">
-                                <button onclick="confirmAction('receive', '${doc.id}')" class="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm shadow transition"><i class="fa-solid fa-check mr-1"></i> Mark Received</button>
-                                <button onclick="openReportModal('${doc.id}')" class="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-lg font-bold text-sm transition"><i class="fa-solid fa-triangle-exclamation"></i> Report</button>
-                            </div>
-                        </div>`;
-                });
-            });
-
             // 3. My Requests (Active Urgencies)
             db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(snap => {
-                const container = document.getElementById('my-requests-list');
+                // Main Tab List
+                const listContainer = document.getElementById('my-requests-list');
                 const statReq = document.getElementById('stat-requests');
-                if(statReq) statReq.innerText = snap.docs.filter(d => d.data().status === 'Pending').length;
-                if(!container) return;
-                container.innerHTML = '';
                 
-                if(snap.empty) { container.innerHTML = `<div class="text-center text-gray-400 py-4">No active requests.</div>`; return; }
-
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    let statusColor = d.status === 'Pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600';
-                    let deleteBtn = d.status === 'Pending' ? `<button onclick="confirmAction('delete_req', '${doc.id}')" class="text-gray-400 hover:text-red-500 transition p-2"><i class="fa-solid fa-trash"></i></button>` : '';
-
-                    container.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="font-bold text-gray-800">${d.itemNeeded}</h4>
-                                <p class="text-sm text-gray-500">Qty: ${d.quantity} &bull; ${d.note || ''}</p>
-                                <p class="text-xs text-gray-400 mt-1">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : 'Just now'}</p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${statusColor}">${d.status}</span>
-                                ${deleteBtn}
-                            </div>
-                        </div>`;
-                });
+                // Active count
+                if(statReq) statReq.innerText = snap.docs.filter(d => d.data().status === 'Pending').length;
+                
+                if(listContainer) {
+                    listContainer.innerHTML = '';
+                    const pendingDocs = snap.docs.filter(d => d.data().status === 'Pending');
+                    
+                    if(pendingDocs.length === 0) { 
+                        listContainer.innerHTML = `<div class="col-span-full text-center text-white py-10 font-medium bg-white/10 rounded-xl">No active requests found.</div>`; 
+                    } else {
+                        pendingDocs.forEach(doc => {
+                            const d = doc.data();
+                            listContainer.innerHTML += `
+                                <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-orange-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div>
+                                            <div>
+                                                <h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4>
+                                                <p class="text-xs text-orange-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p>
+                                            </div>
+                                        </div>
+                                        <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold">Active</span>
+                                    </div>
+                                    <div class="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <p class="italic">"${d.note || 'No additional notes'}"</p>
+                                        <p class="text-xs text-gray-400 mt-2 text-right">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : 'Just now'}</p>
+                                    </div>
+                                    <button onclick="confirmAction('delete_req', '${doc.id}')" class="w-full py-3 bg-red-50 text-red-500 font-bold rounded-xl hover:bg-red-100 border border-red-100 flex items-center justify-center gap-2 transition">
+                                        <i class="fa-solid fa-trash"></i> Delete Request
+                                    </button>
+                                </div>`;
+                        });
+                    }
+                }
             });
 
             // 4. History & Stats & Graph
             db.collection('donations').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc').onSnapshot(snap => {
                 const tbody = document.getElementById('history-table-body');
+                const recentList = document.getElementById('recent-list');
+                
                 let totalReceived = 0;
                 let historyCount = 0;
+                
                 if(tbody) tbody.innerHTML = '';
+                if(recentList) recentList.innerHTML = '';
 
                 snap.forEach(doc => {
                     const d = doc.data();
@@ -471,6 +495,7 @@
                             <p><i class="fa-solid fa-location-dot mr-1"></i>${d.restaurantAddress || 'N/A'}</p>
                         </div>`;
 
+                        // History Table
                         if(tbody) tbody.innerHTML += `
                             <tr class="hover:bg-gray-50 border-b border-gray-50">
                                 <td class="px-6 py-4 text-gray-500">${d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : '-'}</td>
@@ -478,12 +503,20 @@
                                 <td class="px-6 py-4 text-gray-600">${d.foodName} (${d.servings})</td>
                                 <td class="px-6 py-4">${statusBadge}</td>
                             </tr>`;
+                            
+                        // Recent Activity (Overview)
+                        if(historyCount <= 5 && recentList) {
+                             recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${d.foodName}</h4><p class="text-xs text-gray-500">${d.restaurantName} • ${d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : ''}</p></div></div>${statusBadge}</div>`;
+                        }
                     }
                 });
                 
+                if(recentList && historyCount === 0) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No recent activity.</p>";
+                if(tbody && historyCount === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
+
                 // Update Stats
-                document.getElementById('stat-received').innerText = totalReceived;
-                document.getElementById('history-count').innerText = historyCount;
+                const elReceived = document.getElementById('stat-received'); if(elReceived) elReceived.innerText = totalReceived;
+                const elCount = document.getElementById('history-count'); if(elCount) elCount.innerText = historyCount;
                 
                 // Update Graph
                 updateChart(totalReceived);
@@ -500,26 +533,30 @@
             const msg = document.getElementById('confirm-message');
             const btn = document.getElementById('confirm-yes-btn');
             const icon = document.getElementById('confirm-icon');
-
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('confirm-modal-content').classList.add('scale-100'); }, 10);
+            const iconContainer = document.getElementById('confirm-icon-container');
 
             if(type === 'claim') {
                 title.innerText = "Claim Donation?";
                 msg.innerText = "Are you sure you want to claim this food?";
-                btn.className = "flex-1 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600";
+                btn.className = "flex-1 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg";
                 icon.className = "fa-solid fa-utensils";
+                iconContainer.className = "w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
             } else if (type === 'receive') {
                 title.innerText = "Mark Received?";
-                msg.innerText = "Confirm that you have received the food.";
-                btn.className = "flex-1 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600";
-                icon.className = "fa-solid fa-check";
+                msg.innerText = "Confirm that you have received the food from " + (restName || "the restaurant") + ".";
+                btn.className = "flex-1 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 shadow-lg";
+                icon.className = "fa-solid fa-check-double";
+                iconContainer.className = "w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
             } else if (type === 'delete_req') {
                 title.innerText = "Delete Request?";
                 msg.innerText = "Remove this urgent request?";
-                btn.className = "flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600";
+                btn.className = "flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg";
                 icon.className = "fa-solid fa-trash";
+                iconContainer.className = "w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
             }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('confirm-modal-content').classList.add('scale-100'); }, 10);
         }
 
         function closeConfirmModal() {
@@ -625,7 +662,7 @@
                     datasets: [{
                         label: 'Meals',
                         data: [goal, total],
-                        backgroundColor: ['#F3F4F6', '#10B981'],
+                        backgroundColor: ['#E5E7EB', '#10B981'],
                         borderRadius: 8,
                         barThickness: 50
                     }]
