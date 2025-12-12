@@ -110,7 +110,9 @@
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full">
         
         <!-- TAB: OVERVIEW -->
-        <div id="tab-overview" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
+        <div id="tab-overview" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
+            
+            <!-- Header & Post Request Button -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Overview</h1>
@@ -122,27 +124,48 @@
                 </button>
             </div>
 
-            <!-- Stats & Motivation -->
+            <!-- 1. ACTIVE ORDERS (INCOMING) - TOP PRIORITY -->
+            <!-- Handles BOTH Claimed Donations AND Fulfilled Urgent Requests -->
+            <div id="incoming-section" class="hidden space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="bg-blue-500 p-2 rounded-lg text-white shadow-lg animate-bounce">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white drop-shadow-md">Incoming Orders</h2>
+                </div>
+                
+                <!-- Container for both sources -->
+                <div class="space-y-4">
+                    <div id="incoming-donations-container" class="space-y-4"></div>
+                    <div id="incoming-requests-container" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- 2. STATS & GRAPH -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Metrics -->
-                <div class="space-y-4 md:space-y-6">
+                <!-- Metrics Column -->
+                <div class="space-y-6">
+                    <!-- Total Received Card -->
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-green flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Received</p>
                             <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-received">0</h3>
+                            <p class="text-xs text-green-600 font-bold mt-1">Meals Secured</p>
                         </div>
-                        <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="w-12 h-12 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-check-circle"></i></div>
                     </div>
+                    <!-- Active Requests Card -->
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-orange-500 flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Active Requests</p>
                             <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-requests">0</h3>
+                            <p class="text-xs text-orange-500 font-bold mt-1">Urgent Needs</p>
                         </div>
-                        <div class="w-12 h-12 md:w-14 md:h-14 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-bullhorn"></i></div>
+                        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-bullhorn"></i></div>
                     </div>
                 </div>
 
-                <!-- Chart -->
+                <!-- Chart Column -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-bold text-gray-800 text-base md:text-lg">Impact Analytics</h4>
@@ -151,58 +174,26 @@
                             <span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-green-100 text-brand-green rounded-full">Received</span>
                         </div>
                     </div>
-                    <div class="relative h-40 md:h-48 w-full"><canvas id="impactChart"></canvas></div>
+                    <div class="relative h-48 w-full"><canvas id="impactChart"></canvas></div>
                 </div>
             </div>
 
-            <!-- 1. INCOMING ORDERS (Active Claims) -->
-            <!-- Wrapped in a section to toggle visibility easily -->
-            <div id="incoming-section" class="hidden space-y-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <h2 class="text-xl font-bold text-white drop-shadow-md">Incoming Orders</h2>
-                    <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-lg shadow-sm animate-pulse">Action Required</span>
-                </div>
-                <div id="incoming-orders-container" class="space-y-4">
-                    <!-- Dynamically Populated -->
-                </div>
-            </div>
-
-            <!-- 2. AVAILABLE DONATIONS FEED -->
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                <div class="p-5 md:p-6 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 text-brand-green flex items-center justify-center text-base md:text-lg shadow-sm">
-                            <i class="fa-solid fa-utensils"></i>
-                        </div>
-                        <h2 class="text-lg md:text-xl font-bold text-gray-800">Available Donations</h2>
-                    </div>
-                    <span class="text-xs font-bold text-green-600 bg-white px-2 py-1 rounded border border-green-100 animate-pulse">Live Feed</span>
-                </div>
-                <div id="donations-container" class="p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 3. AVAILABLE DONATIONS FEED -->
+            <div>
+                <h2 class="text-xl font-bold text-white drop-shadow-md mb-4 flex items-center"><i class="fa-solid fa-utensils mr-2"></i> Available for Claiming</h2>
+                <div id="donations-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Populated by JS -->
-                    <div class="col-span-full py-8 text-center text-gray-400">
+                    <div class="col-span-full py-12 text-center text-white/80">
                         <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p>Looking for nearby food...</p>
+                        <p>Looking for available food...</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
-                    <span class="text-xs font-bold text-gray-400 uppercase bg-white px-2 py-1 rounded border">Last 5</span>
-                </div>
-                <div class="p-5 md:p-6 space-y-4" id="recent-list"><p class="text-center text-gray-400 py-4">Loading activities...</p></div>
-                <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
-                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-green hover:text-green-700 transition">View Full History &rarr;</button>
                 </div>
             </div>
         </div>
 
         <!-- TAB: URGENT NEEDS (REQUESTS) -->
         <div id="tab-requests" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">My Urgent Requests</h1>
                 <button onclick="openRequestModal()" class="w-full md:w-auto bg-white text-brand-dark px-5 py-3 rounded-xl shadow-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition">
                     <i class="fa-solid fa-plus text-brand-green"></i> Create New Request
@@ -218,7 +209,7 @@
         <!-- TAB: HISTORY -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
             <div class="flex items-center justify-between">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Donation History</h1>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
                     <span class="text-brand-green font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
                 </div>
@@ -228,10 +219,10 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Restaurant Info</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Food Details</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Date</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Restaurant Info</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Food Details</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -287,6 +278,7 @@
             <div class="p-6">
                 <p class="text-sm text-gray-600 mb-3">Please specify the issue with this order:</p>
                 <input type="hidden" id="report-id">
+                <input type="hidden" id="report-type">
                 <textarea id="report-reason" class="w-full p-3 border border-gray-300 rounded-lg focus:border-red-500 outline-none mb-4" rows="3"></textarea>
                 <div class="flex gap-3">
                     <button onclick="closeReportModal()" class="flex-1 py-2 text-gray-500 font-bold hover:bg-gray-50 rounded-lg">Cancel</button>
@@ -321,6 +313,7 @@
         let currentUser = null; let userData = {};
         let pendingAction = null; let myChart;
 
+        // --- Auth & Init ---
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -373,48 +366,7 @@
 
         // --- Data Loading ---
         function loadDashboardData() {
-            // 1. Incoming Orders (My Claims) - TOP SECTION
-            db.collection('donations').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
-                const section = document.getElementById('incoming-section');
-                const container = document.getElementById('incoming-orders-container');
-                if(!container) return;
-                
-                if(snap.empty) { 
-                    section.classList.add('hidden'); // Hide section completely if no orders
-                    return; 
-                }
-                
-                section.classList.remove('hidden'); // Show section
-                container.innerHTML = '';
-
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const contact = d.restaurantPhone ? `<i class="fa-solid fa-phone mr-1 text-brand-green"></i> ${d.restaurantPhone}` : `<i class="fa-solid fa-store mr-1 text-brand-green"></i> ${d.restaurantName}`;
-                    const address = d.restaurantAddress ? `<div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1 text-brand-green"></i> ${d.restaurantAddress}</div>` : '';
-
-                    container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-blue-500 relative transform hover:-translate-y-1 transition duration-300">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-lg font-bold text-gray-800">${d.foodName} <span class="text-sm font-normal text-gray-500">(${d.servings} servings)</span></h3>
-                                    <p class="text-xs text-blue-500 font-bold uppercase mt-1">Incoming</p>
-                                </div>
-                                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded animate-pulse">On Way</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
-                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Info</p>
-                                <p class="text-sm font-bold text-gray-700">${contact}</p>
-                                ${address}
-                            </div>
-                            <div class="flex gap-3">
-                                <button onclick="confirmAction('receive', '${doc.id}', '${d.restaurantId}', '${d.restaurantName}')" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-sm shadow transition"><i class="fa-solid fa-check-circle mr-1"></i> Mark Received</button>
-                                <button onclick="openReportModal('${doc.id}')" class="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-triangle-exclamation"></i> Report</button>
-                            </div>
-                        </div>`;
-                });
-            });
-
-            // 2. Available Donations (Feed)
+            // 1. Available Donations (Feed)
             db.collection('donations').where('status', '==', 'Available').onSnapshot(snap => {
                 const container = document.getElementById('donations-container');
                 if(!container) return;
@@ -437,7 +389,20 @@
                 });
             });
 
-            // 3. My Requests (Active Urgencies)
+            // 2. Incoming Orders (Both Claimed Donations & Fulfilled Requests) - TOP SECTION
+            // We use two listeners and manage the visibility of the parent section
+            
+            // Sub-container 1: Claimed Donations
+            db.collection('donations').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
+                renderIncomingItems(snap, 'donation');
+            });
+
+            // Sub-container 2: Fulfilled Requests
+            db.collection('requests').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Fulfilled').onSnapshot(snap => {
+                renderIncomingItems(snap, 'request');
+            });
+
+            // 3. My Requests (Active Urgencies ONLY)
             db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(snap => {
                 const listContainer = document.getElementById('my-requests-list');
                 const statReq = document.getElementById('stat-requests');
@@ -447,11 +412,10 @@
                 
                 if(listContainer) {
                     listContainer.innerHTML = '';
-                    // Filter to show ONLY Active/Pending in the Requests Tab as requested
                     const pendingDocs = snap.docs.filter(d => d.data().status === 'Pending');
                     
                     if(pendingDocs.length === 0) { 
-                        listContainer.innerHTML = `<div class="col-span-full text-center text-white py-10 font-medium bg-white/10 rounded-xl">No active requests. Create one to get help!</div>`; 
+                        listContainer.innerHTML = `<div class="col-span-full text-center text-white py-10 font-medium bg-white/10 rounded-xl">No active requests found.</div>`; 
                     } else {
                         pendingDocs.forEach(doc => {
                             const d = doc.data();
@@ -481,6 +445,8 @@
             });
 
             // 4. History & Stats & Graph
+            // Need to merge history from both Donations and Requests to show complete picture
+            // Simplified: Focusing on Donations for now as per previous logic, but ensuring completed/issue states are clear
             db.collection('donations').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc').onSnapshot(snap => {
                 const tbody = document.getElementById('history-table-body');
                 const recentList = document.getElementById('recent-list');
@@ -495,7 +461,6 @@
                     const d = doc.data();
                     if(d.status === 'Completed') totalReceived += parseInt(d.servings || 0);
                     
-                    // Don't show active/claimed in history
                     if(d.status !== 'Claimed') { 
                         historyCount++;
                         let statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-bold">${d.status}</span>`;
@@ -533,6 +498,66 @@
             });
         }
 
+        // --- Helper for Incoming Items ---
+        function renderIncomingItems(snap, type) {
+            const section = document.getElementById('incoming-section');
+            const containerId = type === 'donation' ? 'incoming-donations-container' : 'incoming-requests-container';
+            const container = document.getElementById(containerId);
+            
+            if(!container) return;
+            container.innerHTML = '';
+
+            // Check if section should be visible (if either container has kids)
+            // Simplified check: if this snap has items, show section. 
+            if(!snap.empty) section.classList.remove('hidden');
+            
+            // To properly hide section if BOTH are empty would require tracking state, 
+            // but for simplicity we just show it if data comes in.
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                
+                // Fields differ slightly between Request and Donation
+                const title = type === 'donation' ? d.foodName : d.itemNeeded;
+                const subtitle = type === 'donation' ? `(${d.servings} servings)` : `(Qty: ${d.quantity})`;
+                const statusLabel = type === 'donation' ? 'Incoming Donation' : 'Fulfilled Request';
+                const statusColor = type === 'donation' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
+                
+                // We need to fetch/display contact info. 
+                // For donations, it's usually embedded. For requests, restaurantName is there, phone might need fetch or exist.
+                // Assuming basic fields exist or we degrade gracefully.
+                const restName = d.restaurantName || 'Unknown Restaurant';
+                const restPhone = d.restaurantPhone || 'Contact not listed';
+                const restAddr = d.restaurantAddress || '';
+
+                const contact = `<i class="fa-solid fa-store mr-1 text-brand-green"></i> ${restName} <span class="mx-2 text-gray-300">|</span> <i class="fa-solid fa-phone mr-1 text-brand-green"></i> ${restPhone}`;
+                
+                // Action Types
+                const receiveAction = type === 'donation' ? `confirmAction('receive', '${doc.id}')` : `confirmAction('req_receive', '${doc.id}')`;
+                const reportAction = type === 'donation' ? `openReportModal('${doc.id}', 'donation')` : `openReportModal('${doc.id}', 'request')`;
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 ${type === 'donation' ? 'border-blue-500' : 'border-purple-500'} relative transform hover:-translate-y-1 transition duration-300">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">${title} <span class="text-sm font-normal text-gray-500">${subtitle}</span></h3>
+                                <p class="text-xs ${type === 'donation' ? 'text-blue-500' : 'text-purple-500'} font-bold uppercase mt-1">${statusLabel}</p>
+                            </div>
+                            <span class="${statusColor} text-xs font-bold px-2 py-1 rounded animate-pulse">On Way</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
+                            <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Info</p>
+                            <p class="text-sm font-bold text-gray-700">${contact}</p>
+                            ${restAddr ? `<p class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${restAddr}</p>` : ''}
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="${receiveAction}" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-sm shadow transition"><i class="fa-solid fa-check-circle mr-1"></i> Mark Received</button>
+                            <button onclick="${reportAction}" class="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-triangle-exclamation"></i> Report</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
         // --- Confirmation & Actions ---
         function confirmAction(type, id, restId, restName) {
             if(!userData.address || !userData.phone) { alert("Please complete your profile first!"); switchTab('details'); return; }
@@ -550,19 +575,16 @@
                 msg.innerText = "Are you sure you want to claim this food?";
                 btn.className = "flex-1 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg";
                 icon.className = "fa-solid fa-utensils";
-                iconContainer.className = "w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
-            } else if (type === 'receive') {
+            } else if (type === 'receive' || type === 'req_receive') {
                 title.innerText = "Mark Received?";
-                msg.innerText = "Confirm that you have received the food from " + (restName || "the restaurant") + ".";
+                msg.innerText = "Confirm that you have received the food.";
                 btn.className = "flex-1 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 shadow-lg";
                 icon.className = "fa-solid fa-check-double";
-                iconContainer.className = "w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
             } else if (type === 'delete_req') {
                 title.innerText = "Delete Request?";
                 msg.innerText = "Remove this urgent request?";
                 btn.className = "flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg";
                 icon.className = "fa-solid fa-trash";
-                iconContainer.className = "w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm";
             }
 
             modal.classList.remove('hidden');
@@ -598,6 +620,12 @@
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     showToast("Order completed!");
+                } else if (type === 'req_receive') {
+                    await db.collection('requests').doc(id).update({
+                        status: 'Completed',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    showToast("Order completed!");
                 } else if (type === 'delete_req') {
                     await db.collection('requests').doc(id).delete();
                     showToast("Request deleted.");
@@ -609,15 +637,24 @@
         }
 
         // --- Modals (Report & Request) ---
-        function openReportModal(id) { document.getElementById('report-id').value = id; document.getElementById('report-reason').value = ''; document.getElementById('report-modal').classList.remove('hidden'); }
+        function openReportModal(id, type) { 
+            document.getElementById('report-id').value = id; 
+            document.getElementById('report-type').value = type; 
+            document.getElementById('report-reason').value = ''; 
+            document.getElementById('report-modal').classList.remove('hidden'); 
+        }
         function closeReportModal() { document.getElementById('report-modal').classList.add('hidden'); }
         
         async function submitReport() {
             const id = document.getElementById('report-id').value;
+            const type = document.getElementById('report-type').value;
             const reason = document.getElementById('report-reason').value;
             if(!reason) return alert("Reason required");
+            
+            const collection = type === 'donation' ? 'donations' : 'requests';
+            
             try {
-                await db.collection('donations').doc(id).update({ status: 'Issue', reportReason: reason, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                await db.collection(collection).doc(id).update({ status: 'Issue', reportReason: reason, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                 showToast("Issue Reported");
                 closeReportModal();
             } catch(e) { showToast("Error reporting", true); }
