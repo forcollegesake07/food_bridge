@@ -437,7 +437,7 @@
                 tbody.innerHTML = '';
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const isDisabled = data.disabled === true;
+                    const isDisabled = data.isDisable === true;
                     const statusBadge = isDisabled 
                         ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` 
                         : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
@@ -448,7 +448,6 @@
                     const actionBtnText = isDisabled ? "Enable" : "Disable";
                     const actionIcon = isDisabled ? "fa-lock-open" : "fa-ban";
 
-                    // Use openUserModal to handle details and disable/enable
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 font-bold text-gray-800">${data.name || 'Unknown'}</td>
@@ -479,6 +478,7 @@
                     if(data.status === 'Completed') statusColor = 'text-green-600 bg-green-50 border border-green-200';
                     if(data.status === 'Issue') statusColor = 'text-red-600 bg-red-50 border border-red-200';
                     if(data.status === 'Claimed') statusColor = 'text-blue-600 bg-blue-50 border border-blue-200';
+                    if(data.status === 'Resolved') statusColor = 'text-teal-600 bg-teal-50 border border-teal-200';
 
                     const receiverId = data.claimedBy;
                     const receiverName = data.orphanageName || 'Pending...';
@@ -525,7 +525,6 @@
                     }
                 });
 
-                // Sort in memory
                 pending.sort((a, b) => (b.reportedAt?.seconds || 0) - (a.reportedAt?.seconds || 0));
                 resolved.sort((a, b) => (b.resolvedAt?.seconds || 0) - (a.resolvedAt?.seconds || 0));
 
@@ -641,7 +640,7 @@
                 const doc = await db.collection('users').doc(userId).get();
                 if(doc.exists) {
                     const data = doc.data();
-                    const isDisabled = data.disabled === true;
+                    const isDisabled = data.isDisable === true;
                     document.getElementById('modal-user-name').innerText = data.name || 'Unknown User';
                     document.getElementById('modal-user-email').innerText = data.email || 'No Email'; 
                     document.getElementById('modal-user-phone').innerText = data.phone || 'N/A';
@@ -667,7 +666,7 @@
         }
 
         async function toggleUserStatus(userId, disable) {
-            try { await db.collection('users').doc(userId).update({ disabled: disable }); openUserModal(userId); } catch(e) { alert("Error updating status: " + e.message); }
+            try { await db.collection('users').doc(userId).update({ isDisable: disable }); openUserModal(userId); } catch(e) { alert("Error updating status: " + e.message); }
         }
 
         function closeUserModal() {
