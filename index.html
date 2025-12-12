@@ -7,6 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -44,7 +50,6 @@
             <div class="flex justify-between h-20 items-center">
                 <button onclick="showPage('home')" class="flex items-center cursor-pointer group focus:outline-none">
                     <div class="bg-brand-orange/10 p-2 rounded-lg mr-2 group-hover:bg-brand-orange/20 transition">
-                        <!-- ICON HERE -->
                         <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
                     </div>
                     <span class="font-bold text-xl text-brand-dark tracking-wide">Food<span class="text-brand-green">Bridge</span></span>
@@ -105,6 +110,50 @@
                 </div>
             </section>
             
+            <!-- REAL-TIME IMPACT STATISTICS -->
+            <section class="py-16 bg-white relative z-10 -mt-8 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-10">
+                        <h2 class="text-2xl font-bold text-brand-dark">Our Live Impact</h2>
+                        <div class="w-12 h-1 bg-brand-green mx-auto rounded mt-2"></div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <!-- Stat 1 -->
+                        <div class="text-center p-4 group">
+                            <div class="w-16 h-16 mx-auto bg-orange-100 text-brand-orange rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid fa-bowl-rice"></i>
+                            </div>
+                            <h3 class="text-4xl font-extrabold text-brand-dark mb-1" id="count-meals-today">0</h3>
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Meals Today</p>
+                        </div>
+                        <!-- Stat 2 -->
+                        <div class="text-center p-4 group">
+                            <div class="w-16 h-16 mx-auto bg-green-100 text-brand-green rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid fa-earth-americas"></i>
+                            </div>
+                            <h3 class="text-4xl font-extrabold text-brand-dark mb-1" id="count-meals-total">0</h3>
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Lifetime Meals</p>
+                        </div>
+                        <!-- Stat 3 -->
+                        <div class="text-center p-4 group">
+                            <div class="w-16 h-16 mx-auto bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                            <h3 class="text-4xl font-extrabold text-brand-dark mb-1" id="count-restaurants">0</h3>
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Restaurants</p>
+                        </div>
+                        <!-- Stat 4 -->
+                        <div class="text-center p-4 group">
+                            <div class="w-16 h-16 mx-auto bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid fa-hands-holding-child"></i>
+                            </div>
+                            <h3 class="text-4xl font-extrabold text-brand-dark mb-1" id="count-orphanages">0</h3>
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Orphanages</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="py-24 bg-gray-50 border-t border-gray-200">
                 <div class="max-w-7xl mx-auto px-4">
                     <div class="text-center mb-16">
@@ -201,6 +250,58 @@
     </footer>
 
     <script>
+        // --- FIREBASE INITIALIZATION & LOGIC ---
+        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Fetch Users (Restaurants & Orphanages)
+        db.collection('users').where('role', '==', 'restaurant').onSnapshot(snap => {
+            animateValue("count-restaurants", 0, snap.size, 1000);
+        });
+        db.collection('users').where('role', '==', 'orphanage').onSnapshot(snap => {
+            animateValue("count-orphanages", 0, snap.size, 1000);
+        });
+
+        // 2. Fetch Donations (Total & Today)
+        db.collection('donations').onSnapshot(snap => {
+            let total = 0;
+            let today = 0;
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            snap.forEach(doc => {
+                const data = doc.data();
+                const servings = parseInt(data.servings || 0);
+                total += servings;
+                
+                // Firestore timestamp check
+                if (data.createdAt && data.createdAt.toDate() >= startOfDay) {
+                    today += servings;
+                }
+            });
+            
+            animateValue("count-meals-total", 0, total, 1500);
+            animateValue("count-meals-today", 0, today, 1000);
+        });
+
+        // Simple counter animation
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if(!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- PAGE NAVIGATION LOGIC ---
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             const icon = document.getElementById('menu-icon');
