@@ -57,7 +57,7 @@
             </div>
             <div>
                 <span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-brand-green">Bridge</span></span>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Restaurant</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
             </div>
         </div>
 
@@ -72,7 +72,7 @@
                 <i class="fa-solid fa-clock-rotate-left w-6 text-lg"></i> History
             </button>
             <button onclick="switchTab('details')" id="btn-details" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
-                <i class="fa-solid fa-store w-6 text-lg"></i> Profile
+                <i class="fa-solid fa-store w-6 text-lg"></i> Details
             </button>
         </nav>
 
@@ -104,6 +104,11 @@
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span class="font-bold text-sm">Check Urgent Requests</span>
                 </button>
+            </div>
+
+            <!-- Scheduled Pickups Block (New) -->
+            <div id="scheduled-pickups-container" class="space-y-4">
+                <!-- Dynamically Populated -->
             </div>
 
             <!-- Post Donation Form -->
@@ -299,6 +304,7 @@
                     document.getElementById('tab-overview').classList.remove('hidden');
                     loadData();
                     loadUrgentRequests();
+                    loadActivePickups(); // NEW LOADER
                 }
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
@@ -328,6 +334,38 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4><p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'Address not listed'}</p><p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'Phone not listed'}</p></div><button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"><span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i></button></div>`;
+                });
+            });
+        }
+
+        // --- ACTIVE PICKUPS ---
+        function loadActivePickups() {
+            db.collection('donations').where('restaurantId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
+                const container = document.getElementById('scheduled-pickups-container');
+                if(!container) return;
+                container.innerHTML = '';
+                
+                if(snap.empty) { container.innerHTML = `<div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center text-orange-600 text-sm">No scheduled pickups currently.</div>`; return; }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    container.innerHTML += `
+                        <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> Pickup Scheduled</h3>
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
+                                <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
+                                <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p>
+                                    <p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}</p>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center">
+                                Waiting for orphanage confirmation of receipt...
+                            </div>
+                        </div>
+                    `;
                 });
             });
         }
@@ -466,15 +504,24 @@
                   snapshot.forEach(doc => {
                       const data = doc.data(); docCount++; totalMeals += parseInt(data.servings || 0);
                       const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
-                      const isClaimed = data.status === 'Claimed';
-                      const statusColor = isClaimed ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100';
-                      const statusIcon = isClaimed ? 'fa-check' : 'fa-clock';
+                      
+                      // Status Handling
+                      let statusBadge = `<span class="text-green-600 bg-green-50 px-2 py-1 rounded-lg text-xs font-bold border">${data.status}</span>`;
+                      if(data.status === 'Completed') statusBadge = `<span class="text-white bg-green-500 px-2 py-1 rounded-lg text-xs font-bold">Completed</span>`;
+                      if(data.status === 'Issue') statusBadge = `<span class="text-white bg-red-500 px-2 py-1 rounded-lg text-xs font-bold">Issue Reported</span>`;
+
                       const recipient = data.orphanageName || '-';
                       let contactInfo = '-';
-                      if(isClaimed) { contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p><p><i class="fa-solid fa-envelope text-brand-orange mr-1"></i> ${data.orphanageEmail || 'N/A'}</p></div>`; }
+                      if(data.status === 'Claimed' || data.status === 'Completed') { 
+                          contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p></div>`; 
+                      }
 
-                      if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div><span class="${statusColor} px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1"><i class="fa-solid ${statusIcon}"></i> ${data.status}</span></div>`; }
-                      if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-6 py-4 text-gray-500 text-sm">${date}</td><td class="px-6 py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-6 py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-6 py-4"><span class="${statusColor} px-2 py-1 rounded-lg text-xs font-bold border">${data.status}</span></td><td class="px-6 py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-6 py-4">${contactInfo}</td></tr>`; }
+                      if (docCount <= 5 && recentList) { 
+                          recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div>${statusBadge}</div>`; 
+                      }
+                      if (historyBody) { 
+                          historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-6 py-4 text-gray-500 text-sm">${date}</td><td class="px-6 py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-6 py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-6 py-4">${statusBadge}</td><td class="px-6 py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-6 py-4">${contactInfo}</td></tr>`; 
+                      }
                   });
                   const elMeals = document.getElementById('stat-meals'); if (elMeals) elMeals.innerText = totalMeals;
                   const elWaste = document.getElementById('stat-waste'); if (elWaste) elWaste.innerText = (totalMeals * 0.5).toFixed(1);
