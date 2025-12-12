@@ -15,9 +15,7 @@
                     colors: {
                         brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937', light: '#FFF7ED' }
                     },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    },
+                    animation: { 'fade-in': 'fadeIn 0.5s ease-out forwards' },
                     keyframes: {
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
@@ -30,19 +28,11 @@
     </script>
     <style>
         .fixed-bg-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
         }
         body { overflow-x: hidden; }
-        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
@@ -54,6 +44,7 @@
             <div class="flex justify-between h-20 items-center">
                 <button onclick="showPage('home')" class="flex items-center cursor-pointer group focus:outline-none">
                     <div class="bg-brand-orange/10 p-2 rounded-lg mr-2 group-hover:bg-brand-orange/20 transition">
+                        <!-- ICON HERE -->
                         <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
                     </div>
                     <span class="font-bold text-xl text-brand-dark tracking-wide">Food<span class="text-brand-green">Bridge</span></span>
@@ -63,8 +54,8 @@
                     <button onclick="showPage('about')" id="nav-about" class="text-gray-600 hover:text-brand-orange font-medium text-sm uppercase tracking-wide transition pb-1 border-b-2 border-transparent">About Us</button>
                 </div>
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="https://foodbridge.qzz.io/login.html" class="text-brand-dark hover:text-brand-orange font-bold transition">Log In</a>
-                    <a href="https://foodbridge.qzz.io/login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg shadow-orange-200 transform hover:-translate-y-0.5">Sign Up</a>
+                    <a href="login.html" class="text-brand-dark hover:text-brand-orange font-bold transition">Log In</a>
+                    <a href="login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg shadow-orange-200 transform hover:-translate-y-0.5">Sign Up</a>
                 </div>
                 <div class="md:hidden">
                     <button onclick="toggleMobileMenu()" class="text-gray-600 text-2xl p-2 focus:outline-none">
@@ -78,8 +69,8 @@
                 <button onclick="showPage('home'); toggleMobileMenu()" class="text-left font-bold text-brand-dark hover:text-brand-orange py-2 border-b border-gray-50">Home</button>
                 <button onclick="showPage('about'); toggleMobileMenu()" class="text-left font-medium text-gray-600 hover:text-brand-orange py-2 border-b border-gray-50">About Us</button>
                 <div class="flex flex-col gap-3 pt-2">
-                    <a href="https://foodbridge.qzz.io/login.html" class="text-center w-full border border-brand-dark text-brand-dark py-3 rounded-xl font-bold">Log In</a>
-                    <a href="https://foodbridge.qzz.io/login.html?mode=signup" class="text-center w-full bg-brand-orange text-white py-3 rounded-xl font-bold shadow-md">Sign Up</a>
+                    <a href="login.html" class="text-center w-full border border-brand-dark text-brand-dark py-3 rounded-xl font-bold">Log In</a>
+                    <a href="login.html?mode=signup" class="text-center w-full bg-brand-orange text-white py-3 rounded-xl font-bold shadow-md">Sign Up</a>
                 </div>
             </div>
         </div>
@@ -104,7 +95,7 @@
                         <button onclick="showPage('about')" class="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold py-4 px-10 rounded-full transition transform hover:scale-105 text-lg min-w-[200px]">
                             About Us
                         </button>
-                        <a href="https://foodbridge.qzz.io/login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white font-bold py-4 px-10 rounded-full shadow-xl shadow-orange-900/20 transition transform hover:scale-105 text-lg min-w-[200px]">
+                        <a href="login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white font-bold py-4 px-10 rounded-full shadow-xl shadow-orange-900/20 transition transform hover:scale-105 text-lg min-w-[200px]">
                             Join the Mission <i class="fa-solid fa-arrow-right ml-2"></i>
                         </a>
                     </div>
@@ -180,7 +171,7 @@
                                 <h3 class="text-2xl font-bold text-brand-dark mb-4">Our Solution</h3>
                                 <p class="text-lg text-gray-600 leading-relaxed"><strong>FoodBridge</strong> creates a digital highway between these two groups. We empower restaurants to turn potential waste into immediate aid, ensuring that surplus food reaches the plates of those who need it most, instantly and efficiently.</p>
                             </div>
-                            <div class="pt-4"><a href="https://foodbridge.qzz.io/login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline">Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i></a></div>
+                            <div class="pt-4"><a href="login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline">Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i></a></div>
                         </div>
                     </div>
                 </div>
@@ -193,6 +184,7 @@
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="mb-6 md:mb-0 text-center md:text-left">
                     <div class="flex items-center justify-center md:justify-start mb-2">
+                        <!-- ICON HERE -->
                         <i class="fa-solid fa-hand-holding-heart text-brand-orange text-xl mr-2"></i>
                         <span class="font-bold text-2xl">FoodBridge</span>
                     </div>
