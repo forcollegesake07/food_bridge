@@ -437,7 +437,7 @@
                 tbody.innerHTML = '';
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const isDisabled = data.isDisable === true;
+                    const isDisabled = !!data.isDisable;
                     const statusBadge = isDisabled 
                         ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` 
                         : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
@@ -640,7 +640,7 @@
                 const doc = await db.collection('users').doc(userId).get();
                 if(doc.exists) {
                     const data = doc.data();
-                    const isDisabled = data.isDisable === true;
+                    const isDisabled = !!data.isDisable; // Robust check
                     document.getElementById('modal-user-name').innerText = data.name || 'Unknown User';
                     document.getElementById('modal-user-email').innerText = data.email || 'No Email'; 
                     document.getElementById('modal-user-phone').innerText = data.phone || 'N/A';
@@ -655,18 +655,34 @@
                     if (isDisabled) {
                         btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable Account';
                         btn.className = 'w-full py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600';
-                        btn.onclick = () => toggleUserStatus(userId, false);
+                        btn.onclick = function() { toggleUserStatus(userId, false); };
                     } else {
                         btn.innerHTML = '<i class="fa-solid fa-ban"></i> Disable Account';
                         btn.className = 'w-full py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600';
-                        btn.onclick = () => toggleUserStatus(userId, true);
+                        btn.onclick = function() { toggleUserStatus(userId, true); };
                     }
                 } else { document.getElementById('modal-user-name').innerText = 'User not found'; }
             } catch(e) { console.error(e); alert("Error fetching user details"); }
         }
 
         async function toggleUserStatus(userId, disable) {
-            try { await db.collection('users').doc(userId).update({ isDisable: disable }); openUserModal(userId); } catch(e) { alert("Error updating status: " + e.message); }
+            const btn = document.getElementById('btn-disable-user');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...';
+
+            try {
+                await db.collection('users').doc(userId).update({ 
+                    isDisable: disable 
+                });
+                
+                await openUserModal(userId);
+            } catch(e) {
+                console.error("Firebase Error:", e);
+                alert("Error updating status: " + e.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         function closeUserModal() {
