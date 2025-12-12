@@ -39,7 +39,6 @@
     <style>
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            /* Softer background for Orphanage View */
             background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
@@ -125,7 +124,6 @@
             </div>
 
             <!-- 1. ACTIVE ORDERS (INCOMING) - TOP PRIORITY -->
-            <!-- Handles BOTH Claimed Donations AND Fulfilled Urgent Requests -->
             <div id="incoming-section" class="hidden space-y-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="bg-blue-500 p-2 rounded-lg text-white shadow-lg animate-bounce">
@@ -220,9 +218,11 @@
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 font-bold tracking-wider">Date</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Restaurant Info</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Food Details</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Food Item</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Quantity</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Donor</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Contact Info</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -445,75 +445,141 @@
                 }
             });
 
-            // 4. History & Stats & Graph
-            db.collection('donations').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc').onSnapshot(async snap => {
+            // 4. History & Stats & Graph - MERGED & FIXED
+            const historyDonations = db.collection('donations').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc');
+            const historyRequests = db.collection('requests').where('orphanageId', '==', currentUser.uid).orderBy('updatedAt', 'desc');
+
+            // Simplified: Just use Donations collection for main history as per standard flow, but ensure it captures everything.
+            // If requests are fulfilled, they usually update status in Requests collection. 
+            // For a unified history, we will fetch both and merge in memory.
+            
+            // However, real-time merging of two queries is complex in vanilla JS without RxJS.
+            // We'll stick to a robust implementation using `donations` primarily, and append `requests` history if feasible, 
+            // OR simpler: just fetch both and re-render.
+            
+            // Let's implement a unified render function that is called whenever either snapshot updates.
+            let allHistoryItems = [];
+
+            function updateUnifiedHistory() {
+                // Sort by date desc
+                allHistoryItems.sort((a, b) => b.dateObj - a.dateObj);
+                
                 const tbody = document.getElementById('history-table-body');
-                const recentList = document.getElementById('recent-list');
+                if(!tbody) return;
+                tbody.innerHTML = '';
                 
                 let totalReceived = 0;
                 let historyCount = 0;
-                
-                if(tbody) tbody.innerHTML = '';
-                if(recentList) recentList.innerHTML = '';
 
-                // Process docs asynchronously to fetch contacts
-                const historyItems = await Promise.all(snap.docs.map(async doc => {
-                    const d = doc.data();
-                    if(d.status === 'Completed') totalReceived += parseInt(d.servings || 0);
-                    
-                    // Don't show active/claimed in history
-                    if(d.status !== 'Claimed') { 
+                allHistoryItems.forEach(item => {
+                    if (item.type === 'donation' && item.data.status === 'Completed') totalReceived += parseInt(item.data.servings || 0);
+                    if (item.type === 'request' && item.data.status === 'Completed') totalReceived += parseInt(item.data.quantity || 0);
+
+                    // Don't show active items in history
+                    if(item.data.status !== 'Claimed' && item.data.status !== 'Fulfilled' && item.data.status !== 'Pending') {
                         historyCount++;
-                        let statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-bold">${d.status}</span>`;
-                        if(d.status === 'Completed') statusBadge = `<span class="bg-green-100 text-green-600 px-2 py-1 rounded-lg text-xs font-bold">Completed</span>`;
-                        if(d.status === 'Issue') statusBadge = `<span class="bg-red-100 text-red-600 px-2 py-1 rounded-lg text-xs font-bold">Issue</span>`;
-
-                        // Fetch contact if missing
-                        let restPhone = d.restaurantPhone;
-                        let restAddr = d.restaurantAddress;
                         
-                        if(!restPhone && d.restaurantId) {
-                            try {
-                                const uDoc = await db.collection('users').doc(d.restaurantId).get();
-                                if(uDoc.exists) {
-                                    restPhone = uDoc.data().phone;
-                                    restAddr = uDoc.data().address;
-                                }
-                            } catch(e) {}
-                        }
+                        let statusColor = 'bg-gray-100 text-gray-600';
+                        if (item.data.status === 'Completed') statusColor = 'bg-green-100 text-green-600';
+                        if (item.data.status === 'Issue') statusColor = 'bg-red-100 text-red-600';
 
-                        const contact = `<div class="text-xs text-gray-500">
-                            <p class="font-bold text-gray-700">${d.restaurantName || 'Unknown'}</p>
-                            <p><i class="fa-solid fa-phone mr-1 text-brand-green"></i>${restPhone || 'N/A'}</p>
-                            <p><i class="fa-solid fa-location-dot mr-1 text-brand-green"></i>${restAddr || 'N/A'}</p>
-                        </div>`;
+                        const contact = `
+                            <div class="text-sm">
+                                <p class="font-bold text-gray-800">${item.restaurantName}</p>
+                                <p class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i> ${item.restaurantPhone}</p>
+                                <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> ${item.restaurantAddress}</p>
+                            </div>
+                        `;
 
-                        return {
-                            html: `<tr class="hover:bg-gray-50 border-b border-gray-50">
-                                <td class="px-6 py-4 text-gray-500">${d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : '-'}</td>
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                <td class="px-6 py-4 text-gray-500 text-sm">${item.dateString}</td>
+                                <td class="px-6 py-4 font-medium text-gray-800">${item.foodName} <span class="text-xs text-gray-400 block">${item.subtext}</span></td>
+                                <td class="px-6 py-4 text-gray-600 text-sm font-bold">${item.quantity}</td>
+                                <td class="px-6 py-4"><span class="${statusColor} px-2 py-1 rounded-lg text-xs font-bold">${item.data.status}</span></td>
+                                <td class="px-6 py-4 text-gray-600 text-sm">${item.restaurantName}</td>
                                 <td class="px-6 py-4">${contact}</td>
-                                <td class="px-6 py-4 text-gray-600">${d.foodName} (${d.servings})</td>
-                                <td class="px-6 py-4">${statusBadge}</td>
-                            </tr>`,
-                            recentHtml: `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${d.foodName}</h4><p class="text-xs text-gray-500">${d.restaurantName} • ${d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : ''}</p></div></div>${statusBadge}</div>`
-                        };
+                            </tr>
+                        `;
                     }
-                    return null;
-                }));
+                });
 
-                const validItems = historyItems.filter(i => i !== null);
+                if(historyCount === 0) tbody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
                 
-                if(tbody) tbody.innerHTML = validItems.map(i => i.html).join('');
-                if(recentList) recentList.innerHTML = validItems.slice(0, 5).map(i => i.recentHtml).join('');
-                
-                if(validItems.length === 0) {
-                    if(recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No recent activity.</p>";
-                    if(tbody) tbody.innerHTML = "<tr><td colspan='4' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
-                }
-
                 const elReceived = document.getElementById('stat-received'); if(elReceived) elReceived.innerText = totalReceived;
                 const elCount = document.getElementById('history-count'); if(elCount) elCount.innerText = historyCount;
                 updateChart(totalReceived);
+            }
+
+            // Listener 1: Donations
+            db.collection('donations').where('orphanageId', '==', currentUser.uid).onSnapshot(async snap => {
+                // We need to fetch user details for each to get contact info if not present
+                const newItems = await Promise.all(snap.docs.map(async doc => {
+                    const d = doc.data();
+                    let rName = d.restaurantName || 'Unknown';
+                    let rPhone = d.restaurantPhone || 'N/A';
+                    let rAddr = d.restaurantAddress || 'N/A';
+
+                    if(!d.restaurantPhone && d.restaurantId) {
+                        try {
+                            const u = await db.collection('users').doc(d.restaurantId).get();
+                            if(u.exists) { rName = u.data().name; rPhone = u.data().phone; rAddr = u.data().address; }
+                        } catch(e){}
+                    }
+
+                    return {
+                        id: doc.id,
+                        type: 'donation',
+                        data: d,
+                        dateObj: d.updatedAt ? d.updatedAt.toDate() : new Date(),
+                        dateString: d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : '-',
+                        foodName: d.foodName,
+                        subtext: 'Donation',
+                        quantity: d.servings,
+                        restaurantName: rName,
+                        restaurantPhone: rPhone,
+                        restaurantAddress: rAddr
+                    };
+                }));
+                
+                // Update gloal list (remove old donations, add new)
+                allHistoryItems = allHistoryItems.filter(i => i.type !== 'donation').concat(newItems);
+                updateUnifiedHistory();
+            });
+
+            // Listener 2: Requests
+            db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(async snap => {
+                const newItems = await Promise.all(snap.docs.map(async doc => {
+                    const d = doc.data();
+                    let rName = d.restaurantName || 'Unknown';
+                    let rPhone = 'N/A';
+                    let rAddr = 'N/A';
+
+                    // If fulfilled, fetch fulfiller info
+                    if(d.fulfilledBy) {
+                        try {
+                            const u = await db.collection('users').doc(d.fulfilledBy).get();
+                            if(u.exists) { rName = u.data().name; rPhone = u.data().phone; rAddr = u.data().address; }
+                        } catch(e){}
+                    }
+
+                    return {
+                        id: doc.id,
+                        type: 'request',
+                        data: d,
+                        dateObj: d.updatedAt ? d.updatedAt.toDate() : new Date(),
+                        dateString: d.updatedAt ? new Date(d.updatedAt.seconds*1000).toLocaleDateString() : '-',
+                        foodName: d.itemNeeded,
+                        subtext: 'Urgent Request',
+                        quantity: d.quantity,
+                        restaurantName: rName,
+                        restaurantPhone: rPhone,
+                        restaurantAddress: rAddr
+                    };
+                }));
+
+                allHistoryItems = allHistoryItems.filter(i => i.type !== 'request').concat(newItems);
+                updateUnifiedHistory();
             });
         }
 
