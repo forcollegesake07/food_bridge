@@ -39,6 +39,7 @@
     <style>
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            /* Softer background for Orphanage View */
             background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
@@ -121,7 +122,7 @@
                 </button>
             </div>
 
-            <!-- Stats & Motivation (Mirrors Restaurant Stats) -->
+            <!-- Stats & Motivation -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Metrics -->
                 <div class="space-y-4 md:space-y-6">
@@ -154,13 +155,19 @@
                 </div>
             </div>
 
-            <!-- INCOMING ORDERS (Mirrors "Scheduled Pickups") -->
-            <!-- This section shows orders CLAIMED by this orphanage -->
-            <div id="incoming-orders-container" class="space-y-4">
-                <!-- Dynamically Populated -->
+            <!-- 1. INCOMING ORDERS (Active Claims) -->
+            <!-- Wrapped in a section to toggle visibility easily -->
+            <div id="incoming-section" class="hidden space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <h2 class="text-xl font-bold text-white drop-shadow-md">Incoming Orders</h2>
+                    <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-lg shadow-sm animate-pulse">Action Required</span>
+                </div>
+                <div id="incoming-orders-container" class="space-y-4">
+                    <!-- Dynamically Populated -->
+                </div>
             </div>
 
-            <!-- AVAILABLE DONATIONS FEED (Mirrors "Post Donation" area functionality) -->
+            <!-- 2. AVAILABLE DONATIONS FEED -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -180,7 +187,7 @@
                 </div>
             </div>
 
-            <!-- Recent Activity (Mirrors Restaurant) -->
+            <!-- Recent Activity -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
@@ -368,34 +375,39 @@
         function loadDashboardData() {
             // 1. Incoming Orders (My Claims) - TOP SECTION
             db.collection('donations').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
+                const section = document.getElementById('incoming-section');
                 const container = document.getElementById('incoming-orders-container');
                 if(!container) return;
-                container.innerHTML = '';
                 
                 if(snap.empty) { 
-                    // Optional: Hide container or show nothing
+                    section.classList.add('hidden'); // Hide section completely if no orders
                     return; 
                 }
+                
+                section.classList.remove('hidden'); // Show section
+                container.innerHTML = '';
 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const contact = d.restaurantPhone ? `<i class="fa-solid fa-phone mr-1"></i> ${d.restaurantPhone}` : `<i class="fa-solid fa-store mr-1"></i> ${d.restaurantName}`;
-                    const address = d.restaurantAddress ? `<div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${d.restaurantAddress}</div>` : '';
+                    const contact = d.restaurantPhone ? `<i class="fa-solid fa-phone mr-1 text-brand-green"></i> ${d.restaurantPhone}` : `<i class="fa-solid fa-store mr-1 text-brand-green"></i> ${d.restaurantName}`;
+                    const address = d.restaurantAddress ? `<div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1 text-brand-green"></i> ${d.restaurantAddress}</div>` : '';
 
                     container.innerHTML += `
                         <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-blue-500 relative transform hover:-translate-y-1 transition duration-300">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i> Incoming Order</h3>
-                            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                <div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
-                                <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
-                                <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Contact</p>
-                                    <p class="text-sm font-bold text-gray-700">${contact}</p>
-                                    ${address}
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">${d.foodName} <span class="text-sm font-normal text-gray-500">(${d.servings} servings)</span></h3>
+                                    <p class="text-xs text-blue-500 font-bold uppercase mt-1">Incoming</p>
                                 </div>
+                                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded animate-pulse">On Way</span>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
+                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Restaurant Info</p>
+                                <p class="text-sm font-bold text-gray-700">${contact}</p>
+                                ${address}
                             </div>
                             <div class="flex gap-3">
-                                <button onclick="confirmAction('receive', '${doc.id}')" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-sm shadow transition"><i class="fa-solid fa-check mr-1"></i> Mark Received</button>
+                                <button onclick="confirmAction('receive', '${doc.id}', '${d.restaurantId}', '${d.restaurantName}')" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-sm shadow transition"><i class="fa-solid fa-check-circle mr-1"></i> Mark Received</button>
                                 <button onclick="openReportModal('${doc.id}')" class="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-triangle-exclamation"></i> Report</button>
                             </div>
                         </div>`;
@@ -427,19 +439,19 @@
 
             // 3. My Requests (Active Urgencies)
             db.collection('requests').where('orphanageId', '==', currentUser.uid).onSnapshot(snap => {
-                // Main Tab List
                 const listContainer = document.getElementById('my-requests-list');
                 const statReq = document.getElementById('stat-requests');
                 
-                // Active count
+                // Count active only
                 if(statReq) statReq.innerText = snap.docs.filter(d => d.data().status === 'Pending').length;
                 
                 if(listContainer) {
                     listContainer.innerHTML = '';
+                    // Filter to show ONLY Active/Pending in the Requests Tab as requested
                     const pendingDocs = snap.docs.filter(d => d.data().status === 'Pending');
                     
                     if(pendingDocs.length === 0) { 
-                        listContainer.innerHTML = `<div class="col-span-full text-center text-white py-10 font-medium bg-white/10 rounded-xl">No active requests found.</div>`; 
+                        listContainer.innerHTML = `<div class="col-span-full text-center text-white py-10 font-medium bg-white/10 rounded-xl">No active requests. Create one to get help!</div>`; 
                     } else {
                         pendingDocs.forEach(doc => {
                             const d = doc.data();
@@ -483,6 +495,7 @@
                     const d = doc.data();
                     if(d.status === 'Completed') totalReceived += parseInt(d.servings || 0);
                     
+                    // Don't show active/claimed in history
                     if(d.status !== 'Claimed') { 
                         historyCount++;
                         let statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-bold">${d.status}</span>`;
@@ -491,8 +504,8 @@
 
                         const contact = `<div class="text-xs text-gray-500">
                             <p class="font-bold text-gray-700">${d.restaurantName}</p>
-                            <p><i class="fa-solid fa-phone mr-1"></i>${d.restaurantPhone || 'N/A'}</p>
-                            <p><i class="fa-solid fa-location-dot mr-1"></i>${d.restaurantAddress || 'N/A'}</p>
+                            <p><i class="fa-solid fa-phone mr-1 text-brand-green"></i>${d.restaurantPhone || 'N/A'}</p>
+                            <p><i class="fa-solid fa-location-dot mr-1 text-brand-green"></i>${d.restaurantAddress || 'N/A'}</p>
                         </div>`;
 
                         // History Table
@@ -514,11 +527,8 @@
                 if(recentList && historyCount === 0) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No recent activity.</p>";
                 if(tbody && historyCount === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
 
-                // Update Stats
                 const elReceived = document.getElementById('stat-received'); if(elReceived) elReceived.innerText = totalReceived;
                 const elCount = document.getElementById('history-count'); if(elCount) elCount.innerText = historyCount;
-                
-                // Update Graph
                 updateChart(totalReceived);
             });
         }
@@ -662,7 +672,7 @@
                     datasets: [{
                         label: 'Meals',
                         data: [goal, total],
-                        backgroundColor: ['#E5E7EB', '#10B981'],
+                        backgroundColor: ['#F3F4F6', '#10B981'],
                         borderRadius: 8,
                         barThickness: 50
                     }]
