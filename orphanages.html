@@ -2,75 +2,246 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orphanage Dashboard | FoodBridge</title>
+    
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%2310B981' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { orange: '#F97316', green: '#10B981', teal: '#14B8A6', dark: '#1F2937', light: '#F0FDFA' } }, animation: { 'fade-in': 'fadeIn 0.3s ease-out' }, keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } } } } }
-    </script>
-    <style> body { background: linear-gradient(135deg, #F0FDFA 0%, #fff 100%); } .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); } </style>
-</head>
-<body class="text-gray-800 font-sans min-h-screen flex flex-col hidden" id="page-body">
-    <nav class="bg-white/90 backdrop-blur-md shadow-sm w-full py-4 px-6 fixed top-0 z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center"><div class="bg-brand-green/10 p-2 rounded-lg mr-3"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-brand-green"><path d="M12 2.5a3.5 3.5 0 0 0-3.5 3.5c0 2.5 3.5 6 3.5 6s3.5-3.5 3.5-6a3.5 3.5 0 0 0-3.5-3.5zM12 14c-4.4 0-8 3.6-8 8h16c0-4.4-3.6-8-8-8z"/></svg></div><div><span class="font-bold text-xl text-brand-dark block leading-none">Food<span class="text-brand-green">Bridge</span></span><span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Orphanage Portal</span></div></div>
-            <div class="flex items-center gap-4"><div class="relative"><button onclick="toggleProfileModal()" class="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-full transition"><div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold"><i class="fa-solid fa-user"></i></div><span id="nav-username" class="text-sm font-bold text-brand-dark hidden md:block">Loading...</span></button></div></div>
-        </div>
-    </nav>
-    <main class="flex-grow pt-28 px-4 pb-12 max-w-7xl mx-auto w-full">
-        <!-- HEADER -->
-        <div class="mb-10 animate-fade-in flex justify-between items-end">
-            <div><h1 class="text-4xl font-bold text-brand-dark mb-2">Find Food Nearby <span class="text-brand-green">🌱</span></h1><p class="text-gray-500 text-lg">Browse donations or request help.</p></div>
-        </div>
-        
-        <!-- TABS NAV -->
-        <div class="flex gap-4 mb-8 overflow-x-auto pb-2">
-            <button onclick="switchTab('overview')" id="nav-overview" class="px-6 py-3 rounded-xl font-bold text-white bg-brand-green shadow-md transition whitespace-nowrap"><i class="fa-solid fa-chart-pie mr-2"></i> Overview</button>
-            <button onclick="switchTab('my-requests')" id="nav-my-requests" class="px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-blue-50 hover:text-blue-500 border border-transparent hover:border-blue-100 transition whitespace-nowrap"><i class="fa-solid fa-bullhorn mr-2"></i> My Requests</button>
-            <button onclick="switchTab('history')" id="nav-history" class="px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-green-50 hover:text-brand-green border border-transparent hover:border-green-100 transition whitespace-nowrap"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Claim History</button>
-            <button onclick="switchTab('details')" id="nav-details" class="px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-green-50 hover:text-brand-green border border-transparent hover:border-green-100 transition whitespace-nowrap"><i class="fa-solid fa-house-chimney mr-2"></i> Details</button>
-        </div>
 
-        <div id="tab-overview" class="animate-fade-in">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div class="lg:col-span-8 animate-slide-up" style="animation-delay: 0.1s;"><div class="glass-card p-8 rounded-3xl shadow-xl border border-teal-50 min-h-[500px]"><h2 class="text-xl font-bold text-gray-800 mb-6">Live Feed</h2><div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-gray-50 rounded-2xl p-4 animate-pulse h-64"></div></div></div></div>
-                <div class="lg:col-span-4 animate-slide-up" style="animation-delay: 0.2s;"><div class="glass-card p-6 rounded-3xl shadow-lg border border-gray-100 sticky top-28 h-auto"><h2 class="text-xl font-bold text-gray-800 mb-6">Your Claims</h2><div id="claims-container" class="space-y-4 max-h-[600px] overflow-y-auto"><p class="text-gray-400 text-center text-sm py-4">Loading history...</p></div></div></div>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316', 
+                            green: '#10B981',
+                            teal: '#14B8A6',
+                            dark: '#1F2937',
+                            light: '#F0FDFA'
+                        }
+                    },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-out' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fixed-bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 h-screen flex overflow-hidden">
+
+    <div class="fixed-bg-layer"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full flex-shrink-0">
+        <div class="p-6 flex items-center border-b border-gray-100">
+            <div class="bg-brand-green/10 p-2 rounded-lg mr-3">
+                <i class="fa-solid fa-hand-holding-heart text-brand-green text-2xl"></i>
+            </div>
+            <div>
+                <span class="font-bold text-lg text-brand-dark block leading-none">Food<span class="text-brand-green">Bridge</span></span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Orphanage</span>
+            </div>
+        </div>
+        <nav class="flex-grow p-4 space-y-2">
+            <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all bg-brand-green text-white shadow-md">
+                <i class="fa-solid fa-chart-pie w-5 mr-3"></i> Overview
+            </button>
+            <button onclick="switchTab('my-requests')" id="btn-my-requests" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-blue-50 hover:text-blue-600 border border-transparent hover:border-blue-100 transition-all">
+                <i class="fa-solid fa-bullhorn w-5 mr-3"></i> My Requests
+            </button>
+            <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-brand-green transition-all">
+                <i class="fa-solid fa-clock-rotate-left w-5 mr-3"></i> History
+            </button>
+            <button onclick="switchTab('details')" id="btn-details" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-brand-green transition-all">
+                <i class="fa-solid fa-house-chimney w-5 mr-3"></i> Center Details
+            </button>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 mb-4 px-2">
+                <div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold">OP</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-gray-800 truncate" id="sidebar-name">Loading...</p>
+                    <p class="text-xs text-gray-500 truncate" id="sidebar-id">ID: ...</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 text-sm font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="flex-grow overflow-y-auto p-4 md:p-8 relative z-10">
+        
+        <!-- TAB: OVERVIEW -->
+        <div id="tab-overview" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-white drop-shadow-md">Dashboard Overview</h1>
+                    <p class="text-gray-200 text-sm">Welcome back! Find meals for your community.</p>
+                </div>
+                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-gray-700">Status: Verified Center</span>
+                </div>
+            </div>
+
+            <!-- Stats & Motivation -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Metrics -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-green flex flex-col justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wide">Meals Received</p>
+                        <h3 class="text-4xl font-bold text-brand-dark mt-2" id="stat-received">0</h3>
+                    </div>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-bold">
+                        <i class="fa-solid fa-utensils mr-1"></i> Full Stomachs
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-blue-500 flex flex-col justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-wide">Active Donors</p>
+                        <h3 class="text-4xl font-bold text-brand-dark mt-2" id="stat-donors">0</h3>
+                    </div>
+                    <div class="mt-4 flex items-center text-blue-500 text-sm font-bold">
+                        <i class="fa-solid fa-hand-holding-heart mr-1"></i> Partners
+                    </div>
+                </div>
+                <!-- Chart -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg lg:col-span-1">
+                    <h4 class="text-gray-700 font-bold mb-4 flex justify-between items-center">
+                        Donations Claimed
+                        <span class="text-[10px] bg-brand-light text-brand-green px-2 py-1 rounded">Avg vs. You</span>
+                    </h4>
+                    <div class="relative h-32 w-full">
+                        <canvas id="motivationChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-400 mt-2">You are actively securing food for your center!</p>
+                </div>
+            </div>
+
+            <!-- LIVE FEED -->
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-brand-green">
+                <div class="p-6 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-green text-white flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Live Donation Feed</h2>
+                    </div>
+                    <span class="text-xs font-bold text-brand-green bg-green-100 px-3 py-1 rounded-full animate-pulse">Live</span>
+                </div>
+                <div class="p-6">
+                    <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <p class="text-center text-gray-400 col-span-full py-8">Looking for available donations...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Claims -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-lg font-bold text-gray-800">Your Recent Claims</h2>
+                    <span class="text-xs font-bold text-gray-400 uppercase bg-white px-2 py-1 rounded border">Last 5</span>
+                </div>
+                <div class="p-6 space-y-4" id="recent-list">
+                    <p class="text-center text-gray-400 py-4">Loading claims...</p>
+                </div>
+                <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
+                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-green hover:text-green-700 transition">View Full History &rarr;</button>
+                </div>
             </div>
         </div>
         
         <!-- TAB: MY REQUESTS -->
-        <div id="tab-my-requests" class="hidden animate-fade-in">
+        <div id="tab-my-requests" class="max-w-6xl mx-auto space-y-8 animate-fade-in hidden">
+             <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-white drop-shadow-md">Urgent Food Requests</h1>
+                <div class="bg-blue-500 px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn text-white"></i>
+                    <span class="text-white font-bold text-sm">Broadcast Need</span>
+                </div>
+            </div>
+
              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 <!-- CREATE REQUEST -->
                  <div class="md:col-span-1">
-                     <div class="bg-white rounded-3xl shadow-lg p-8 border-t-4 border-blue-500 sticky top-28">
-                         <div class="flex items-center mb-6"><div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-3 font-bold shadow-sm"><i class="fa-solid fa-plus"></i></div><h2 class="text-xl font-bold text-gray-800">Request Food</h2></div>
+                     <div class="bg-white rounded-3xl shadow-lg p-6 border-t-4 border-blue-500 sticky top-4">
+                         <div class="flex items-center mb-6">
+                             <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-3 font-bold shadow-sm"><i class="fa-solid fa-plus"></i></div>
+                             <h2 class="text-xl font-bold text-gray-800">Request Food</h2>
+                         </div>
                          <form onsubmit="createRequest(event)" class="space-y-4">
-                             <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Item Needed</label><input type="text" id="req-item" required class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. Lunch for Kids"></div>
-                             <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity</label><input type="number" id="req-qty" required class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50"></div>
+                             <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Item Needed</label>
+                                <input type="text" id="req-item" required class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. Lunch for Kids">
+                             </div>
+                             <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity</label>
+                                <input type="number" id="req-qty" required class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="50">
+                             </div>
                              <button type="submit" id="btn-request" class="w-full py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-200 transition transform active:scale-95">Post Urgent Request</button>
                          </form>
                      </div>
                  </div>
+                 
+                 <!-- REQUEST LIST -->
                  <div class="md:col-span-2">
-                     <div class="bg-white rounded-3xl shadow-xl overflow-hidden p-6 border border-gray-100"><h2 class="text-xl font-bold text-gray-800 mb-6">Request History</h2><div id="my-requests-list" class="space-y-4"><p class="text-center text-gray-400 py-4">Loading requests...</p></div></div>
+                     <div class="bg-white rounded-3xl shadow-xl overflow-hidden p-6 border border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">Request History</h2>
+                        <div id="my-requests-list" class="space-y-4">
+                            <!-- Populated by JS -->
+                            <p class="text-center text-gray-400 py-4">Loading requests...</p>
+                        </div>
+                     </div>
                  </div>
              </div>
         </div>
 
         <!-- TAB: HISTORY -->
-        <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 animate-fade-in">
-            <div class="flex items-center justify-between"><h1 class="text-3xl font-bold text-white drop-shadow-md">Claim History</h1><div class="bg-white px-4 py-2 rounded-lg shadow-sm"><span class="text-brand-green font-bold text-lg" id="history-count">0</span> <span class="text-sm text-gray-500">Records</span></div></div>
+        <div id="tab-history" class="hidden max-w-6xl mx-auto space-y-6 animate-fade-in">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-white drop-shadow-md">Claim History</h1>
+                <div class="bg-white px-4 py-2 rounded-lg shadow-sm">
+                    <span class="text-brand-green font-bold text-lg" id="history-count">0</span> <span class="text-sm text-gray-500">Records</span>
+                </div>
+            </div>
+            
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b"><tr><th class="px-6 py-4">Date</th><th class="px-6 py-4">Food</th><th class="px-6 py-4">Qty</th><th class="px-6 py-4">Donor</th><th class="px-6 py-4">Contact</th><th class="px-6 py-4 text-right">Actions</th></tr></thead>
-                        <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-5 font-bold tracking-wider">Date Claimed</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Food Item</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Quantity</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Donor Restaurant</th>
+                                <th class="px-6 py-5 font-bold tracking-wider">Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -79,73 +250,184 @@
         <!-- TAB: DETAILS -->
         <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-10">
             <div class="bg-white rounded-2xl shadow-2xl p-8 border-t-4 border-brand-green">
-                <div class="text-center mb-8"><div class="w-20 h-20 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg"><i class="fa-solid fa-house-chimney"></i></div><h2 class="text-2xl font-bold text-gray-800">Orphanage Profile</h2><p class="text-gray-500 text-sm mt-1">Manage your center's information</p></div>
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
+                        <i class="fa-solid fa-house-chimney"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Orphanage Profile</h2>
+                    <p class="text-gray-500 text-sm mt-1">Manage your center's information</p>
+                </div>
+                
                 <form onsubmit="saveProfile(event)" class="space-y-6">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Name</label><input type="text" id="detail-name" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Phone</label><input type="tel" id="detail-phone" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label><textarea id="detail-address" rows="3" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none"></textarea></div>
-                    <button type="submit" class="w-full py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg transform active:scale-95">Save Changes</button>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Orphanage Name</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-building absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="detail-name" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Phone Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="tel" id="detail-phone" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-location-dot absolute left-4 top-3.5 text-gray-400"></i>
+                            <textarea id="detail-address" rows="3" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green outline-none"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg transform active:scale-95">
+                        Save Changes
+                    </button>
                 </form>
             </div>
         </div>
 
     </main>
 
-    <div id="profile-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"><div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-fade-in relative"><button onclick="toggleProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button><div class="text-center mb-6"><div class="w-16 h-16 bg-brand-green text-white rounded-full flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-house-chimney"></i></div><h3 class="text-xl font-bold text-gray-800">Account Settings</h3></div><form onsubmit="saveProfile(event)" class="space-y-4"><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Orphanage Name</label><input type="text" id="profile-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none" required></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label><input type="tel" id="profile-phone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none" placeholder="+91..."></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Full Address</label><textarea id="profile-address" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none"></textarea></div><button type="submit" class="w-full py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-teal-600 transition">Save Changes</button><button type="button" onclick="logout()" class="w-full py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition">Log Out</button></form></div></div>
-    <div id="confirm-modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"><div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-scale-up"><h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Claim?</h3><p class="text-gray-500 text-sm mb-6">You are claiming this donation.</p><div class="flex gap-3"><button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50">Cancel</button><button id="confirm-btn" class="flex-1 py-3 rounded-xl bg-brand-green text-white font-bold hover:bg-green-600 shadow-lg">Yes, Claim it</button></div></div></div>
-    <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50"><i class="fa-solid fa-circle-check text-green-400 text-lg"></i><p class="text-sm" id="toast-message">Success</p></div>
+    <!-- Confirm Claim Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-scale-up text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-green text-3xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Claim?</h3>
+            <p class="text-gray-500 text-sm mb-6">You are about to claim this donation. The restaurant will be notified.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50">Cancel</button>
+                <button id="confirm-btn" class="flex-1 py-3 rounded-xl bg-brand-green text-white font-bold hover:bg-green-700 shadow-lg">Yes, Claim it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50">
+        <i class="fa-solid fa-circle-check text-green-400 text-lg"></i>
+        <p class="text-sm" id="toast-message">Success</p>
+    </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0",
+            authDomain: "panel-9e1a6.firebaseapp.com",
+            projectId: "panel-9e1a6",
+            storageBucket: "panel-9e1a6.firebasestorage.app",
+            messagingSenderId: "491001640513",
+            appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0"
+        };
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(); const db = firebase.firestore();
-        let currentUser = null; let userData = {}; let selectedDonationId = null;
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let currentUser = null;
+        let userData = {};
+        let selectedDonationId = null;
+        let totalReceived = 0;
 
+        // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
-                    const navUser = document.getElementById('nav-username'); if(navUser) navUser.innerText = userData.name;
-                    const sideName = document.getElementById('sidebar-name'); if(sideName) sideName.innerText = userData.name;
-                    const sideId = document.getElementById('sidebar-id'); if(sideId) sideId.innerText = "ID: " + user.uid.slice(0, 6);
+                    
+                    const navUser = document.getElementById('nav-username');
+                    if(navUser) navUser.innerText = userData.name || "Orphanage";
+                    
+                    const sideName = document.getElementById('sidebar-name');
+                    if(sideName) sideName.innerText = userData.name || "Orphanage";
+                    
+                    const sideId = document.getElementById('sidebar-id');
+                    if(sideId) sideId.innerText = "ID: " + user.uid.slice(0, 6);
+                    
                     if(document.getElementById('detail-name')) document.getElementById('detail-name').value = userData.name || "";
                     if(document.getElementById('detail-phone')) document.getElementById('detail-phone').value = userData.phone || "";
                     if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
-                    document.getElementById('page-body').classList.remove('hidden');
-                    loadAvailableDonations(); loadMyClaims(); loadMyRequests();
+
+                    document.getElementById('tab-overview').classList.remove('hidden');
+                    loadAvailableDonations();
+                    loadMyClaims();
+                    loadMyRequests();
                 }
-            } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
+            } else {
+                window.location.href = 'https://foodbridge.qzz.io/login.html';
+            }
         });
 
+        // TAB SWITCHER
         function switchTab(tab) {
             ['overview', 'my-requests', 'history', 'details'].forEach(t => {
                 document.getElementById('tab-'+t).classList.add('hidden');
-                const btn = document.getElementById('nav-'+t);
-                if(btn) { 
-                    btn.classList.remove('bg-brand-green', 'text-white', 'bg-blue-500'); 
-                    btn.classList.add('bg-white', 'text-gray-500'); 
+                const btn = document.getElementById('btn-'+t);
+                
+                // Sidebar Buttons Reset
+                btn.classList.remove('bg-brand-green', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-green');
+                
+                // Reset My Requests specific styling
+                if(t === 'my-requests') {
+                   // Standard reset logic handles it
                 }
             });
+            
             document.getElementById('tab-'+tab).classList.remove('hidden');
-            const btn = document.getElementById('nav-'+tab);
-            if(tab === 'my-requests') btn.className = "px-6 py-3 rounded-xl font-bold text-white bg-blue-500 shadow-md transition whitespace-nowrap";
-            else btn.className = "px-6 py-3 rounded-xl font-bold text-white bg-brand-green shadow-md transition whitespace-nowrap";
+            const activeBtn = document.getElementById('btn-'+tab);
+            
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-brand-green');
+            
+            // Highlight styling
+            if(tab === 'my-requests') {
+                 // Keeping blue accent for consistency with content, or green for sidebar.
+                 // Using Green to keep sidebar uniform as requested.
+                 activeBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
+            } else {
+                 activeBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
+            }
+            
+            // Top Nav Reset (if visible)
+             if(document.getElementById('nav-overview')) {
+                document.getElementById('nav-overview').className = tab === 'overview' ? "px-6 py-3 rounded-xl font-bold text-white bg-brand-green shadow-md transition whitespace-nowrap" : "px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-green-50 transition whitespace-nowrap";
+             }
+             if(document.getElementById('nav-my-requests')) {
+                document.getElementById('nav-my-requests').className = tab === 'my-requests' ? "px-6 py-3 rounded-xl font-bold text-white bg-blue-500 shadow-md transition whitespace-nowrap" : "px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-blue-50 hover:text-blue-500 border border-transparent hover:border-blue-100 transition whitespace-nowrap";
+             }
+             if(document.getElementById('nav-history')) {
+                 document.getElementById('nav-history').className = tab === 'history' ? "px-6 py-3 rounded-xl font-bold text-white bg-brand-green shadow-md transition whitespace-nowrap" : "px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-green-50 transition whitespace-nowrap";
+             }
+             if(document.getElementById('nav-details')) {
+                 document.getElementById('nav-details').className = tab === 'details' ? "px-6 py-3 rounded-xl font-bold text-white bg-brand-green shadow-md transition whitespace-nowrap" : "px-6 py-3 rounded-xl font-bold text-gray-500 bg-white hover:bg-green-50 transition whitespace-nowrap";
+             }
         }
 
+        // --- REQUEST LOGIC ---
         async function createRequest(e) {
             e.preventDefault();
             if(!userData.address || !userData.phone) { alert("Complete profile first!"); switchTab('details'); return; }
-            const item = document.getElementById('req-item').value; const qty = document.getElementById('req-qty').value; const btn = document.getElementById('btn-request');
+            
+            const item = document.getElementById('req-item').value;
+            const qty = document.getElementById('req-qty').value;
+            const btn = document.getElementById('btn-request');
             btn.innerText = "Posting..."; btn.disabled = true;
+
             try {
-                await db.collection('requests').add({ 
-                    orphanageId: currentUser.uid, orphanageName: userData.name, orphanageAddress: userData.address, 
-                    orphanagePhone: userData.phone, orphanageEmail: currentUser.email,
-                    itemNeeded: item, quantity: qty, status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                await db.collection('requests').add({
+                    orphanageId: currentUser.uid,
+                    orphanageName: userData.name,
+                    orphanageAddress: userData.address,
+                    orphanagePhone: userData.phone,
+                    orphanageEmail: currentUser.email,
+                    itemNeeded: item,
+                    quantity: qty,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                showToast("Request Broadcasted!"); e.target.reset();
+                showToast("Request Broadcasted!");
+                e.target.reset();
             } catch(e) { alert("Error: " + e.message); }
             finally { btn.innerText = "Post Urgent Request"; btn.disabled = false; }
         }
@@ -153,6 +435,7 @@
         function loadMyRequests() {
             db.collection('requests').where('orphanageId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('my-requests-list');
+                if(!container) return;
                 container.innerHTML = '';
                 if(snap.empty) { container.innerHTML = "<p class='text-gray-400 text-center py-4'>No active requests.</p>"; return; }
                 
@@ -163,23 +446,257 @@
                         ? `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Fulfilled by ${d.restaurantName || 'Restaurant'}</span>`
                         : `<span class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs font-bold animate-pulse border border-red-200">Broadcasting...</span>`;
                     
-                    container.innerHTML += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold"><i class="fa-solid fa-bullhorn"></i></div><div><h4 class="font-bold text-gray-800">${d.itemNeeded}</h4><p class="text-sm text-gray-500">Qty: ${d.quantity}</p></div></div>${badge}</div>`;
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">${d.itemNeeded}</h4>
+                                    <p class="text-sm text-gray-500">Qty: ${d.quantity} • ${new Date(d.createdAt?.seconds*1000).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            ${badge}
+                        </div>
+                    `;
                 });
             });
         }
 
-        function toggleProfileModal() { document.getElementById('profile-modal').classList.toggle('hidden'); }
-        async function saveProfile(e) { e.preventDefault(); const name = document.getElementById('profile-name').value || document.getElementById('detail-name').value; const phone = document.getElementById('profile-phone').value || document.getElementById('detail-phone').value; const address = document.getElementById('profile-address').value || document.getElementById('detail-address').value; try { await db.collection('users').doc(currentUser.uid).update({ name, phone, address }); userData.name = name; userData.phone = phone; userData.address = address; const navUser = document.getElementById('nav-username'); if(navUser) navUser.innerText = name; if(!document.getElementById('profile-modal').classList.contains('hidden')) toggleProfileModal(); showToast("Profile Updated!"); } catch(err) { console.error(err); } }
+        // UPDATE PROFILE
+        async function saveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('detail-name').value;
+            const phone = document.getElementById('detail-phone').value;
+            const address = document.getElementById('detail-address').value;
+            try {
+                await db.collection('users').doc(currentUser.uid).update({ name, phone, address });
+                userData.name = name; userData.phone = phone; userData.address = address;
+                
+                const navUser = document.getElementById('nav-username');
+                if(navUser) navUser.innerText = name;
+                
+                const sideName = document.getElementById('sidebar-name');
+                if(sideName) sideName.innerText = name;
+
+                showToast("Profile Updated!");
+            } catch(err) { console.error(err); }
+        }
+
+        // LOAD FEED
+        function loadAvailableDonations() {
+            db.collection('donations').where("status", "==", "Available").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+                const container = document.getElementById('feed-container');
+                if(!container) return;
+                container.innerHTML = "";
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `<div class="col-span-full text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200"><i class="fa-solid fa-bowl-rice text-4xl text-gray-300 mb-2"></i><p class="text-gray-400 font-medium">No available food right now.</p></div>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const img = data.imageUrl || 'https://placehold.co/400x300/e2e8f0/94a3b8?text=Food+Image';
+                    
+                    const restDetails = `
+                        <div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 space-y-1">
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-brand-green"></i> ${data.restaurantAddress || 'Address unavailable'}</p>
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-phone text-brand-green"></i> ${data.restaurantPhone || 'Phone unavailable'}</p>
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-envelope text-brand-green"></i> ${data.restaurantEmail || 'Email unavailable'}</p>
+                        </div>
+                    `;
+
+                    container.innerHTML += `
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div class="relative h-48">
+                                <img src="${img}" class="w-full h-full object-cover">
+                                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-brand-dark shadow-sm">
+                                    <i class="fa-solid fa-clock mr-1 text-brand-green"></i> Available
+                                </div>
+                            </div>
+                            <div class="p-5 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-xs font-bold bg-green-50 text-brand-green px-2 py-1 rounded-md uppercase tracking-wide">
+                                            <i class="fa-solid fa-utensils mr-1"></i> ${data.restaurantName}
+                                        </span>
+                                    </div>
+                                    <h3 class="font-bold text-xl text-brand-dark mb-1">${data.foodName}</h3>
+                                    <p class="text-sm text-gray-500 mb-4 font-medium">Serves: <span class="text-brand-dark">${data.servings} People</span></p>
+                                    ${restDetails}
+                                </div>
+                                <button onclick="openConfirmModal('${doc.id}')" class="w-full mt-5 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition-colors flex items-center justify-center gap-2">
+                                    <span>Claim Donation</span> <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // CLAIM LOGIC
+        function openConfirmModal(id) {
+            selectedDonationId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('confirm-btn').onclick = () => processClaim(id);
+        }
         
-        function loadAvailableDonations() { db.collection('donations').where("status", "==", "Available").orderBy("createdAt", "desc").onSnapshot(snapshot => { const container = document.getElementById('feed-container'); if(!container) return; container.innerHTML = ""; if (snapshot.empty) { container.innerHTML = "<div class='col-span-full text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200'><i class='fa-solid fa-bowl-rice text-4xl text-gray-300 mb-2'></i><p class='text-gray-400 font-medium'>No available food right now.</p></div>"; return; } snapshot.forEach(doc => { const data = doc.data(); const img = data.imageUrl || 'https://placehold.co/400x300/e2e8f0/94a3b8?text=Food+Image'; const restDetails = `<div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 space-y-1"><p class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-brand-green"></i> ${data.restaurantAddress || 'Address unavailable'}</p><p class="flex items-center gap-2"><i class="fa-solid fa-phone text-brand-green"></i> ${data.restaurantPhone || 'Phone unavailable'}</p><p><i class="fa-solid fa-envelope text-brand-green"></i> ${data.restaurantEmail || 'Email unavailable'}</p></div>`; container.innerHTML += `<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"><div class="relative h-48"><img src="${img}" class="w-full h-full object-cover"><div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-brand-dark shadow-sm"><i class="fa-solid fa-clock mr-1 text-brand-green"></i> Available</div></div><div class="p-5 flex-grow flex flex-col justify-between"><div><div class="flex items-center gap-2 mb-2"><span class="text-xs font-bold bg-green-50 text-brand-green px-2 py-1 rounded-md uppercase tracking-wide"><i class="fa-solid fa-utensils mr-1"></i> ${data.restaurantName}</span></div><h3 class="font-bold text-xl text-brand-dark mb-1">${data.foodName}</h3><p class="text-sm text-gray-500 mb-4 font-medium">Serves: <span class="text-brand-dark">${data.servings} People</span></p>${restDetails}</div><button onclick="openConfirmModal('${doc.id}')" class="w-full mt-5 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition-colors flex items-center justify-center gap-2"><span>Claim Donation</span> <i class="fa-solid fa-arrow-right"></i></button></div></div>`; }); }); }
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
         
-        function openConfirmModal(id) { selectedDonationId = id; document.getElementById('confirm-modal').classList.remove('hidden'); document.getElementById('confirm-btn').onclick = () => processClaim(id); }
-        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
-        async function processClaim(docId) { if(!userData.address || !userData.phone) { alert("Please add your Address/Phone in 'Details' tab first!"); closeModal(); switchTab('details'); return; } try { const btn = document.getElementById('confirm-btn'); btn.innerText = "Processing..."; await db.collection('donations').doc(docId).update({ status: "Claimed", claimedBy: currentUser.uid, orphanageName: userData.name, orphanageEmail: currentUser.email, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp() }); closeModal(); showToast("Claimed successfully!"); } catch(err) { alert("Error claiming."); } finally { document.getElementById('confirm-btn').innerText = "Yes, Claim it"; } }
-        async function deleteClaim(id) { if(confirm("Remove from history?")) { try { await db.collection('donations').doc(id).delete(); showToast("Record removed."); } catch(e) { alert("Error deleting."); } } }
-        function loadMyClaims() { db.collection('donations').where("claimedBy", "==", currentUser.uid).orderBy("claimedAt", "desc").onSnapshot(snapshot => { const recentList = document.getElementById('recent-list'); const historyBody = document.getElementById('history-table-body'); if(recentList) recentList.innerHTML = ""; if(historyBody) historyBody.innerHTML = ""; let count = 0; if(snapshot.empty) { if(recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No claims yet.</p>"; if(historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; } snapshot.forEach(doc => { const d = doc.data(); count++; const date = d.claimedAt ? new Date(d.claimedAt.seconds*1000).toLocaleDateString() : 'Just now'; const contactInfo = `<div class="text-xs text-gray-500"><p><i class="fa-solid fa-phone text-brand-green"></i> ${d.restaurantPhone||'-'}</p><p><i class="fa-solid fa-envelope text-brand-green"></i> ${d.restaurantEmail||'-'}</p></div>`; if(count <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-sm transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-green shadow-sm border border-gray-100 text-lg"><i class="fa-solid fa-check"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${d.foodName}</h4><p class="text-xs text-gray-500">From: ${d.restaurantName}</p></div></div><span class="text-gray-400 text-xs font-medium">${date}</span></div>`; } if(historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-6 py-4 text-gray-500 text-sm font-medium">${date}</td><td class="px-6 py-4 font-bold text-gray-800 text-sm">${d.foodName}</td><td class="px-6 py-4 text-gray-600 text-sm">${d.servings} Servings</td><td class="px-6 py-4 text-brand-dark text-sm font-medium">${d.restaurantName}</td><td class="px-6 py-4">${contactInfo}</td><td class="px-6 py-4 text-right"><button onclick="deleteClaim('${doc.id}')" class="text-red-400 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash-can"></i></button></td></tr>`; } }); }); }
-        function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); }
-        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/index.html'); }
+        async function processClaim(docId) {
+            if(!userData.address || !userData.phone) {
+                alert("Please add your Address/Phone in 'Details' tab first!");
+                closeModal();
+                switchTab('details');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('confirm-btn');
+                btn.innerText = "Processing...";
+                
+                await db.collection('donations').doc(docId).update({
+                    status: "Claimed",
+                    claimedBy: currentUser.uid,
+                    orphanageName: userData.name,
+                    orphanageEmail: currentUser.email,
+                    orphanagePhone: userData.phone,
+                    orphanageAddress: userData.address,
+                    claimedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                closeModal();
+                showToast("Claimed successfully!");
+            } catch(err) {
+                console.error(err);
+                alert("Error claiming donation.");
+            } finally {
+                document.getElementById('confirm-btn').innerText = "Yes, Claim it";
+            }
+        }
+        
+        // HISTORY & STATS
+        function loadMyClaims() {
+             db.collection('donations').where("claimedBy", "==", currentUser.uid).orderBy("claimedAt", "desc").onSnapshot(snapshot => {
+                  const recentList = document.getElementById('recent-list');
+                  const historyBody = document.getElementById('history-table-body');
+                  
+                  if(recentList) recentList.innerHTML = "";
+                  if(historyBody) historyBody.innerHTML = "";
+                  
+                  let docCount = 0;
+                  let uniqueDonors = new Set();
+                  totalReceived = 0;
+
+                  if(snapshot.empty) {
+                      if(recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No claims yet.</p>";
+                      if(historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
+                  }
+                  
+                  snapshot.forEach(doc => {
+                      const d = doc.data();
+                      docCount++;
+                      totalReceived += parseInt(d.servings || 0);
+                      if(d.restaurantName) uniqueDonors.add(d.restaurantName);
+                      
+                      const date = d.claimedAt ? new Date(d.claimedAt.seconds*1000).toLocaleDateString() : 'Just now';
+                      const contactInfo = `<div class="text-xs text-gray-500"><p><i class="fa-solid fa-phone text-brand-green"></i> ${d.restaurantPhone||'-'}</p><p><i class="fa-solid fa-envelope text-brand-green"></i> ${d.restaurantEmail||'-'}</p></div>`;
+
+                      if(docCount <= 5 && recentList) {
+                           recentList.innerHTML += `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-sm transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-green shadow-sm border border-gray-100 text-lg">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800 text-sm">${d.foodName}</h4>
+                                        <p class="text-xs text-gray-500">From: ${d.restaurantName}</p>
+                                    </div>
+                                </div>
+                                <span class="text-gray-400 text-xs font-medium">${date}</span>
+                            </div>
+                           `;
+                      }
+                      
+                      if(historyBody) {
+                          historyBody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-gray-500 text-sm font-medium">${date}</td>
+                                <td class="px-6 py-4 font-bold text-gray-800 text-sm">${d.foodName}</td>
+                                <td class="px-6 py-4 text-gray-600 text-sm">${d.servings} Servings</td>
+                                <td class="px-6 py-4 text-brand-dark text-sm font-medium">${d.restaurantName}</td>
+                                <td class="px-6 py-4">${contactInfo}</td>
+                                <td class="px-6 py-4 text-right"></td>
+                            </tr>
+                          `;
+                      }
+                  });
+
+                  // Safe Stat Updates
+                  const elReceived = document.getElementById('stat-received');
+                  if (elReceived) elReceived.innerText = totalReceived;
+                  
+                  const elDonors = document.getElementById('stat-donors');
+                  if (elDonors) elDonors.innerText = uniqueDonors.size;
+                  
+                  const elCount = document.getElementById('history-count');
+                  if (elCount) elCount.innerText = docCount;
+                  
+                  updateChart(totalReceived);
+             });
+        }
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if(t) {
+                document.getElementById('toast-message').innerText = msg;
+                t.classList.remove('translate-y-32', 'opacity-0');
+                setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
+            }
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'https://foodbridge.qzz.io/index.html';
+            });
+        }
+        
+        // CHART
+        let myChart;
+        function updateChart(total) {
+            const ctxElem = document.getElementById('motivationChart');
+            if(!ctxElem) return;
+            const ctx = ctxElem.getContext('2d');
+            const avg = 200; 
+
+            if(myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Avg. Center', 'You'],
+                    datasets: [{
+                        label: 'Meals Received',
+                        data: [avg, total],
+                        backgroundColor: ['#E5E7EB', '#10B981'],
+                        borderRadius: 6,
+                        barThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } }
+                }
+            });
+        }
     </script>
 </body>
 </html>
