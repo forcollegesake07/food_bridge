@@ -301,7 +301,7 @@
     
     <!-- REPORT MODAL -->
     <div id="report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300" id="report-modal-content">
             <div class="text-center">
                 <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -311,7 +311,7 @@
                 <textarea id="report-reason-text" class="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none text-sm" rows="3" placeholder="e.g. Food spoiled, wrong item..."></textarea>
                 <div class="flex gap-4">
                     <button onclick="closeReportModal()" class="flex-1 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-sm">Cancel</button>
-                    <button onclick="submitReport()" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all text-sm">Submit Report</button>
+                    <button onclick="submitReport()" id="btn-submit-report" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all text-sm">Submit Report</button>
                 </div>
             </div>
         </div>
@@ -479,10 +479,10 @@
                                 </div>
                             </div>
                             <div class="flex gap-3">
-                                <button onclick="openReportModal('${doc.id}')" class="flex-1 py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm">
-                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Report
+                                <button onclick="openReportModal('${doc.id}')" class="flex-1 py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm flex items-center justify-center">
+                                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> Report
                                 </button>
-                                <button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-sm">
+                                <button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-sm flex items-center justify-center">
                                     <i class="fa-solid fa-check-circle mr-2"></i> Confirm Receipt
                                 </button>
                             </div>
@@ -644,21 +644,38 @@
             reportDonationId = donationId;
             document.getElementById('report-reason-text').value = '';
             const modal = document.getElementById('report-modal');
+            const content = document.getElementById('report-modal-content');
+            
             modal.classList.remove('hidden');
-            setTimeout(() => { modal.querySelector('div').classList.remove('scale-95'); modal.querySelector('div').classList.add('scale-100'); }, 10);
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95'); 
+                content.classList.add('scale-100'); 
+            }, 10);
         }
 
         function closeReportModal() {
             const modal = document.getElementById('report-modal');
-            modal.querySelector('div').classList.remove('scale-100');
-            modal.querySelector('div').classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); reportDonationId = null; }, 300);
+            const content = document.getElementById('report-modal-content');
+            
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                reportDonationId = null; 
+            }, 300);
         }
 
         async function submitReport() {
             const reason = document.getElementById('report-reason-text').value;
             if (!reason) { alert("Please enter a reason."); return; }
             
+            const btn = document.getElementById('btn-submit-report');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Submitting...';
+            btn.disabled = true;
+
             try {
                 await db.collection('donations').doc(reportDonationId).update({
                     status: 'Issue',
@@ -668,7 +685,11 @@
                 showToast("Report submitted successfully.");
                 closeReportModal();
             } catch(e) {
+                console.error(e);
                 showToast("Error submitting report: " + e.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
