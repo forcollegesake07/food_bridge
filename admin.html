@@ -171,25 +171,60 @@
             </div>
         </div>
 
-        <!-- TAB: HISTORY LOG -->
-        <div id="tab-history" class="hidden max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Donation History</h1>
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Restaurant</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Receiver (Orphanage)</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Food Item</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
-                    </table>
+        <!-- TAB: HISTORY LOG (SPLIT) -->
+        <div id="tab-history" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Activity Log</h1>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- COLUMN 1: RESTAURANT DONATIONS -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-white drop-shadow-md flex items-center">
+                        <i class="fa-solid fa-utensils mr-2"></i> Restaurant Donations
+                    </h3>
+                    <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold">Date</th>
+                                        <th class="px-4 py-3 font-bold">Restaurant</th>
+                                        <th class="px-4 py-3 font-bold">Item (Qty)</th>
+                                        <th class="px-4 py-3 font-bold text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="donation-history-body" class="divide-y divide-gray-100">
+                                    <tr><td colspan="4" class="text-center py-4 text-gray-400">Loading donations...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- COLUMN 2: ORPHANAGE REQUESTS -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-white drop-shadow-md flex items-center">
+                        <i class="fa-solid fa-hands-holding-child mr-2"></i> Orphanage Requests
+                    </h3>
+                    <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold">Date</th>
+                                        <th class="px-4 py-3 font-bold">Orphanage</th>
+                                        <th class="px-4 py-3 font-bold">Request (Qty)</th>
+                                        <th class="px-4 py-3 font-bold text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="request-history-body" class="divide-y divide-gray-100">
+                                    <tr><td colspan="4" class="text-center py-4 text-gray-400">Loading requests...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -336,6 +371,7 @@
         let dailyChart, monthlyChart, lifetimeChart;
         let currentInvestigateId = null;
         let currentDeleteId = null;
+        let currentDeleteCollection = null; // Track which collection to delete from
         let currentModalUserId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -465,37 +501,55 @@
             });
         }
 
-        // --- HISTORY ---
+        // --- HISTORY (SPLIT) ---
         function loadHistory() {
-            db.collection('donations').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
-                const tbody = document.getElementById('history-table-body');
+            // 1. Load Restaurant Donations
+            db.collection('donations').orderBy('createdAt', 'desc').limit(25).onSnapshot(snap => {
+                const tbody = document.getElementById('donation-history-body');
                 tbody.innerHTML = '';
+                if(snap.empty) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">No donations yet.</td></tr>`;
+                
                 snap.forEach(doc => {
                     const data = doc.data();
                     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : '-';
                     
-                    let statusColor = 'text-gray-500 bg-gray-100';
-                    if(data.status === 'Completed') statusColor = 'text-green-600 bg-green-50 border border-green-200';
-                    if(data.status === 'Issue') statusColor = 'text-red-600 bg-red-50 border border-red-200';
-                    if(data.status === 'Claimed') statusColor = 'text-blue-600 bg-blue-50 border border-blue-200';
-                    if(data.status === 'Resolved') statusColor = 'text-teal-600 bg-teal-50 border border-teal-200';
-
-                    const receiverId = data.claimedBy;
-                    const receiverName = data.orphanageName || 'Pending...';
-                    
                     const restHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Unknown'}</span>`;
-                    const recvHtml = receiverId ? `<span onclick="openUserModal('${receiverId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${receiverName}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
+                    
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-gray-500 text-sm">${date}</td>
+                            <td class="px-4 py-3 text-sm">${restHtml}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="confirmDeleteHistory('${doc.id}', 'donations')" class="text-gray-400 hover:text-red-500 transition-colors">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // 2. Load Orphanage Requests
+            db.collection('requests').orderBy('createdAt', 'desc').limit(25).onSnapshot(snap => {
+                const tbody = document.getElementById('request-history-body');
+                tbody.innerHTML = '';
+                if(snap.empty) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">No requests yet.</td></tr>`;
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : '-';
+                    
+                    const orphHtml = `<span onclick="openUserModal('${data.orphanageId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Unknown'}</span>`;
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${restHtml}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${recvHtml}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
-                            <td class="px-4 py-4 md:px-6 md:py-5"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-center">
-                                <button onclick="confirmDeleteHistory('${doc.id}')" class="text-gray-400 hover:text-red-500 transition-colors">
-                                    <i class="fa-solid fa-trash-can text-lg"></i>
+                            <td class="px-4 py-3 text-gray-500 text-sm">${date}</td>
+                            <td class="px-4 py-3 text-sm">${orphHtml}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.itemNeeded} <span class="text-gray-400 font-normal">(${data.quantity})</span></td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="confirmDeleteHistory('${doc.id}', 'requests')" class="text-gray-400 hover:text-red-500 transition-colors">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </td>
                         </tr>
@@ -602,8 +656,9 @@
         }
 
         // --- DELETE HISTORY ---
-        function confirmDeleteHistory(id) {
+        function confirmDeleteHistory(id, collection) {
             currentDeleteId = id;
+            currentDeleteCollection = collection;
             const modal = document.getElementById('confirm-modal');
             const content = document.getElementById('confirm-modal-content');
             modal.classList.remove('hidden');
@@ -614,12 +669,13 @@
             const modal = document.getElementById('confirm-modal');
             const content = document.getElementById('confirm-modal-content');
             modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); currentDeleteId = null; }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); currentDeleteId = null; currentDeleteCollection = null; }, 300);
         }
 
         async function executeDelete() {
+            if(!currentDeleteCollection) return;
             try {
-                await db.collection('donations').doc(currentDeleteId).delete();
+                await db.collection(currentDeleteCollection).doc(currentDeleteId).delete();
                 closeConfirmModal();
             } catch(e) { console.error(e); alert("Error deleting record."); }
         }
