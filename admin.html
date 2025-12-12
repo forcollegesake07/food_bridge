@@ -68,6 +68,9 @@
             <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl bg-brand-blue text-white shadow-md transition-all">
                 <i class="fa-solid fa-chart-line w-6 text-lg mr-3"></i> Overview
             </button>
+            <button onclick="switchTab('users')" id="btn-users" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all">
+                <i class="fa-solid fa-users w-6 text-lg mr-3"></i> Users
+            </button>
             <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all">
                 <i class="fa-solid fa-clock-rotate-left w-6 text-lg mr-3"></i> History Log
             </button>
@@ -143,6 +146,27 @@
                         <h3 class="font-bold text-gray-800 text-lg mb-4">Lifetime Growth (Yearly)</h3>
                         <div class="h-64 w-full relative"><canvas id="lifetimeChart"></canvas></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: USERS -->
+        <div id="tab-users" class="hidden max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">User Management</h1>
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 font-bold tracking-wider">User Name</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Phone</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Address</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Status</th>
+                                <th class="px-6 py-4 font-bold tracking-wider text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -294,6 +318,7 @@
                 if(user) { 
                     switchTab('overview');
                     loadOverview();
+                    loadUsers();
                     loadHistory();
                     loadReports();
                 } else {
@@ -315,7 +340,7 @@
         }
 
         function switchTab(tab) {
-            ['overview', 'history', 'reports'].forEach(t => {
+            ['overview', 'users', 'history', 'reports'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 const btn = document.getElementById('btn-' + t);
                 btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all";
@@ -378,6 +403,42 @@
             const years = Object.keys(yearlyObj).sort();
             const yearData = years.map(y => yearlyObj[y]);
             lifetimeChart = new Chart(document.getElementById('lifetimeChart'), { type: 'bar', data: { labels: years, datasets: [{ label: 'Total Meals', data: yearData, backgroundColor: '#F97316', borderRadius: 6, barThickness: 40 }] }, options: commonOptions });
+        }
+
+        // --- USERS ---
+        function loadUsers() {
+            db.collection('users').onSnapshot(snap => {
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = '';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const isDisabled = data.disabled === true;
+                    const statusBadge = isDisabled 
+                        ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` 
+                        : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
+                    
+                    const actionBtnClass = isDisabled 
+                        ? "text-green-600 bg-green-50 border-green-200 hover:bg-green-100" 
+                        : "text-red-600 bg-red-50 border-red-200 hover:bg-red-100";
+                    const actionBtnText = isDisabled ? "Enable" : "Disable";
+                    const actionIcon = isDisabled ? "fa-lock-open" : "fa-ban";
+
+                    // Use openUserModal to handle details and disable/enable
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 font-bold text-gray-800">${data.name || 'Unknown'}</td>
+                            <td class="px-6 py-4 text-gray-500">${data.phone || 'N/A'}</td>
+                            <td class="px-6 py-4 text-gray-500 truncate max-w-xs">${data.address || 'N/A'}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openUserModal('${doc.id}')" class="text-xs ${actionBtnClass} px-3 py-1.5 rounded-lg border transition font-bold">
+                                    <i class="fa-solid ${actionIcon} mr-1"></i> Manage
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
         }
 
         // --- HISTORY ---
