@@ -359,6 +359,7 @@
                                     <p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p>
                                     <p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}</p>
                                     <p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}</p>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.orphanageAddress || 'N/A'}</p>
                                 </div>
                             </div>
                             <div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center">
@@ -481,7 +482,7 @@
                         restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone,
                         foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, 
                         orphanageName: orphName, 
-                        orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone,
+                        orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '',
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     showToast("Request Fulfilled!");
