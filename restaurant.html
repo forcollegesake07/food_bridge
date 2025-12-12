@@ -38,7 +38,6 @@
     <style>
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            /* Updated to a high-quality food spread image */
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
@@ -50,13 +49,11 @@
     <div class="fixed-bg-layer"></div>
 
     <!-- SIDEBAR NAVIGATION -->
-    <aside class="w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full flex-shrink-0">
+    <aside class="w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-20 shadow-xl h-full flex-shrink-0 transition-transform duration-300 transform md:translate-x-0 -translate-x-full absolute md:relative" id="sidebar">
         <div class="p-8 flex items-center border-b border-gray-100">
             <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
-                 <!-- Header Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="w-8 h-8 fill-brand-orange">
-                    <path d="M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z"/>
-                </svg>
+                 <!-- Header Icon (Updated) -->
+                <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
             </div>
             <div>
                 <span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-brand-green">Bridge</span></span>
@@ -285,7 +282,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
-        let pendingAction = null; // Store pending action data
+        let pendingAction = null;
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
