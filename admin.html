@@ -175,9 +175,19 @@
         <div id="tab-history" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Activity Log</h1>
-                <div class="flex bg-white/20 backdrop-blur-md rounded-xl p-1 shadow-inner">
-                    <button onclick="switchHistoryMode('donations')" id="btn-hist-donations" class="px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue">Donations</button>
-                    <button onclick="switchHistoryMode('requests')" id="btn-hist-requests" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10">Requests</button>
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-64">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Filter by User..." class="pl-10 pr-4 py-2 rounded-xl border-none focus:ring-2 focus:ring-blue-500 shadow-md w-full text-sm font-medium focus:outline-none">
+                    </div>
+                    <!-- Toggle Buttons -->
+                    <div class="flex bg-white/20 backdrop-blur-md rounded-xl p-1 shadow-inner self-start sm:self-auto">
+                        <button onclick="switchHistoryMode('donations')" id="btn-hist-donations" class="px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue">Donations</button>
+                        <button onclick="switchHistoryMode('requests')" id="btn-hist-requests" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10">Requests</button>
+                    </div>
                 </div>
             </div>
             
@@ -430,6 +440,36 @@
                 btnReq.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue";
                 btnDon.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10";
             }
+            // Re-apply filter on switch
+            filterHistory();
+        }
+
+        // --- FILTER HISTORY ---
+        function filterHistory() {
+            const input = document.getElementById('history-search');
+            const filter = input.value.toUpperCase();
+            
+            // Determine active table
+            const isDonations = !document.getElementById('block-hist-donations').classList.contains('hidden');
+            const tbodyId = isDonations ? 'donation-history-body' : 'request-history-body';
+            const tbody = document.getElementById(tbodyId);
+            const tr = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < tr.length; i++) {
+                // Skip rows that don't have enough columns (loading/empty messages)
+                const tds = tr[i].getElementsByTagName('td');
+                if (tds.length < 4) continue;
+
+                // Column 2 is User 1 (Restaurant/Orphanage), Column 3 is User 2 (Accepted By)
+                const user1 = tds[2].textContent || tds[2].innerText;
+                const user2 = tds[3].textContent || tds[3].innerText;
+
+                if (user1.toUpperCase().indexOf(filter) > -1 || user2.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
         }
 
         // --- OVERVIEW & GRAPHS ---
@@ -524,83 +564,91 @@
         // --- HISTORY (SPLIT & UPDATED COLUMNS) ---
         function loadHistory() {
             // 1. Load Restaurant Donations
-            db.collection('donations').orderBy('createdAt', 'desc').limit(25).onSnapshot(snap => {
+            db.collection('donations').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
                 const tbody = document.getElementById('donation-history-body');
                 tbody.innerHTML = '';
-                if(snap.empty) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No donations yet.</td></tr>`;
-                
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
-                    const dateStr = dateObj.toLocaleDateString();
-                    const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    let statusColor = 'text-gray-500 bg-gray-100';
-                    if(data.status === 'Completed') statusColor = 'text-green-600 bg-green-50 border border-green-200';
-                    if(data.status === 'Claimed') statusColor = 'text-blue-600 bg-blue-50 border border-blue-200';
+                if(snap.empty) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No donations yet.</td></tr>`;
+                } else {
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                        const dateStr = dateObj.toLocaleDateString();
+                        const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        let statusColor = 'text-gray-500 bg-gray-100';
+                        if(data.status === 'Completed') statusColor = 'text-green-600 bg-green-50 border border-green-200';
+                        if(data.status === 'Claimed') statusColor = 'text-blue-600 bg-blue-50 border border-blue-200';
 
-                    const restHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Unknown'}</span>`;
-                    
-                    const acceptorId = data.claimedBy;
-                    const acceptorName = data.orphanageName || 'Pending...';
-                    const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
+                        const restHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Unknown'}</span>`;
+                        
+                        const acceptorId = data.claimedBy;
+                        const acceptorName = data.orphanageName || 'Pending...';
+                        const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
 
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
-                            <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
-                            <td class="px-4 py-3 text-sm">${restHtml}</td>
-                            <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
-                            <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
-                            <td class="px-4 py-3 text-center">
-                                <button onclick="confirmDeleteHistory('${doc.id}', 'donations')" class="text-gray-400 hover:text-red-500 transition-colors">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
+                                <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
+                                <td class="px-4 py-3 text-sm">${restHtml}</td>
+                                <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
+                                <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
+                                <td class="px-4 py-3 text-center">
+                                    <button onclick="confirmDeleteHistory('${doc.id}', 'donations')" class="text-gray-400 hover:text-red-500 transition-colors">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    // Re-apply filter if needed
+                    filterHistory();
+                }
             });
 
             // 2. Load Orphanage Requests
-            db.collection('requests').orderBy('createdAt', 'desc').limit(25).onSnapshot(snap => {
+            db.collection('requests').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
                 const tbody = document.getElementById('request-history-body');
                 tbody.innerHTML = '';
-                if(snap.empty) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No requests yet.</td></tr>`;
+                if(snap.empty) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No requests yet.</td></tr>`;
+                } else {
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                        const dateStr = dateObj.toLocaleDateString();
+                        const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        let statusColor = 'text-gray-500 bg-gray-100';
+                        if(data.status === 'Fulfilled') statusColor = 'text-green-600 bg-green-50 border border-green-200';
+                        if(data.status === 'Pending') statusColor = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
 
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
-                    const dateStr = dateObj.toLocaleDateString();
-                    const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    let statusColor = 'text-gray-500 bg-gray-100';
-                    if(data.status === 'Fulfilled') statusColor = 'text-green-600 bg-green-50 border border-green-200';
-                    if(data.status === 'Pending') statusColor = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
+                        const orphHtml = `<span onclick="openUserModal('${data.orphanageId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Unknown'}</span>`;
+                        
+                        const acceptorId = data.fulfilledBy;
+                        const acceptorName = data.restaurantName || 'Pending...';
+                        const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not fulfilled</span>`;
 
-                    const orphHtml = `<span onclick="openUserModal('${data.orphanageId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Unknown'}</span>`;
-                    
-                    const acceptorId = data.fulfilledBy;
-                    const acceptorName = data.restaurantName || 'Pending...';
-                    const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not fulfilled</span>`;
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
-                            <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
-                            <td class="px-4 py-3 text-sm">${orphHtml}</td>
-                            <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
-                            <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.itemNeeded} <span class="text-gray-400 font-normal">(${data.quantity})</span></td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
-                            <td class="px-4 py-3 text-center">
-                                <button onclick="confirmDeleteHistory('${doc.id}', 'requests')" class="text-gray-400 hover:text-red-500 transition-colors">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
+                                <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
+                                <td class="px-4 py-3 text-sm">${orphHtml}</td>
+                                <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
+                                <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.itemNeeded} <span class="text-gray-400 font-normal">(${data.quantity})</span></td>
+                                <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
+                                <td class="px-4 py-3 text-center">
+                                    <button onclick="confirmDeleteHistory('${doc.id}', 'requests')" class="text-gray-400 hover:text-red-500 transition-colors">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    // Re-apply filter if needed
+                    filterHistory();
+                }
             });
         }
 
