@@ -156,7 +156,6 @@
         </div>
     </div>
 
-    <!-- Same Firebase Script logic -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
@@ -170,7 +169,15 @@
             else { loginForm.classList.add('hidden'); signupForm.classList.remove('hidden'); tabSignup.className = "w-1/2 py-3 md:py-4 font-bold text-sm text-brand-green border-b-2 border-brand-green transition-colors hover:bg-gray-50"; tabLogin.className = "w-1/2 py-3 md:py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50"; }
         }
         function showMessage(msg, type) { const el = document.getElementById('auth-message'); el.innerText = msg; el.className = `text-center text-sm mt-4 block font-medium ${type === 'error' ? 'text-red-500' : 'text-green-600'}`; el.classList.remove('hidden'); }
-        function performRedirect(role) { const base = "https://foodbridge.qzz.io/"; setTimeout(() => { if (role === 'restaurant') window.location.href = base + "restaurant.html"; else if (role === 'orphanage') window.location.href = base + "orphanages.html"; else if (role === 'admin') window.location.href = base + "admin.html"; }, 1000); }
+        
+        function performRedirect(role) { 
+            const base = "https://foodbridge.qzz.io/"; 
+            setTimeout(() => { 
+                if (role === 'restaurant') window.location.href = base + "restaurant.html"; 
+                else if (role === 'orphanage') window.location.href = base + "orphanages.html"; 
+                else if (role === 'admin') window.location.href = base + "admin.html"; 
+            }, 1000); 
+        }
         
         async function handleGoogleLogin() { const provider = new firebase.auth.GoogleAuthProvider(); try { const result = await auth.signInWithPopup(provider); const user = result.user; const doc = await db.collection('users').doc(user.uid).get(); if (doc.exists) { const userData = doc.data(); if (userData.isDisabled === true) { showMessage("Your account has been disabled by Admin.", "error"); await firebase.auth().signOut(); return; } showMessage(`Welcome back, ${userData.name}!`, "success"); performRedirect(userData.role); } else { pendingGoogleUser = user; document.getElementById('google-role-modal').classList.remove('hidden'); } } catch (error) { console.error(error); showMessage(error.message, "error"); } }
         async function finalizeGoogleRole(role) { if (!pendingGoogleUser) return; const orgName = document.getElementById('google-org-name').value.trim(); if (!orgName) { alert("Please enter your Organization Name."); return; } try { await db.collection('users').doc(pendingGoogleUser.uid).set({ name: orgName, email: pendingGoogleUser.email, role: role, googleDisplayName: pendingGoogleUser.displayName, isDisabled: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); document.getElementById('google-role-modal').classList.add('hidden'); showMessage("Account setup complete!", "success"); performRedirect(role); } catch (error) { console.error(error); alert("Error saving role: " + error.message); } }
