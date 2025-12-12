@@ -194,24 +194,49 @@
         </div>
 
         <!-- TAB: REPORTS -->
-        <div id="tab-reports" class="hidden max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Issue Reports</h1>
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reporter (Orphanage)</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Against (Restaurant)</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reason</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reports-table-body" class="divide-y divide-gray-100"></tbody>
-                    </table>
+        <div id="tab-reports" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
+            
+            <!-- Pending Reports Block -->
+            <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md mb-4">Active Reports</h1>
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reporter (Orphanage)</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Against (Restaurant)</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reason</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- Resolved History Block -->
+            <div>
+                <h1 class="text-2xl font-bold text-white drop-shadow-md mb-4 opacity-90">Resolved History</h1>
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 opacity-95">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date Resolved</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Parties</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Original Issue</th>
+                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action Taken</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resolved-reports-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </main>
@@ -479,28 +504,66 @@
             });
         }
 
-        // --- REPORTS ---
+        // --- REPORTS (Split Pending vs Resolved) ---
         function loadReports() {
-            db.collection('donations').where('status', '==', 'Issue').orderBy('reportedAt', 'desc').onSnapshot(snap => {
-                const tbody = document.getElementById('reports-table-body');
-                tbody.innerHTML = '';
-                if(snap.empty) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No issues reported.</td></tr>`; return; }
+            db.collection('donations').onSnapshot(snap => {
+                const pendingTbody = document.getElementById('reports-table-body');
+                const resolvedTbody = document.getElementById('resolved-reports-body');
+                
+                pendingTbody.innerHTML = '';
+                resolvedTbody.innerHTML = '';
+
+                const pending = [];
+                const resolved = [];
 
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const date = data.reportedAt ? new Date(data.reportedAt.seconds * 1000).toLocaleDateString() : '-';
-                    const reporterHtml = `<span onclick="openUserModal('${data.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName}</span>`;
-                    const againstHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName}</span>`;
+                    if (data.status === 'Issue') {
+                        pending.push({ id: doc.id, ...data });
+                    } else if (data.status === 'Resolved') {
+                        resolved.push({ id: doc.id, ...data });
+                    }
+                });
 
-                    tbody.innerHTML += `
+                // Sort in memory
+                pending.sort((a, b) => (b.reportedAt?.seconds || 0) - (a.reportedAt?.seconds || 0));
+                resolved.sort((a, b) => (b.resolvedAt?.seconds || 0) - (a.resolvedAt?.seconds || 0));
+
+                if (pending.length === 0) pendingTbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No active issues.</td></tr>`;
+                if (resolved.length === 0) resolvedTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No resolved history.</td></tr>`;
+
+                // Render Pending
+                pending.forEach(item => {
+                    const date = item.reportedAt ? new Date(item.reportedAt.seconds * 1000).toLocaleDateString() : '-';
+                    const reporterHtml = `<span onclick="openUserModal('${item.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${item.orphanageName}</span>`;
+                    const againstHtml = `<span onclick="openUserModal('${item.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${item.restaurantName}</span>`;
+
+                    pendingTbody.innerHTML += `
                         <tr class="hover:bg-red-50/30 transition-colors">
                             <td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td>
                             <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${reporterHtml}</td>
                             <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${againstHtml}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-red-600 font-medium text-xs max-w-xs break-words">${data.reportReason || 'No reason provided'}</td>
+                            <td class="px-4 py-4 md:px-6 md:py-5 text-red-600 font-medium text-xs max-w-xs break-words">${item.reportReason || 'No reason provided'}</td>
                             <td class="px-4 py-4 md:px-6 md:py-5">
-                                <button onclick="openInvestigateModal('${doc.id}', '${data.reportReason}')" class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-200 transition font-bold">Investigate</button>
+                                <button onclick="openInvestigateModal('${item.id}', '${item.reportReason}')" class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-200 transition font-bold">Investigate</button>
                             </td>
+                        </tr>
+                    `;
+                });
+
+                // Render Resolved
+                resolved.forEach(item => {
+                    const date = item.resolvedAt ? new Date(item.resolvedAt.seconds * 1000).toLocaleDateString() : '-';
+                    resolvedTbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td>
+                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">
+                                <span class="block font-bold text-gray-700">${item.orphanageName}</span>
+                                <span class="text-xs text-gray-400">vs</span>
+                                <span class="block font-bold text-gray-700">${item.restaurantName}</span>
+                            </td>
+                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm text-gray-600">${item.reportReason || '-'}</td>
+                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg p-2 max-w-xs break-words">${item.adminAction || '-'}</td>
                         </tr>
                     `;
                 });
