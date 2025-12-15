@@ -236,10 +236,29 @@
 
         <!-- TAB: HISTORY -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
-                <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
-                    <span class="text-brand-orange font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
+                <div class="flex items-center gap-3">
+                    <!-- Notification Bell -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20">
+                            <i class="fa-solid fa-bell text-xl"></i>
+                            <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
+                        </button>
+                        <!-- Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
+                            <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
+                                <span>Notifications</span>
+                                <span class="text-[10px] text-gray-400 font-normal">Recent Updates</span>
+                            </div>
+                            <div id="notif-list" class="max-h-64 overflow-y-auto">
+                                <p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
+                        <span class="text-brand-orange font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
+                    </div>
                 </div>
             </div>
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
@@ -409,6 +428,80 @@
             // Auto close sidebar on mobile when tab clicked
             if (window.innerWidth < 768) {
                 toggleSidebar();
+            }
+        }
+
+        // --- NOTIFICATIONS LOGIC ---
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { 
+                    dropdown.classList.remove('opacity-0', 'scale-95'); 
+                    dropdown.classList.add('opacity-100', 'scale-100'); 
+                }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100');
+                dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function updateNotifications(snapshot) {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
+            const notifications = [];
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Check if specific timestamp exists, fallback to createdAt
+                const date = data.reportedAt || data.resolvedAt || data.createdAt; 
+                
+                if (data.status === 'Issue') {
+                    notifications.push({
+                        type: 'issue',
+                        text: `Issue reported: ${data.foodName}`,
+                        subtext: `Reason: ${data.reportReason || 'N/A'}`,
+                        time: date ? new Date(date.seconds * 1000) : new Date()
+                    });
+                } else if (data.status === 'Resolved') {
+                    notifications.push({
+                        type: 'resolved',
+                        text: `Issue Resolved: ${data.foodName}`,
+                        subtext: `Action: ${data.adminAction || 'Resolved by Admin'}`,
+                        time: date ? new Date(date.seconds * 1000) : new Date()
+                    });
+                }
+            });
+
+            // Sort by time desc
+            notifications.sort((a, b) => b.time - a.time);
+
+            if (notifications.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
+                list.innerHTML = '';
+                notifications.forEach(n => {
+                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500';
+                    const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
+                    const timeAgo = n.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    list.innerHTML += `
+                        <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-default">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">${n.text}</p>
+                                    <p class="text-xs text-gray-600 truncate max-w-[200px]">${n.subtext}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">${timeAgo}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                badge.classList.remove('hidden');
             }
         }
 
@@ -638,6 +731,9 @@
                 totalMeals = 0; 
                 let docCount = 0;
 
+                // CALL NOTIFICATION UPDATE
+                updateNotifications(snapshot);
+
                 if (snapshot.empty) { 
                     if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet. Post one above!</p>"; 
                     if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; 
@@ -655,6 +751,7 @@
                     if(data.status === 'Issue') statusBadge = `<span class="text-white bg-red-500 px-2 py-1 rounded-lg text-xs font-bold">Issue Reported</span>`;
                     if(data.status === 'Available') statusBadge = `<span class="text-brand-orange bg-orange-50 px-2 py-1 rounded-lg text-xs font-bold border border-orange-100">Available</span>`;
                     if(data.status === 'Claimed') statusBadge = `<span class="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg text-xs font-bold border border-indigo-100">Claimed</span>`;
+                    if(data.status === 'Resolved') statusBadge = `<span class="text-teal-600 bg-teal-50 px-2 py-1 rounded-lg text-xs font-bold border border-teal-100">Resolved</span>`;
 
 
                     const recipient = data.orphanageName || '-';
@@ -675,7 +772,7 @@
                 });
                 
                 const elMeals = document.getElementById('stat-meals'); if (elMeals) elMeals.innerText = totalMeals;
-                const elWaste = document.getElementById('stat-waste'); if (elWaste) elWaste.innerText = (totalMeals * 0.5).toFixed(1); // Estimation: 0.5kg saved per meal
+                const elWaste = document.getElementById('stat-waste'); if (elWaste) elWaste.innerText = (totalMeals * 0.5).toFixed(1); 
                 const elCount = document.getElementById('history-count'); if (elCount) elCount.innerText = docCount;
                 updateChart(totalMeals);
             });
