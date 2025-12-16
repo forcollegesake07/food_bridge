@@ -59,7 +59,7 @@
         input, select, textarea { font-size: 16px; } /* Prevents iOS zoom on focus */
         #map-container { height: 300px; z-index: 1; touch-action: pan-x pan-y; }
         
-        /* GPU Acceleration for animations */
+        /* GPU Acceleration */
         #sidebar, #mobile-menu, .transform-gpu { will-change: transform; transform: translateZ(0); }
     </style>
 </head>
@@ -67,18 +67,25 @@
 
     <div class="fixed-bg-layer"></div>
 
-    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
+    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <!-- SIDEBAR -->
-    <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-40 shadow-2xl h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 smooth-scroll-touch" id="sidebar">
-        <div class="p-6 md:p-8 flex items-center border-b border-gray-100">
-            <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
-                <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
+    <!-- SIDEBAR (Optimized for Mobile) -->
+    <!-- z-50 to stay on top, h-[100dvh] for mobile browsers -->
+    <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl h-[100dvh] md:h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 smooth-scroll-touch" id="sidebar">
+        <div class="p-6 md:p-8 flex items-center justify-between border-b border-gray-100">
+            <div class="flex items-center">
+                <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
+                    <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-brand-green">Bridge</span></span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
+                </div>
             </div>
-            <div>
-                <span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-brand-green">Bridge</span></span>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
-            </div>
+            <!-- Mobile Close Button -->
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition touch-manipulation">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
 
         <nav class="flex-grow p-4 md:p-6 space-y-2 md:space-y-3 overflow-y-auto smooth-scroll-touch">
@@ -221,7 +228,7 @@
                 </div>
                 <div class="p-5 md:p-6 space-y-4" id="recent-list"><p class="text-center text-gray-400 py-4">Loading activities...</p></div>
                 <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
-                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-orange hover:text-orange-700 transition active:scale-95 touch-manipulation">View Full History &rarr;</button>
+                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-orange hover:text-orange-700 transition active:scale-95">View Full History &rarr;</button>
                 </div>
             </div>
         </div>
@@ -246,7 +253,7 @@
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100 touch-manipulation">
+                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100">
                             <i class="fa-solid fa-bell text-xl"></i>
                             <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                         </button>
@@ -303,7 +310,7 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Restaurant Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
-                    <!-- Address & Map -->
+                    <!-- Updated Address & Map Section -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
                         <textarea id="detail-address" rows="2" enterkeyhint="done" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use the map below..."></textarea>
@@ -342,7 +349,10 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
         let pendingAction = null;
-        let map, marker, currentLat = 0, currentLng = 0;
+        
+        // Map Variables
+        let map, marker;
+        let currentLat = 0, currentLng = 0;
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -351,90 +361,220 @@
                 if (doc.exists) {
                     userData = doc.data();
                     if (userData.isDisable === true) { await auth.signOut(); window.location.href = 'https://foodbridge.qzz.io/login.html'; return; }
-                    if (userData.role !== 'restaurant') { if (userData.role === 'orphanage') window.location.href = 'orphanages.html'; else if (userData.role === 'admin') window.location.href = 'admin.html'; else window.location.href = 'login.html'; return; }
+                    if (userData.role !== 'restaurant') { 
+                        if (userData.role === 'orphanage') window.location.href = 'orphanages.html';
+                        else if (userData.role === 'admin') window.location.href = 'admin.html';
+                        else window.location.href = 'login.html';
+                        return;
+                    }
+                    
                     const navUser = document.getElementById('nav-username'); if (navUser) navUser.innerText = userData.name || "Restaurant";
                     const sbName = document.getElementById('sidebar-name'); if (sbName) sbName.innerText = userData.name || "Restaurant";
                     const sbId = document.getElementById('sidebar-id'); if (sbId) sbId.innerText = "ID: " + user.uid.slice(0, 6);
                     if(document.getElementById('detail-name')) document.getElementById('detail-name').value = userData.name || "";
                     if(document.getElementById('detail-phone')) document.getElementById('detail-phone').value = userData.phone || "";
                     if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
+                    
+                    // Initialize Coords if exist
                     if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
+
                     document.getElementById('tab-overview').classList.remove('hidden');
-                    loadData(); loadUrgentRequests(); loadActivePickups();
+                    loadData();
+                    loadUrgentRequests(); // This now uses location filtering
+                    loadActivePickups();
                 } else {
-                    userData = { name: "New Restaurant", phone: "", address: "" }; await db.collection('users').doc(user.uid).set(userData);
-                    document.getElementById('tab-overview').classList.remove('hidden'); loadData(); loadUrgentRequests(); loadActivePickups();
+                    userData = { name: "New Restaurant", phone: "", address: "" };
+                    await db.collection('users').doc(user.uid).set(userData);
+                    document.getElementById('tab-overview').classList.remove('hidden');
+                    loadData();
+                    loadUrgentRequests();
+                    loadActivePickups();
                 }
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
 
-        function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const backdrop = document.getElementById('sidebar-backdrop'); if (sidebar.classList.contains('-translate-x-full')) { sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden'); } else { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); } }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden');
+            }
+        }
+
         function switchTab(tab) {
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden'); const btn = document.getElementById('btn-' + t);
+                document.getElementById('tab-' + t).classList.add('hidden');
+                const btn = document.getElementById('btn-' + t);
                 btn.classList.remove('bg-brand-orange', 'text-white', 'shadow-md', 'bg-red-500');
-                if (t === 'alerts') { btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900'); btn.classList.add('text-gray-500', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100'); } 
-                else { btn.classList.remove('hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100'); btn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900'); }
+                if (t === 'alerts') {
+                    btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900');
+                    btn.classList.add('text-gray-500', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100');
+                } else {
+                    btn.classList.remove('hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100');
+                    btn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900');
+                }
             });
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
             activeBtn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'hover:border-red-100');
-            if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md'); else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
+            if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md');
+            else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
+            
             if (window.innerWidth < 768) toggleSidebar();
-            if (tab === 'details') setTimeout(initMap, 200);
+
+            // Initialize Map if Details tab selected
+            if (tab === 'details') {
+                setTimeout(initMap, 200); 
+            }
         }
 
+        // --- MAP LOGIC ---
         function initMap() {
-            if (map) { map.invalidateSize(); return; }
-            const lat = currentLat || 20.5937; const lng = currentLng || 78.9629; const zoom = currentLat ? 13 : 5;
+            if (map) { map.invalidateSize(); return; } // Already init
+
+            // Default to India Center or existing user loc
+            const lat = currentLat || 20.5937;
+            const lng = currentLng || 78.9629;
+            const zoom = currentLat ? 13 : 5;
+
             map = L.map('map-container').setView([lat, lng], zoom);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            marker.on('dragend', function(event) { const position = marker.getLatLng(); currentLat = position.lat; currentLng = position.lng; });
-            if (!currentLat) { map.locate({setView: true, maxZoom: 16}); map.on('locationfound', function(e) { currentLat = e.latlng.lat; currentLng = e.latlng.lng; marker.setLatLng(e.latlng); }); }
+
+            marker.on('dragend', function(event) {
+                const position = marker.getLatLng();
+                currentLat = position.lat;
+                currentLng = position.lng;
+            });
+            
+            // If user has no location, try to get current position
+            if (!currentLat) {
+                map.locate({setView: true, maxZoom: 16});
+                map.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat;
+                    currentLng = e.latlng.lng;
+                    marker.setLatLng(e.latlng);
+                });
+            }
         }
 
+        // --- DISTANCE CALCULATION (Haversine) ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
-            var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; 
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999; // Return huge distance if coords missing
+            var R = 6371; // Radius of the earth in km
+            var dLat = deg2rad(lat2-lat1);  // deg2rad below
+            var dLon = deg2rad(lon2-lon1); 
+            var a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            var d = R * c; // Distance in km
+            return d;
         }
+
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
-        function toggleNotifications() { const dropdown = document.getElementById('notif-dropdown'); if (dropdown.classList.contains('hidden')) { dropdown.classList.remove('hidden'); setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10); } else { dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95'); setTimeout(() => { dropdown.classList.add('hidden'); }, 300); } }
+        // --- NOTIFICATIONS LOGIC ---
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
+        }
+
         function updateNotifications(snapshot) {
-            const list = document.getElementById('notif-list'); const badge = document.getElementById('notif-badge'); const notifications = [];
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            const notifications = [];
             snapshot.forEach(doc => {
-                const data = doc.data(); const date = data.reportedAt || data.resolvedAt || data.createdAt; 
-                if (data.status === 'Issue') notifications.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: date ? new Date(date.seconds * 1000) : new Date() });
-                else if (data.status === 'Resolved') notifications.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: date ? new Date(date.seconds * 1000) : new Date() });
+                const data = doc.data();
+                const date = data.reportedAt || data.resolvedAt || data.createdAt; 
+                if (data.status === 'Issue') {
+                    notifications.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: date ? new Date(date.seconds * 1000) : new Date() });
+                } else if (data.status === 'Resolved') {
+                    notifications.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: date ? new Date(date.seconds * 1000) : new Date() });
+                }
             });
             notifications.sort((a, b) => b.time - a.time);
             if (notifications.length === 0) { list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>'; badge.classList.add('hidden'); } 
             else {
                 list.innerHTML = '';
                 notifications.forEach(n => {
-                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500'; const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
+                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500';
+                    const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
                     list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.text}</p><p class="text-xs text-gray-600 truncate">${n.subtext}</p></div></div></div>`;
                 });
                 badge.classList.remove('hidden');
             }
         }
 
+        // --- URGENT REQUESTS LOGIC (With Radius Filter 15km) ---
         function loadUrgentRequests() {
             db.collection('requests').where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('requests-container'); if(!container) return; container.innerHTML = '';
-                let visibleCount = 0; const myLat = userData.location?.lat; const myLng = userData.location?.lng;
-                if (!myLat) { container.innerHTML = "<div class='col-span-full text-center py-10 bg-red-50 rounded-2xl border border-red-100 text-red-500'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Required</p><p class='text-sm'>Please set your location in 'Details' to see nearby requests.</p></div>"; return; }
+                const container = document.getElementById('requests-container');
+                if(!container) return;
+                container.innerHTML = '';
+                
+                let visibleCount = 0;
+
+                // Check if user has location set
+                const myLat = userData.location?.lat;
+                const myLng = userData.location?.lng;
+
+                if (!myLat) {
+                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-red-50 rounded-2xl border border-red-100 text-red-500'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Required</p><p class='text-sm'>Please set your location in the 'Details' tab to see nearby requests.</p></div>"; 
+                    return;
+                }
+
                 snap.forEach(doc => {
-                    const d = doc.data(); const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
-                    if (dist <= 15) {
-                        visibleCount++; const distStr = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
-                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4><p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'N/A'}</p><p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'N/A'}</p></div><button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation"><span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i></button></div>`;
+                    const d = doc.data();
+                    
+                    // Filter by Radius (15km)
+                    const reqLat = d.location?.lat;
+                    const reqLng = d.location?.lng;
+                    const distance = getDistanceFromLatLonInKm(myLat, myLng, reqLat, reqLng);
+                    
+                    if (distance <= 15) {
+                        visibleCount++;
+                        const distStr = distance < 1 ? "< 1 km" : distance.toFixed(1) + " km";
+                        
+                        const cardHtml = `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300">
+                                            <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div>
+                                            <div class="flex justify-between items-start mb-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div>
+                                                    <div>
+                                                        <h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4>
+                                                        <p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p>
+                                                <p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'Address not listed'}</p>
+                                                <p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'Phone not listed'}</p>
+                                            </div>
+                                            <button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation">
+                                                <span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i>
+                                            </button>
+                                        </div>`;
+                        container.innerHTML += cardHtml;
                     }
                 });
-                if(visibleCount === 0) container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-check-circle text-4xl mb-2'></i><p class='font-medium'>No urgent requests within 15km.</p></div>";
+
+                if(visibleCount === 0) {
+                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-check-circle text-4xl mb-2'></i><p class='font-medium'>No urgent requests within 15km.</p></div>";
+                }
             });
         }
 
