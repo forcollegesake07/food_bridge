@@ -582,11 +582,50 @@
                     await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null });
                     showToast("Posted!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); btn.innerHTML = org; btn.disabled = false;
                 } else if (pendingAction.type === 'fulfill') {
-                    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
-                    const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
-                    await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
-                    showToast(`Reserved ${item}.`); switchTab('history');
+    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
+    try {
+        const reqDoc = await db.collection('requests').doc(reqId).get();
+        const reqData = reqDoc.data();
+
+        // Database Updates (Keep existing)
+        await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await db.collection('donations').add({
+            restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone,
+            foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null
+        });
+
+        // --- EMAIL LOGIC: CONFIRMATION ---
+        
+        // 1. Email to Orphanage
+        const orphSubject = "Food Request Accepted! - FoodBridge";
+        const orphBody = `
+            <h2>Good News, ${orphName}!</h2>
+            <p><strong>${userData.name}</strong> has accepted your request for <strong>${item} (${qty})</strong>.</p>
+            <p><strong>Pickup Address:</strong> ${userData.address}</p>
+            <p><strong>Phone:</strong> ${userData.phone}</p>
+            <p>Please arrange pickup immediately.</p>
+        `;
+        // Check if orphanage email exists in request data, otherwise skip
+        if(reqData.orphanageEmail) sendEmail(reqData.orphanageEmail, orphName, orphSubject, orphBody);
+
+        // 2. Email to Restaurant (Self)
+        const restSubject = "Fulfillment Confirmed - FoodBridge";
+        const restBody = `
+            <h2>Commitment Confirmed</h2>
+            <p>You have agreed to provide <strong>${item}</strong> to <strong>${orphName}</strong>.</p>
+            <p>They have been notified and will contact you shortly.</p>
+        `;
+        if(currentUser.email) sendEmail(currentUser.email, userData.name, restSubject, restBody);
+        
+        // --- END EMAIL LOGIC ---
+
+        showToast(`Successfully reserved ${item}.`);
+        switchTab('history');
+    } catch (e) {
+        console.error("Fulfillment Error:", e);
+        showToast("Error: " + e.message, 'error');
+    }
+}
                 } else if (pendingAction.type === 'deleteDonation') {
                     await db.collection('donations').doc(pendingAction.data.id).delete();
                     showToast("Listing deleted.");
@@ -629,6 +668,41 @@
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }); }
         let myChart; function updateChart(userTotal) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals', data: [avg, userTotal], backgroundColor: ['#D1D5DB', '#F97316'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
+        // --- BREVO EMAIL SYSTEM ---
+const BREVO_API_KEY = "xsmtpsib-12fafa3dab925376ea8c1d275d1cfb321311d72cf5b8236422f8391b7d4ab2bb-VFsgfmpf194AyIte"; // PASTE YOUR KEY HERE
+const SENDER_EMAIL = "forcollegesake07@gmail.com"; // MUST be verified in Brevo
+const SENDER_NAME = "FoodBridge";
+
+async function sendEmail(toEmail, toName, subject, htmlContent) {
+    const url = "https://api.brevo.com/v3/smtp/email";
+    
+    const data = {
+        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+        to: [{ email: toEmail, name: toName }],
+        subject: subject,
+        htmlContent: htmlContent
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'api-key': BREVO_API_KEY
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            console.log("Email sent successfully to", toEmail);
+        } else {
+            console.error("Brevo Error:", await response.json());
+        }
+    } catch (error) {
+        console.error("Network Error sending email:", error);
+    }
+}
     </script>
 </body>
 </html>
