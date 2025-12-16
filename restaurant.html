@@ -2,19 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimized Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Restaurant Dashboard | FoodBridge</title>
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
-    <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Leaflet Map -->
+    <!-- Leaflet CSS & JS for Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
@@ -56,22 +54,18 @@
         html { -webkit-text-size-adjust: 100%; }
         input, select, textarea { font-size: 16px; } 
         #map-container { height: 300px; z-index: 1; touch-action: pan-x pan-y; }
-        
-        /* Hardware Acceleration Classes */
-        .transform-gpu { will-change: transform; transform: translateZ(0); }
+        #sidebar, .transform-gpu { will-change: transform; transform: translateZ(0); }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-brand-orange selection:text-white">
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- SIDEBAR BACKDROP (Mobile Only) -->
+    <!-- SIDEBAR BACKDROP -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
     <!-- SIDEBAR -->
-    <!-- Fixed on Mobile (Off-canvas), Relative/Flex on Desktop -->
-    <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:h-full flex-shrink-0 smooth-scroll-touch" id="sidebar">
-        
+    <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative md:h-auto smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center justify-between border-b border-gray-100">
             <div class="flex items-center">
                 <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -82,8 +76,8 @@
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
                 </div>
             </div>
-            <!-- Close Button (Mobile Only) -->
-            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition touch-manipulation">
+            <!-- Close Button for Mobile -->
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
         </div>
@@ -144,9 +138,9 @@
                 </button>
             </div>
 
-            <!-- Active Listings & Scheduled Pickups -->
+            <!-- Active Listings Block -->
             <div id="scheduled-pickups-container" class="space-y-4">
-                <!-- Dynamically populated by JS -->
+                <!-- Dynamically populated -->
             </div>
 
             <!-- Post Donation Form -->
@@ -181,7 +175,7 @@
                             <img id="image-preview" class="hidden w-full h-20 object-cover rounded-lg mx-auto relative z-10">
                         </div>
 
-                        <button type="submit" id="btn-submit" class="w-full py-4 bg-brand-orange text-white font-bold text-base md:text-lg rounded-xl shadow-md hover:bg-orange-600 hover:shadow-lg transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 touch-manipulation">
+                        <button type="submit" id="btn-submit" class="w-full py-4 bg-brand-orange text-white font-bold text-base md:text-lg rounded-xl shadow-md hover:bg-orange-600 hover:shadow-lg transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation">
                             <span>Post Donation</span>
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -314,7 +308,7 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Restaurant Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
-                    <!-- Address & Map -->
+                    <!-- Updated Address & Map Section -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
                         <textarea id="detail-address" rows="2" enterkeyhint="done" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use the map below..."></textarea>
@@ -354,6 +348,7 @@
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
         let pendingAction = null;
         
+        // Map Variables
         let map, marker;
         let currentLat = 0, currentLng = 0;
 
@@ -395,7 +390,6 @@
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
 
-        // Fixed Toggle Logic
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
@@ -409,7 +403,6 @@
             }
         }
 
-        // Updated switchTab
         function switchTab(tab) {
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
@@ -429,7 +422,7 @@
             if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md');
             else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
             
-            // Only close sidebar if it is currently OPEN and screen is mobile
+            // Fixed Logic: Only toggle sidebar if it's currently open AND on mobile
             const sidebar = document.getElementById('sidebar');
             if (window.innerWidth < 768 && !sidebar.classList.contains('-translate-x-full')) {
                 toggleSidebar();
@@ -438,6 +431,7 @@
             if (tab === 'details') { setTimeout(initMap, 200); }
         }
 
+        // --- MAP LOGIC ---
         function initMap() {
             if (map) { map.invalidateSize(); return; }
             const lat = currentLat || 20.5937;
@@ -471,6 +465,7 @@
 
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
+        // --- NOTIFICATIONS LOGIC ---
         function toggleNotifications() {
             const dropdown = document.getElementById('notif-dropdown');
             if (dropdown.classList.contains('hidden')) {
@@ -508,6 +503,7 @@
             }
         }
 
+        // --- URGENT REQUESTS LOGIC (With Radius Filter 15km) ---
         function loadUrgentRequests() {
             db.collection('requests').where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('requests-container');
@@ -531,6 +527,7 @@
             });
         }
 
+        // Modified to handle Active Listings (Claimed + Available)
         function loadActivePickups() {
             db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('scheduled-pickups-container'); if(!container) return; container.innerHTML = '';
@@ -561,7 +558,7 @@
             } else if (type === 'fulfill') {
                 btn.innerText = 'Confirm'; btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-truck-fast";
-            } else {
+            } else { // Donate
                 btn.innerText = 'Post'; btn.className = "flex-1 py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-orange/10 text-brand-orange rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-hand-holding-heart";
             }
@@ -582,50 +579,11 @@
                     await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null });
                     showToast("Posted!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); btn.innerHTML = org; btn.disabled = false;
                 } else if (pendingAction.type === 'fulfill') {
-    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
-    try {
-        const reqDoc = await db.collection('requests').doc(reqId).get();
-        const reqData = reqDoc.data();
-
-        // Database Updates (Keep existing)
-        await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
-        await db.collection('donations').add({
-            restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone,
-            foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null
-        });
-
-        // --- EMAIL LOGIC: CONFIRMATION ---
-        
-        // 1. Email to Orphanage
-        const orphSubject = "Food Request Accepted! - FoodBridge";
-        const orphBody = `
-            <h2>Good News, ${orphName}!</h2>
-            <p><strong>${userData.name}</strong> has accepted your request for <strong>${item} (${qty})</strong>.</p>
-            <p><strong>Pickup Address:</strong> ${userData.address}</p>
-            <p><strong>Phone:</strong> ${userData.phone}</p>
-            <p>Please arrange pickup immediately.</p>
-        `;
-        // Check if orphanage email exists in request data, otherwise skip
-        if(reqData.orphanageEmail) sendEmail(reqData.orphanageEmail, orphName, orphSubject, orphBody);
-
-        // 2. Email to Restaurant (Self)
-        const restSubject = "Fulfillment Confirmed - FoodBridge";
-        const restBody = `
-            <h2>Commitment Confirmed</h2>
-            <p>You have agreed to provide <strong>${item}</strong> to <strong>${orphName}</strong>.</p>
-            <p>They have been notified and will contact you shortly.</p>
-        `;
-        if(currentUser.email) sendEmail(currentUser.email, userData.name, restSubject, restBody);
-        
-        // --- END EMAIL LOGIC ---
-
-        showToast(`Successfully reserved ${item}.`);
-        switchTab('history');
-    } catch (e) {
-        console.error("Fulfillment Error:", e);
-        showToast("Error: " + e.message, 'error');
-    }
-}
+                    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
+                    const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
+                    await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
+                    showToast(`Reserved ${item}.`); switchTab('history');
                 } else if (pendingAction.type === 'deleteDonation') {
                     await db.collection('donations').doc(pendingAction.data.id).delete();
                     showToast("Listing deleted.");
@@ -668,41 +626,6 @@
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }); }
         let myChart; function updateChart(userTotal) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals', data: [avg, userTotal], backgroundColor: ['#D1D5DB', '#F97316'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
-        // --- BREVO EMAIL SYSTEM ---
-const BREVO_API_KEY = "xsmtpsib-12fafa3dab925376ea8c1d275d1cfb321311d72cf5b8236422f8391b7d4ab2bb-VFsgfmpf194AyIte"; // PASTE YOUR KEY HERE
-const SENDER_EMAIL = "forcollegesake07@gmail.com"; // MUST be verified in Brevo
-const SENDER_NAME = "FoodBridge";
-
-async function sendEmail(toEmail, toName, subject, htmlContent) {
-    const url = "https://api.brevo.com/v3/smtp/email";
-    
-    const data = {
-        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
-        to: [{ email: toEmail, name: toName }],
-        subject: subject,
-        htmlContent: htmlContent
-    };
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'content-type': 'application/json',
-                'api-key': BREVO_API_KEY
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-            console.log("Email sent successfully to", toEmail);
-        } else {
-            console.error("Brevo Error:", await response.json());
-        }
-    } catch (error) {
-        console.error("Network Error sending email:", error);
-    }
-}
     </script>
 </body>
 </html>
