@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimized Viewport: Disables user scaling for app-like feel -->
+    <!-- Optimized Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Restaurant Dashboard | FoodBridge</title>
     <!-- Favicon -->
@@ -42,45 +42,34 @@
         }
     </script>
     <style>
-        /* Mobile Performance Optimizations */
-        * { -webkit-tap-highlight-color: transparent; } /* Removes gray tap box on mobile */
+        /* Mobile Optimization Rules */
+        * { -webkit-tap-highlight-color: transparent; }
         
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
-            will-change: transform; /* Hardware acceleration hint */
+            will-change: transform;
         }
-
-        /* Smooth scrolling for iOS */
+        
         .smooth-scroll-touch { -webkit-overflow-scrolling: touch; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* Prevent elastic bounce on iOS */
         body { overscroll-behavior-y: none; }
-        
-        /* Prevent text resizing on orientation change */
         html { -webkit-text-size-adjust: 100%; }
-
-        /* Fix mobile input zoom */
-        input, select, textarea { font-size: 16px; }
-        
-        /* Map Container Height */
+        input, select, textarea { font-size: 16px; } /* Prevents iOS zoom on focus */
         #map-container { height: 300px; z-index: 1; touch-action: pan-x pan-y; }
-
-        /* Hardware acceleration for animations */
-        #sidebar, #mobile-menu, .transform-gpu { will-change: transform; }
+        
+        /* GPU Acceleration for animations */
+        #sidebar, #mobile-menu, .transform-gpu { will-change: transform; transform: translateZ(0); }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-brand-orange selection:text-white">
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- MOBILE SIDEBAR BACKDROP -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <!-- SIDEBAR NAVIGATION -->
+    <!-- SIDEBAR -->
     <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-40 shadow-2xl h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center border-b border-gray-100">
             <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -133,7 +122,6 @@
     </div>
 
     <!-- MAIN CONTENT AREA -->
-    <!-- Added smooth scrolling and optimized padding for mobile -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full smooth-scroll-touch" id="main-scroll-container">
         
         <!-- TAB: OVERVIEW -->
@@ -149,7 +137,7 @@
                 </button>
             </div>
 
-            <!-- Scheduled Pickups Block -->
+            <!-- Active Listings Block -->
             <div id="scheduled-pickups-container" class="space-y-4"></div>
 
             <!-- Post Donation Form -->
@@ -233,7 +221,7 @@
                 </div>
                 <div class="p-5 md:p-6 space-y-4" id="recent-list"><p class="text-center text-gray-400 py-4">Loading activities...</p></div>
                 <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
-                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-orange hover:text-orange-700 transition active:scale-95">View Full History &rarr;</button>
+                    <button onclick="switchTab('history')" class="text-sm font-bold text-brand-orange hover:text-orange-700 transition active:scale-95 touch-manipulation">View Full History &rarr;</button>
                 </div>
             </div>
         </div>
@@ -258,7 +246,7 @@
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100">
+                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100 touch-manipulation">
                             <i class="fa-solid fa-bell text-xl"></i>
                             <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                         </button>
@@ -288,6 +276,7 @@
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Recipient</th>
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Contact Info</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -314,7 +303,7 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Restaurant Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
-                    <!-- Updated Address & Map Section -->
+                    <!-- Address & Map -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
                         <textarea id="detail-address" rows="2" enterkeyhint="done" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use the map below..."></textarea>
@@ -353,10 +342,7 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
         let pendingAction = null;
-        
-        // Map Variables
-        let map, marker;
-        let currentLat = 0, currentLng = 0;
+        let map, marker, currentLat = 0, currentLng = 0;
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -365,361 +351,194 @@
                 if (doc.exists) {
                     userData = doc.data();
                     if (userData.isDisable === true) { await auth.signOut(); window.location.href = 'https://foodbridge.qzz.io/login.html'; return; }
-                    if (userData.role !== 'restaurant') { 
-                        if (userData.role === 'orphanage') window.location.href = 'orphanages.html';
-                        else if (userData.role === 'admin') window.location.href = 'admin.html';
-                        else window.location.href = 'login.html';
-                        return;
-                    }
-                    
+                    if (userData.role !== 'restaurant') { if (userData.role === 'orphanage') window.location.href = 'orphanages.html'; else if (userData.role === 'admin') window.location.href = 'admin.html'; else window.location.href = 'login.html'; return; }
                     const navUser = document.getElementById('nav-username'); if (navUser) navUser.innerText = userData.name || "Restaurant";
                     const sbName = document.getElementById('sidebar-name'); if (sbName) sbName.innerText = userData.name || "Restaurant";
                     const sbId = document.getElementById('sidebar-id'); if (sbId) sbId.innerText = "ID: " + user.uid.slice(0, 6);
                     if(document.getElementById('detail-name')) document.getElementById('detail-name').value = userData.name || "";
                     if(document.getElementById('detail-phone')) document.getElementById('detail-phone').value = userData.phone || "";
                     if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
-                    
-                    // Initialize Coords if exist
                     if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
-
                     document.getElementById('tab-overview').classList.remove('hidden');
-                    loadData();
-                    loadUrgentRequests(); // This now uses location filtering
-                    loadActivePickups();
+                    loadData(); loadUrgentRequests(); loadActivePickups();
                 } else {
-                    userData = { name: "New Restaurant", phone: "", address: "" };
-                    await db.collection('users').doc(user.uid).set(userData);
-                    document.getElementById('tab-overview').classList.remove('hidden');
-                    loadData();
-                    loadUrgentRequests();
-                    loadActivePickups();
+                    userData = { name: "New Restaurant", phone: "", address: "" }; await db.collection('users').doc(user.uid).set(userData);
+                    document.getElementById('tab-overview').classList.remove('hidden'); loadData(); loadUrgentRequests(); loadActivePickups();
                 }
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden');
-            }
-        }
-
+        function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const backdrop = document.getElementById('sidebar-backdrop'); if (sidebar.classList.contains('-translate-x-full')) { sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden'); } else { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); } }
         function switchTab(tab) {
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                const btn = document.getElementById('btn-' + t);
+                document.getElementById('tab-' + t).classList.add('hidden'); const btn = document.getElementById('btn-' + t);
                 btn.classList.remove('bg-brand-orange', 'text-white', 'shadow-md', 'bg-red-500');
-                if (t === 'alerts') {
-                    btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900');
-                    btn.classList.add('text-gray-500', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100');
-                } else {
-                    btn.classList.remove('hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100');
-                    btn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900');
-                }
+                if (t === 'alerts') { btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900'); btn.classList.add('text-gray-500', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100'); } 
+                else { btn.classList.remove('hover:bg-red-50', 'hover:text-red-500', 'border', 'border-transparent', 'hover:border-red-100'); btn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900'); }
             });
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
             activeBtn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-red-50', 'hover:text-red-500', 'border', 'hover:border-red-100');
-            if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md');
-            else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
-            
+            if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md'); else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
             if (window.innerWidth < 768) toggleSidebar();
-
-            // Initialize Map if Details tab selected
-            if (tab === 'details') {
-                setTimeout(initMap, 200); 
-            }
+            if (tab === 'details') setTimeout(initMap, 200);
         }
 
-        // --- MAP LOGIC ---
         function initMap() {
-            if (map) { map.invalidateSize(); return; } // Already init
-
-            // Default to India Center or existing user loc
-            const lat = currentLat || 20.5937;
-            const lng = currentLng || 78.9629;
-            const zoom = currentLat ? 13 : 5;
-
+            if (map) { map.invalidateSize(); return; }
+            const lat = currentLat || 20.5937; const lng = currentLng || 78.9629; const zoom = currentLat ? 13 : 5;
             map = L.map('map-container').setView([lat, lng], zoom);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-
-            marker.on('dragend', function(event) {
-                const position = marker.getLatLng();
-                currentLat = position.lat;
-                currentLng = position.lng;
-            });
-            
-            // If user has no location, try to get current position
-            if (!currentLat) {
-                map.locate({setView: true, maxZoom: 16});
-                map.on('locationfound', function(e) {
-                    currentLat = e.latlng.lat;
-                    currentLng = e.latlng.lng;
-                    marker.setLatLng(e.latlng);
-                });
-            }
+            marker.on('dragend', function(event) { const position = marker.getLatLng(); currentLat = position.lat; currentLng = position.lng; });
+            if (!currentLat) { map.locate({setView: true, maxZoom: 16}); map.on('locationfound', function(e) { currentLat = e.latlng.lat; currentLng = e.latlng.lng; marker.setLatLng(e.latlng); }); }
         }
 
-        // --- DISTANCE CALCULATION (Haversine) ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999; // Return huge distance if coords missing
-            var R = 6371; // Radius of the earth in km
-            var dLat = deg2rad(lat2-lat1);  // deg2rad below
-            var dLon = deg2rad(lon2-lon1); 
-            var a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            var d = R * c; // Distance in km
-            return d;
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
+            var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; 
         }
-
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
-        // --- NOTIFICATIONS LOGIC ---
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notif-dropdown');
-            if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
-            } else {
-                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
-            }
-        }
-
+        function toggleNotifications() { const dropdown = document.getElementById('notif-dropdown'); if (dropdown.classList.contains('hidden')) { dropdown.classList.remove('hidden'); setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10); } else { dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95'); setTimeout(() => { dropdown.classList.add('hidden'); }, 300); } }
         function updateNotifications(snapshot) {
-            const list = document.getElementById('notif-list');
-            const badge = document.getElementById('notif-badge');
-            const notifications = [];
+            const list = document.getElementById('notif-list'); const badge = document.getElementById('notif-badge'); const notifications = [];
             snapshot.forEach(doc => {
-                const data = doc.data();
-                const date = data.reportedAt || data.resolvedAt || data.createdAt; 
-                if (data.status === 'Issue') {
-                    notifications.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: date ? new Date(date.seconds * 1000) : new Date() });
-                } else if (data.status === 'Resolved') {
-                    notifications.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: date ? new Date(date.seconds * 1000) : new Date() });
-                }
+                const data = doc.data(); const date = data.reportedAt || data.resolvedAt || data.createdAt; 
+                if (data.status === 'Issue') notifications.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: date ? new Date(date.seconds * 1000) : new Date() });
+                else if (data.status === 'Resolved') notifications.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: date ? new Date(date.seconds * 1000) : new Date() });
             });
             notifications.sort((a, b) => b.time - a.time);
             if (notifications.length === 0) { list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>'; badge.classList.add('hidden'); } 
             else {
                 list.innerHTML = '';
                 notifications.forEach(n => {
-                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500';
-                    const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
+                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500'; const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
                     list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.text}</p><p class="text-xs text-gray-600 truncate">${n.subtext}</p></div></div></div>`;
                 });
                 badge.classList.remove('hidden');
             }
         }
 
-        // --- URGENT REQUESTS LOGIC (With Radius Filter 15km) ---
         function loadUrgentRequests() {
             db.collection('requests').where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('requests-container');
-                if(!container) return;
-                container.innerHTML = '';
-                
-                let visibleCount = 0;
-
-                // Check if user has location set
-                const myLat = userData.location?.lat;
-                const myLng = userData.location?.lng;
-
-                if (!myLat) {
-                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-red-50 rounded-2xl border border-red-100 text-red-500'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Required</p><p class='text-sm'>Please set your location in the 'Details' tab to see nearby requests.</p></div>"; 
-                    return;
-                }
-
+                const container = document.getElementById('requests-container'); if(!container) return; container.innerHTML = '';
+                let visibleCount = 0; const myLat = userData.location?.lat; const myLng = userData.location?.lng;
+                if (!myLat) { container.innerHTML = "<div class='col-span-full text-center py-10 bg-red-50 rounded-2xl border border-red-100 text-red-500'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Required</p><p class='text-sm'>Please set your location in 'Details' to see nearby requests.</p></div>"; return; }
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    
-                    // Filter by Radius (15km)
-                    const reqLat = d.location?.lat;
-                    const reqLng = d.location?.lng;
-                    const distance = getDistanceFromLatLonInKm(myLat, myLng, reqLat, reqLng);
-                    
-                    if (distance <= 15) {
-                        visibleCount++;
-                        const distStr = distance < 1 ? "< 1 km" : distance.toFixed(1) + " km";
-                        
-                        const cardHtml = `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300">
-                                            <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div>
-                                            <div class="flex justify-between items-start mb-4">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div>
-                                                    <div>
-                                                        <h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4>
-                                                        <p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                <p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p>
-                                                <p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'Address not listed'}</p>
-                                                <p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'Phone not listed'}</p>
-                                            </div>
-                                            <button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation">
-                                                <span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i>
-                                            </button>
-                                        </div>`;
-                        container.innerHTML += cardHtml;
+                    const d = doc.data(); const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
+                    if (dist <= 15) {
+                        visibleCount++; const distStr = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
+                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4><p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'N/A'}</p><p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'N/A'}</p></div><button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation"><span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i></button></div>`;
                     }
                 });
-
-                if(visibleCount === 0) {
-                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-check-circle text-4xl mb-2'></i><p class='font-medium'>No urgent requests within 15km.</p></div>";
-                }
+                if(visibleCount === 0) container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-check-circle text-4xl mb-2'></i><p class='font-medium'>No urgent requests within 15km.</p></div>";
             });
         }
 
-        // --- ACTIVE PICKUPS ---
+        // Modified to handle Active Listings (Claimed + Available)
         function loadActivePickups() {
-            db.collection('donations').where('restaurantId', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
-                const container = document.getElementById('scheduled-pickups-container');
-                if(!container) return;
-                container.innerHTML = '';
-                if(snap.empty) { container.innerHTML = `<div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center text-orange-600 text-sm font-medium">No scheduled pickups currently. Post a donation!</div>`; return; }
+            db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
+                const container = document.getElementById('scheduled-pickups-container'); if(!container) return; container.innerHTML = '';
+                let activeCount = 0;
                 snap.forEach(doc => {
                     const d = doc.data();
-                    container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> Pickup Scheduled</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.orphanageAddress || 'N/A'}</p></div></div><div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center border border-green-100">Waiting for orphanage confirmation...</div></div>`;
+                    if(d.status === 'Available') {
+                        activeCount++;
+                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-brand-orange relative mb-4"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-box-open text-brand-orange mr-2"></i> Available Listing</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div></div><div class="text-sm text-gray-500 italic bg-orange-50 p-2 rounded text-center border border-orange-100 mb-3">Waiting for claim...</div><button onclick="confirmDeleteDonation('${doc.id}')" class="w-full py-2 bg-red-100 text-red-600 font-bold rounded-xl hover:bg-red-200 transition-colors flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-trash-can"></i> Delete Listing</button></div>`;
+                    } else if(d.status === 'Claimed') {
+                        activeCount++;
+                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative mb-4"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> Pickup Scheduled</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.orphanageAddress || 'N/A'}</p></div></div><div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center border border-green-100">Waiting for orphanage confirmation...</div></div>`;
+                    }
                 });
+                if(activeCount === 0) container.innerHTML = `<div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center text-orange-600 text-sm font-medium">No active listings. Post a donation!</div>`;
             });
         }
 
-        // --- NEW CONFIRMATION LOGIC ---
+        function confirmDeleteDonation(id) { pendingAction = { type: 'deleteDonation', data: { id } }; showConfirmModal("Delete Listing", "Are you sure you want to delete this available food listing?", 'delete'); }
+
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
-            const content = document.getElementById('confirm-modal-content');
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
-            const btn = document.getElementById('confirm-yes-btn');
-            const icon = document.getElementById('confirm-icon');
-            const iconContainer = document.getElementById('confirm-icon-container');
-
-            if (type === 'fulfill') {
-                btn.innerText = 'Confirm Fulfillment'; btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
+            document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
+            const btn = document.getElementById('confirm-yes-btn'); const iconContainer = document.getElementById('confirm-icon-container'); const icon = document.getElementById('confirm-icon');
+            if (type === 'delete') {
+                btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation"; btn.innerText = "Delete";
+                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-trash-can";
+            } else if (type === 'fulfill') {
+                btn.innerText = 'Confirm'; btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-truck-fast";
-            } else if (type === 'donate') {
-                btn.innerText = 'Post Donation'; btn.className = "flex-1 py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
+            } else { // Donate
+                btn.innerText = 'Post'; btn.className = "flex-1 py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-orange/10 text-brand-orange rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-hand-holding-heart";
             }
-            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); modal.querySelector('div').classList.add('scale-100'); }, 10);
         }
 
-        function closeConfirmModal() {
-            const modal = document.getElementById('confirm-modal');
-            const content = document.getElementById('confirm-modal-content');
-            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300);
-        }
+        function closeConfirmModal() { const modal = document.getElementById('confirm-modal'); modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300); }
 
-        function initiateDonation(e) {
-            e.preventDefault();
-            const name = document.getElementById('food-name').value;
-            const qty = document.getElementById('food-qty').value;
-            if(!userData.address || !userData.phone) { showToast("Please update your Address and Phone in the Details tab first!", 'error'); switchTab('details'); return; }
-            if (!name || !qty) return;
-            pendingAction = { type: 'donate', data: { name, qty, form: e.target } };
-            showConfirmModal("Confirm Donation", `Donate ${qty} servings of ${name}? This will be posted immediately for pickup.`, 'donate');
-        }
-
-        function initiateFulfillment(reqId, item, qty, orphId, orphName) {
-            if(!userData.address || !userData.phone) { showToast("Please update your details in the Details tab first!", 'error'); switchTab('details'); return; }
-            pendingAction = { type: 'fulfill', data: { reqId, item, qty, orphId, orphName } };
-            showConfirmModal("Confirm Fulfillment", `Fulfill request for ${qty} ${item} from ${orphName}?`, 'fulfill');
-        }
+        function initiateDonation(e) { e.preventDefault(); const name = document.getElementById('food-name').value; const qty = document.getElementById('food-qty').value; if(!userData.address || !userData.phone) { showToast("Update Address/Phone in Details tab first!", 'error'); switchTab('details'); return; } if (!name || !qty) return; pendingAction = { type: 'donate', data: { name, qty, form: e.target } }; showConfirmModal("Confirm Donation", `Donate ${qty} servings of ${name}?`, 'donate'); }
+        function initiateFulfillment(reqId, item, qty, orphId, orphName) { if(!userData.address || !userData.phone) { showToast("Update details first!", 'error'); switchTab('details'); return; } pendingAction = { type: 'fulfill', data: { reqId, item, qty, orphId, orphName } }; showConfirmModal("Confirm Fulfillment", `Fulfill request for ${qty} ${item}?`, 'fulfill'); }
 
         async function executeAction() {
-            if (!pendingAction) return;
-            closeConfirmModal();
-            if (pendingAction.type === 'donate') {
-                const { name, qty, form } = pendingAction.data;
-                const btn = document.getElementById('btn-submit'); const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Posting...'; btn.disabled = true;
-                try {
-                    if (!userData.address || !userData.phone || !userData.name) { throw new Error("Missing required profile details."); }
-                    
-                    // Add Donation with Location
-                    await db.collection('donations').add({
-                        restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone,
-                        foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        location: userData.location || null // Save Location to Donation
-                    });
-                    showToast("Donation posted successfully!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden');
-                } catch (err) { console.error("Donation Error:", err); showToast("Error: " + err.message, 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
-            } else if (pendingAction.type === 'fulfill') {
-                const { reqId, item, qty, orphId, orphName } = pendingAction.data;
-                try {
+            if (!pendingAction) return; closeConfirmModal();
+            try {
+                if (pendingAction.type === 'donate') {
+                    const { name, qty, form } = pendingAction.data; const btn = document.getElementById('btn-submit'); const org = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
+                    if (!userData.address) throw new Error("Missing profile details.");
+                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null });
+                    showToast("Posted!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); btn.innerHTML = org; btn.disabled = false;
+                } else if (pendingAction.type === 'fulfill') {
+                    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
                     const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
                     await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    await db.collection('donations').add({
-                        restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone,
-                        foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId,
-                        location: userData.location || null
-                    });
-                    showToast(`Successfully reserved ${item}.`); switchTab('history');
-                } catch(e) { console.error("Fulfillment Error:", e); showToast("Error: " + e.message, 'error'); }
-            }
+                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
+                    showToast(`Reserved ${item}.`); switchTab('history');
+                } else if (pendingAction.type === 'deleteDonation') {
+                    await db.collection('donations').doc(pendingAction.data.id).delete();
+                    showToast("Listing deleted.");
+                }
+            } catch (err) { console.error(err); showToast("Error: " + err.message, 'error'); }
         }
 
         function loadData() {
             db.collection('donations').where("restaurantId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 const recentList = document.getElementById('recent-list'); const historyBody = document.getElementById('history-table-body');
                 if (recentList) recentList.innerHTML = ""; if (historyBody) historyBody.innerHTML = "";
-                totalMeals = 0; let docCount = 0;
-                updateNotifications(snapshot);
-                if (snapshot.empty) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; }
+                totalMeals = 0; let docCount = 0; updateNotifications(snapshot);
+                if (snapshot.empty) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='7' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; }
                 snapshot.forEach(doc => {
                     const data = doc.data(); docCount++; totalMeals += parseInt(data.servings || 0);
                     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Just now';
                     let statusBadge = `<span class="text-green-600 bg-green-50 px-2 py-1 rounded-lg text-xs font-bold border border-green-100">${data.status}</span>`;
+                    let deleteBtn = '';
+                    if(data.status === 'Available') { 
+                        statusBadge = `<span class="text-brand-orange bg-orange-50 px-2 py-1 rounded-lg text-xs font-bold border border-orange-100">Available</span>`;
+                        deleteBtn = `<button onclick="confirmDeleteDonation('${doc.id}')" class="text-red-400 hover:text-red-600 ml-2"><i class="fa-solid fa-trash-can"></i></button>`;
+                    }
                     if(data.status === 'Completed') statusBadge = `<span class="text-white bg-brand-green px-2 py-1 rounded-lg text-xs font-bold">Completed</span>`;
                     if(data.status === 'Issue') statusBadge = `<span class="text-white bg-red-500 px-2 py-1 rounded-lg text-xs font-bold">Issue Reported</span>`;
-                    if(data.status === 'Available') statusBadge = `<span class="text-brand-orange bg-orange-50 px-2 py-1 rounded-lg text-xs font-bold border border-orange-100">Available</span>`;
                     if(data.status === 'Claimed') statusBadge = `<span class="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg text-xs font-bold border border-indigo-100">Claimed</span>`;
                     if(data.status === 'Resolved') statusBadge = `<span class="text-teal-600 bg-teal-50 px-2 py-1 rounded-lg text-xs font-bold border border-teal-100">Resolved</span>`;
+                    
                     const recipient = data.orphanageName || '-';
                     let contactInfo = '-'; if(data.status === 'Claimed' || data.status === 'Completed') { contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p><p><i class="fa-solid fa-location-dot text-brand-orange mr-1"></i> ${data.orphanageAddress || 'N/A'}</p></div>`; }
-                    if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div>${statusBadge}</div>`; }
-                    if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${date}</td><td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-4 py-3 md:px-6 md:py-4">${contactInfo}</td></tr>`; }
+                    if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div><div class="flex items-center">${statusBadge}${deleteBtn}</div></div>`; }
+                    if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${date}</td><td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-4 py-3 md:px-6 md:py-4">${contactInfo}</td><td class="px-4 py-3 text-center">${deleteBtn}</td></tr>`; }
                 });
-                const elMeals = document.getElementById('stat-meals'); if (elMeals) elMeals.innerText = totalMeals;
-                const elWaste = document.getElementById('stat-waste'); if (elWaste) elWaste.innerText = (totalMeals * 0.5).toFixed(1); 
-                const elCount = document.getElementById('history-count'); if (elCount) elCount.innerText = docCount;
-                updateChart(totalMeals);
+                document.getElementById('stat-meals').innerText = totalMeals; document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); document.getElementById('history-count').innerText = docCount; updateChart(totalMeals);
             });
         }
 
-        async function saveProfile(e) { 
-            e.preventDefault(); 
-            const name = document.getElementById('detail-name').value; 
-            const phone = document.getElementById('detail-phone').value; 
-            const address = document.getElementById('detail-address').value; 
-            try { 
-                await db.collection('users').doc(currentUser.uid).update({ 
-                    name, phone, address,
-                    location: { lat: currentLat, lng: currentLng } // Save Map Coords
-                }); 
-                userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng };
-                document.getElementById('nav-username').innerText = name; document.getElementById('sidebar-name').innerText = name; 
-                showToast("Profile & Location Updated!"); 
-            } catch (err) { console.error(err); showToast("Error: " + err.message, 'error'); } 
-        }
-
+        async function saveProfile(e) { e.preventDefault(); const name = document.getElementById('detail-name').value; const phone = document.getElementById('detail-phone').value; const address = document.getElementById('detail-address').value; try { await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } }); userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng }; document.getElementById('nav-username').innerText = name; document.getElementById('sidebar-name').innerText = name; showToast("Profile Updated!"); } catch (err) { showToast("Error: " + err.message, 'error'); } }
         function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('image-preview').src = e.target.result; document.getElementById('image-preview').classList.remove('hidden'); document.getElementById('upload-placeholder').classList.add('hidden'); base64Image = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
         function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
-        function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }).catch(e => { console.error("Logout failed:", e); }); }
+        function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }); }
         let myChart; function updateChart(userTotal) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals', data: [avg, userTotal], backgroundColor: ['#D1D5DB', '#F97316'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
     </script>
 </body>
 </html>
+
+
