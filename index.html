@@ -2,7 +2,8 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Optimized Viewport for Mobile Performance -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>FoodBridge | Zero Waste Initiative</title>
     
     <!-- Favicon -->
@@ -37,59 +38,71 @@
         }
     </script>
     <style>
+        /* Mobile Optimizations */
+        * { -webkit-tap-highlight-color: transparent; } /* Remove gray tap highlight */
+        
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-position: center; background-repeat: no-repeat;
+            will-change: transform; /* Hint for GPU acceleration */
         }
-        body { overflow-x: hidden; }
+        
+        body { overflow-x: hidden; width: 100%; }
         /* Prevent scroll jank on mobile */
-        html, body { height: 100%; }
-        #main-content { min-height: 100%; }
+        html, body { height: 100%; -webkit-text-size-adjust: 100%; }
+        
+        /* Ensures footer stays at bottom even if content is short */
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        #main-content { flex-grow: 1; }
+        
+        /* Hardware accelerated animations */
+        .transform-gpu { transform: translateZ(0); }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans flex flex-col">
+<body class="bg-gray-50 text-gray-800 font-sans selection:bg-brand-orange selection:text-white">
 
     <div class="fixed-bg-layer"></div>
 
-    <nav class="bg-white/95 backdrop-blur-md shadow-md fixed w-full z-50 transition-all">
+    <nav class="bg-white/95 backdrop-blur-md shadow-md fixed w-full z-50 transition-all transform-gpu">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20 items-center">
-                <button onclick="showPage('home')" class="flex items-center cursor-pointer group focus:outline-none">
+                <button onclick="showPage('home')" class="flex items-center cursor-pointer group focus:outline-none touch-manipulation">
                     <div class="bg-brand-orange/10 p-2 rounded-lg mr-2 group-hover:bg-brand-orange/20 transition">
                         <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
                     </div>
                     <span class="font-bold text-xl text-brand-dark tracking-wide">Food<span class="text-brand-green">Bridge</span></span>
                 </button>
                 <div class="hidden md:flex items-center space-x-8">
-                    <button onclick="showPage('home')" id="nav-home" class="text-brand-orange font-bold text-sm uppercase tracking-wide transition border-b-2 border-brand-orange pb-1">Home</button>
-                    <button onclick="showPage('about')" id="nav-about" class="text-gray-600 hover:text-brand-orange font-medium text-sm uppercase tracking-wide transition pb-1 border-b-2 border-transparent">About Us</button>
+                    <button onclick="showPage('home')" id="nav-home" class="text-brand-orange font-bold text-sm uppercase tracking-wide transition border-b-2 border-brand-orange pb-1 touch-manipulation">Home</button>
+                    <button onclick="showPage('about')" id="nav-about" class="text-gray-600 hover:text-brand-orange font-medium text-sm uppercase tracking-wide transition pb-1 border-b-2 border-transparent touch-manipulation">About Us</button>
                 </div>
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="login.html" class="text-brand-dark hover:text-brand-orange font-bold transition">Log In</a>
-                    <a href="login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg shadow-orange-200 transform hover:-translate-y-0.5">Sign Up</a>
+                    <a href="login.html" class="text-brand-dark hover:text-brand-orange font-bold transition touch-manipulation">Log In</a>
+                    <a href="login.html?mode=signup" class="bg-brand-orange hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg shadow-orange-200 transform hover:-translate-y-0.5 active:scale-95 touch-manipulation">Sign Up</a>
                 </div>
                 <div class="md:hidden">
-                    <button onclick="toggleMobileMenu()" class="text-gray-600 text-2xl p-2 focus:outline-none">
+                    <button onclick="toggleMobileMenu()" class="text-gray-600 text-2xl p-2 focus:outline-none active:bg-gray-100 rounded-lg transition touch-manipulation">
                         <i class="fa-solid fa-bars" id="menu-icon"></i>
                     </button>
                 </div>
             </div>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-20 shadow-lg animate-fade-in z-40">
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-20 shadow-lg animate-fade-in z-40 transform-gpu">
             <div class="flex flex-col p-4 space-y-4">
-                <button onclick="showPage('home'); toggleMobileMenu()" class="text-left font-bold text-brand-dark hover:text-brand-orange py-3 border-b border-gray-50 text-lg">Home</button>
-                <button onclick="showPage('about'); toggleMobileMenu()" class="text-left font-medium text-gray-600 hover:text-brand-orange py-3 border-b border-gray-50 text-lg">About Us</button>
+                <button onclick="showPage('home'); toggleMobileMenu()" class="text-left font-bold text-brand-dark hover:text-brand-orange py-3 border-b border-gray-50 text-lg active:bg-gray-50 transition touch-manipulation">Home</button>
+                <button onclick="showPage('about'); toggleMobileMenu()" class="text-left font-medium text-gray-600 hover:text-brand-orange py-3 border-b border-gray-50 text-lg active:bg-gray-50 transition touch-manipulation">About Us</button>
                 <div class="flex flex-col gap-3 pt-4">
-                    <a href="login.html" class="text-center w-full border border-brand-dark text-brand-dark py-3.5 rounded-xl font-bold active:bg-gray-100 transition">Log In</a>
-                    <a href="login.html?mode=signup" class="text-center w-full bg-brand-orange text-white py-3.5 rounded-xl font-bold shadow-md active:bg-orange-600 transition">Sign Up</a>
+                    <a href="login.html" class="text-center w-full border border-brand-dark text-brand-dark py-3.5 rounded-xl font-bold active:bg-gray-100 transition touch-manipulation">Log In</a>
+                    <a href="login.html?mode=signup" class="text-center w-full bg-brand-orange text-white py-3.5 rounded-xl font-bold shadow-md active:bg-orange-600 active:scale-[0.98] transition touch-manipulation">Sign Up</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div id="main-content" class="pt-20 flex-grow">
-        <div id="view-home" class="animate-fade-in block">
+    <!-- Content Wrapper with flex-grow -->
+    <div id="main-content" class="pt-20">
+        <div id="view-home" class="animate-fade-in block transform-gpu">
             <section class="min-h-screen flex items-center justify-center text-center text-white px-4 relative pb-10">
                 <div class="max-w-4xl mx-auto">
                     <div class="mb-6 inline-block">
@@ -104,10 +117,10 @@
                         Stop wasting food. Start saving lives.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center w-full sm:w-auto">
-                        <button onclick="showPage('about')" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold py-4 px-10 rounded-full transition transform hover:scale-105 text-lg min-w-[200px]">
+                        <button onclick="showPage('about')" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold py-4 px-10 rounded-full transition transform hover:scale-105 active:scale-95 text-lg min-w-[200px] touch-manipulation">
                             About Us
                         </button>
-                        <a href="login.html?mode=signup" class="w-full sm:w-auto bg-brand-orange hover:bg-orange-600 text-white font-bold py-4 px-10 rounded-full shadow-xl shadow-orange-900/20 transition transform hover:scale-105 text-lg min-w-[200px]">
+                        <a href="login.html?mode=signup" class="w-full sm:w-auto bg-brand-orange hover:bg-orange-600 text-white font-bold py-4 px-10 rounded-full shadow-xl shadow-orange-900/20 transition transform hover:scale-105 active:scale-95 text-lg min-w-[200px] touch-manipulation">
                             Join the Mission <i class="fa-solid fa-arrow-right ml-2"></i>
                         </a>
                     </div>
@@ -198,7 +211,7 @@
             </section>
         </div>
 
-        <div id="view-about" class="hidden animate-fade-in bg-white min-h-screen">
+        <div id="view-about" class="hidden animate-fade-in bg-white min-h-screen transform-gpu">
             <section class="py-16 md:py-20 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-96 h-96 bg-brand-orange/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 w-96 h-96 bg-brand-green/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
@@ -231,7 +244,7 @@
                                 <h3 class="text-2xl font-bold text-brand-dark mb-4">Our Solution</h3>
                                 <p class="text-lg text-gray-600 leading-relaxed"><strong>FoodBridge</strong> creates a digital highway between these two groups. We empower restaurants to turn potential waste into immediate aid, ensuring that surplus food reaches the plates of those who need it most, instantly and efficiently.</p>
                             </div>
-                            <div class="pt-4"><a href="login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline">Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i></a></div>
+                            <div class="pt-4"><a href="login.html?mode=signup" class="inline-flex items-center text-brand-green font-bold text-lg hover:underline active:text-green-700 transition touch-manipulation">Join us as a Restaurant or Orphanage <i class="fa-solid fa-arrow-right ml-2"></i></a></div>
                         </div>
                     </div>
                 </div>
@@ -239,6 +252,7 @@
         </div>
     </div>
 
+    <!-- Footer - Pushed to bottom via flex-grow on main-content -->
     <footer class="bg-brand-dark text-white py-12 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center">
@@ -251,12 +265,21 @@
                     <p class="text-gray-400 text-sm">Connecting food to those who need it most.</p>
                 </div>
                 <div class="flex space-x-6 justify-center">
-                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110"><i class="fa-brands fa-github text-2xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110"><i class="fa-brands fa-linkedin text-2xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110"><i class="fa-brands fa-instagram text-2xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110 active:scale-95 touch-manipulation"><i class="fa-brands fa-github text-2xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110 active:scale-95 touch-manipulation"><i class="fa-brands fa-linkedin text-2xl"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition transform hover:scale-110 active:scale-95 touch-manipulation"><i class="fa-brands fa-instagram text-2xl"></i></a>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-500">&copy; 2025 FoodBridge Project. Built for a better world.</div>
+            
+            <!-- Updated Copyright Section with Terms Link -->
+            <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+                <p>&copy; 2025 FoodBridge Project. Built for a better world.</p>
+                <div class="mt-4 md:mt-0 space-x-4">
+                    <a href="terms&conditions.html" class="hover:text-brand-orange transition active:text-orange-400 touch-manipulation">Terms & Conditions</a>
+                    <span class="text-gray-700">|</span>
+                    <a href="#" class="hover:text-brand-orange transition active:text-orange-400 touch-manipulation">Privacy Policy</a>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -336,3 +359,5 @@
     </script>
 </body>
 </html>
+
+
