@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Optimized Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Restaurant Dashboard | FoodBridge</title>
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
+    <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Leaflet CSS & JS for Maps -->
+    <!-- Leaflet Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
@@ -41,31 +43,36 @@
         }
     </script>
     <style>
+        /* Mobile Performance */
         * { -webkit-tap-highlight-color: transparent; }
+        
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
             will-change: transform;
         }
+        
         .smooth-scroll-touch { -webkit-overflow-scrolling: touch; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         body { overscroll-behavior-y: none; }
         html { -webkit-text-size-adjust: 100%; }
         input, select, textarea { font-size: 16px; } 
         #map-container { height: 300px; z-index: 1; touch-action: pan-x pan-y; }
-        #sidebar, .transform-gpu { will-change: transform; transform: translateZ(0); }
+        
+        /* Animation Classes */
+        #sidebar, #mobile-menu, .transform-gpu { will-change: transform; transform: translateZ(0); }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-brand-orange selection:text-white">
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- SIDEBAR BACKDROP -->
+    <!-- SIDEBAR BACKDROP (Mobile) -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
     <!-- SIDEBAR -->
-    <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative md:h-auto smooth-scroll-touch" id="sidebar">
+    <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:h-full smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center justify-between border-b border-gray-100">
             <div class="flex items-center">
                 <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -76,8 +83,8 @@
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
                 </div>
             </div>
-            <!-- Close Button for Mobile -->
-            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition">
+            <!-- Mobile Close Button -->
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition touch-manipulation">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
         </div>
@@ -122,7 +129,7 @@
         </button>
     </div>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- MAIN CONTENT -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full smooth-scroll-touch" id="main-scroll-container">
         
         <!-- TAB: OVERVIEW -->
@@ -139,9 +146,7 @@
             </div>
 
             <!-- Active Listings Block -->
-            <div id="scheduled-pickups-container" class="space-y-4">
-                <!-- Dynamically populated -->
-            </div>
+            <div id="scheduled-pickups-container" class="space-y-4"></div>
 
             <!-- Post Donation Form -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
@@ -183,40 +188,25 @@
                 </div>
             </div>
 
-            <!-- Stats & Motivation -->
+            <!-- Stats -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Metrics -->
                 <div class="space-y-4 md:space-y-6">
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-orange flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Meals</p>
-                            <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3>
-                        </div>
+                        <div><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Meals</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3></div>
                         <div class="w-12 h-12 md:w-14 md:h-14 bg-orange-100 text-brand-orange rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-bowl-food"></i></div>
                     </div>
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-green flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Waste Saved</p>
-                            <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark"><span id="stat-waste">0</span><span class="text-base md:text-lg text-gray-500 ml-1">kg</span></h3>
-                        </div>
+                        <div><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Waste Saved</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark"><span id="stat-waste">0</span><span class="text-base md:text-lg text-gray-500 ml-1">kg</span></h3></div>
                         <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-leaf"></i></div>
                     </div>
                 </div>
-
-                <!-- Chart -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-bold text-gray-800 text-base md:text-lg">Community Impact</h4>
-                        <div class="flex gap-2">
-                            <span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-gray-100 text-gray-600 rounded-full">Avg.</span>
-                            <span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-orange-100 text-brand-orange rounded-full">You</span>
-                        </div>
-                    </div>
+                    <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-gray-800 text-base md:text-lg">Community Impact</h4><div class="flex gap-2"><span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-gray-100 text-gray-600 rounded-full">Avg.</span><span class="text-[10px] md:text-xs font-bold px-2 py-1 md:px-3 bg-orange-100 text-brand-orange rounded-full">You</span></div></div>
                     <div class="relative h-40 md:h-48 w-full"><canvas id="motivationChart"></canvas></div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Activity -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
@@ -248,13 +238,11 @@
             <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="flex items-center gap-3">
-                    <!-- Notification Bell -->
                     <div class="relative">
                         <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100 touch-manipulation">
                             <i class="fa-solid fa-bell text-xl"></i>
                             <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                         </button>
-                        <!-- Dropdown -->
                         <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
                             <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
                                 <span>Notifications</span>
@@ -348,7 +336,6 @@
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
         let pendingAction = null;
         
-        // Map Variables
         let map, marker;
         let currentLat = 0, currentLng = 0;
 
@@ -390,6 +377,7 @@
             } else { window.location.href = 'https://foodbridge.qzz.io/login.html'; }
         });
 
+        // Fixed Toggle Logic
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
@@ -403,6 +391,7 @@
             }
         }
 
+        // Updated switchTab logic
         function switchTab(tab) {
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
@@ -422,7 +411,7 @@
             if(tab === 'alerts') activeBtn.classList.add('bg-red-500', 'text-white', 'shadow-md');
             else activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
             
-            // Fixed Logic: Only toggle sidebar if it's currently open AND on mobile
+            // Only close sidebar if currently OPEN and on mobile
             const sidebar = document.getElementById('sidebar');
             if (window.innerWidth < 768 && !sidebar.classList.contains('-translate-x-full')) {
                 toggleSidebar();
@@ -431,7 +420,6 @@
             if (tab === 'details') { setTimeout(initMap, 200); }
         }
 
-        // --- MAP LOGIC ---
         function initMap() {
             if (map) { map.invalidateSize(); return; }
             const lat = currentLat || 20.5937;
@@ -465,7 +453,6 @@
 
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
-        // --- NOTIFICATIONS LOGIC ---
         function toggleNotifications() {
             const dropdown = document.getElementById('notif-dropdown');
             if (dropdown.classList.contains('hidden')) {
@@ -503,7 +490,6 @@
             }
         }
 
-        // --- URGENT REQUESTS LOGIC (With Radius Filter 15km) ---
         function loadUrgentRequests() {
             db.collection('requests').where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('requests-container');
@@ -527,7 +513,7 @@
             });
         }
 
-        // Modified to handle Active Listings (Claimed + Available)
+        // Active Listings (Claimed + Available)
         function loadActivePickups() {
             db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('scheduled-pickups-container'); if(!container) return; container.innerHTML = '';
