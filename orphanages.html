@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimized Viewport for Mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Orphanage Dashboard | FoodBridge</title>
-    <!-- Favicon: Orange Hand Holding Heart SVG -->
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +12,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -45,18 +48,16 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         body { overscroll-behavior-y: none; }
-        /* Fix mobile input zoom */
         input, select, textarea { font-size: 16px; }
+        #map-container { height: 300px; z-index: 1; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- MOBILE SIDEBAR BACKDROP -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <!-- SIDEBAR NAVIGATION -->
     <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-40 shadow-2xl h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0" id="sidebar">
         <div class="p-6 md:p-8 flex items-center border-b border-gray-100">
             <div class="bg-brand-green/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -97,7 +98,6 @@
         </div>
     </aside>
 
-    <!-- MOBILE HEADER -->
     <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur shadow-md z-30 flex items-center justify-between px-4 transition-all">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-hands-holding-child text-brand-green text-xl"></i>
@@ -108,7 +108,6 @@
         </button>
     </div>
 
-    <!-- MAIN CONTENT AREA -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full">
         
         <!-- TAB: OVERVIEW -->
@@ -124,31 +123,20 @@
                 </button>
             </div>
 
-            <!-- Incoming Deliveries Block (Replaces Scheduled Pickups) -->
-            <div id="incoming-deliveries-container" class="space-y-4">
-                <!-- Dynamically Populated -->
-            </div>
+            <div id="incoming-deliveries-container" class="space-y-4"></div>
 
-            <!-- Stats -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Metrics -->
                 <div class="space-y-4 md:space-y-6">
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-green flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Meals Received</p>
-                            <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3>
-                        </div>
+                        <div><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Meals Received</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3></div>
                         <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 text-brand-green rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-utensils"></i></div>
                     </div>
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-orange flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Budget Saved</p>
-                            <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark">$<span id="stat-saved">0</span></h3>
-                        </div>
+                        <div><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Budget Saved</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark">$<span id="stat-saved">0</span></h3></div>
                         <div class="w-12 h-12 md:w-14 md:h-14 bg-orange-100 text-brand-orange rounded-xl flex items-center justify-center text-xl md:text-2xl"><i class="fa-solid fa-piggy-bank"></i></div>
                     </div>
                 </div>
-
                 <!-- Chart -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
@@ -175,62 +163,44 @@
             </div>
         </div>
 
-        <!-- TAB: AVAILABLE FOOD & REQUESTS (Replaces Urgent Alerts) -->
+        <!-- TAB: AVAILABLE FOOD (Radius Filter) -->
         <div id="tab-alerts" class="max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Find Food</h1>
                 <div class="bg-brand-orange px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-pulse w-full md:w-auto justify-center">
                     <i class="fa-solid fa-bolt text-white"></i>
-                    <span class="text-white font-bold text-sm">Live Feed</span>
+                    <span class="text-white font-bold text-sm">Live Feed (Radius 10km)</span>
                 </div>
             </div>
 
-            <!-- 2-Column Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
                 <!-- Left Column: Available Donations (2/3 width) -->
                 <div class="lg:col-span-2 space-y-6">
                     <h3 class="text-xl font-bold text-white drop-shadow-md"><i class="fa-solid fa-utensils mr-2"></i> Available Donations</h3>
                     <div id="donations-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Donation Cards Populated JS -->
-                        <p class="col-span-full text-center text-white text-lg py-10">Checking for available food...</p>
+                        <p class="col-span-full text-center text-white text-lg py-10">Checking for available food nearby...</p>
                     </div>
                 </div>
 
-                <!-- Right Column: Request Food & My Requests (1/3 width) -->
+                <!-- Right Column: Request Food (1/3 width) -->
                 <div class="space-y-6">
-                    <!-- Request Form -->
                     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                         <div class="p-5 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
                             <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-bullhorn text-brand-green mr-2"></i> Request Food</h2>
                         </div>
                         <div class="p-5">
                             <form onsubmit="initiateRequest(event)" class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Items Needed</label>
-                                    <input type="text" id="req-item" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-base" placeholder="e.g. 50 Meals">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Quantity</label>
-                                    <input type="number" id="req-qty" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-base" placeholder="e.g. 50">
-                                </div>
-                                <button type="submit" id="btn-submit-req" class="w-full py-4 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition-all flex items-center justify-center gap-2 text-base">
-                                    <span>Broadcast Request</span>
-                                </button>
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Items Needed</label><input type="text" id="req-item" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-base" placeholder="e.g. 50 Meals"></div>
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Quantity</label><input type="number" id="req-qty" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-base" placeholder="e.g. 50"></div>
+                                <button type="submit" id="btn-submit-req" class="w-full py-4 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition-all flex items-center justify-center gap-2 text-base"><span>Broadcast Request</span></button>
                             </form>
                         </div>
                     </div>
-
-                    <!-- My Pending Requests List -->
                     <div class="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-5">
                         <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-hourglass-half mr-2"></i> My Active Requests</h3>
-                        <div id="my-requests-list" class="space-y-3">
-                            <!-- Populated by JS -->
-                            <p class="text-gray-200 text-sm text-center">No active requests.</p>
-                        </div>
+                        <div id="my-requests-list" class="space-y-3"><p class="text-gray-200 text-sm text-center">No active requests.</p></div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -246,14 +216,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Time</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Type</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Item/Qty</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Source/Dest</th>
-                            </tr>
+                            <tr><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Time</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Type</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Item/Qty</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Source/Dest</th></tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -261,7 +224,7 @@
             </div>
         </div>
 
-        <!-- TAB: DETAILS -->
+        <!-- TAB: DETAILS (Updated with Map) -->
         <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-6 md:pt-10">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
                 <div class="h-24 md:h-32 bg-gradient-to-r from-emerald-800 to-teal-900 relative">
@@ -273,19 +236,27 @@
                 </div>
                 <div class="pt-14 pb-6 md:pt-16 md:pb-8 px-6 md:px-8 text-center">
                     <h2 class="text-xl md:text-2xl font-bold text-gray-800">Orphanage Profile</h2>
-                    <p class="text-gray-500 text-xs md:text-sm mt-1">Manage your public information</p>
+                    <p class="text-gray-500 text-xs md:text-sm mt-1">Manage your public information & Location</p>
                 </div>
                 <form onsubmit="saveProfile(event)" class="px-6 md:px-8 pb-8 md:pb-10 space-y-5 md:space-y-6">
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Orphanage Name</label><input type="text" id="detail-name" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Address</label><textarea id="detail-address" rows="3" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></textarea></div>
+                    
+                    <!-- Address & Map -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
+                        <textarea id="detail-address" rows="2" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use map below..."></textarea>
+                        <div id="map-container" class="w-full rounded-xl border border-gray-300 overflow-hidden relative"></div>
+                        <p class="text-xs text-gray-400 mt-1 italic"><i class="fa-solid fa-location-crosshairs"></i> Drag the blue marker to your exact location to see donations within 10km.</p>
+                    </div>
+
                     <button type="submit" class="w-full py-4 md:py-4 bg-brand-green text-white font-bold text-base md:text-lg rounded-xl hover:bg-green-600 transition-all shadow-lg transform active:scale-[0.99]">Save Changes</button>
                 </form>
             </div>
         </div>
     </main>
 
-    <!-- CONFIRMATION MODAL -->
+    <!-- CONFIRMATION & REPORT MODALS -->
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300" id="confirm-modal-content">
             <div class="text-center">
@@ -293,7 +264,7 @@
                     <i id="confirm-icon" class="fa-solid fa-check"></i>
                 </div>
                 <h3 id="confirm-title" class="text-lg md:text-xl font-bold text-gray-900 mb-2">Confirm Action</h3>
-                <p class="text-gray-500 mb-6 md:mb-8 px-2 text-sm md:text-base" id="confirm-message">Are you sure you want to proceed?</p>
+                <p class="text-gray-500 mb-6 md:mb-8 px-2 text-sm md:text-base" id="confirm-message">Are you sure?</p>
                 <div class="flex gap-4">
                     <button onclick="closeConfirmModal()" class="flex-1 py-3.5 md:py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base md:text-base">Cancel</button>
                     <button onclick="executeAction()" class="flex-1 py-3.5 md:py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg hover:shadow-green-500/30 transition-all transform active:scale-95 text-base md:text-base" id="confirm-yes-btn">Confirm</button>
@@ -302,16 +273,12 @@
         </div>
     </div>
     
-    <!-- REPORT MODAL -->
     <div id="report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300" id="report-modal-content">
             <div class="text-center">
-                <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
+                <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">Report Issue</h3>
-                <p class="text-gray-500 mb-4 text-sm">Please explain why you are reporting this delivery.</p>
-                <textarea id="report-reason-text" class="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none text-base" rows="3" placeholder="e.g. Food spoiled, wrong item..."></textarea>
+                <textarea id="report-reason-text" class="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none text-base" rows="3" placeholder="Reason..."></textarea>
                 <div class="flex gap-4">
                     <button onclick="closeReportModal()" class="flex-1 py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base md:text-base">Cancel</button>
                     <button onclick="submitReport()" id="btn-submit-report" class="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all text-base md:text-base">Submit Report</button>
@@ -328,6 +295,10 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let totalReceived = 0;
         let pendingAction = null; let reportDonationId = null;
+        
+        // Map Vars
+        let map, marker;
+        let currentLat = 0, currentLng = 0;
 
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -335,25 +306,18 @@
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
-                    
-                    // Check disable status immediately on entry
-                    if (userData.isDisable === true) {
-                        await auth.signOut();
-                        window.location.href = 'https://foodbridge.qzz.io/login.html';
-                        return;
-                    }
-
-                    // --- ROLE VERIFICATION START ---
-                    if (userData.role !== 'orphanage') {
-                        // Redirect if user is not an orphanage
+                    if (userData.isDisable === true) { await auth.signOut(); window.location.href = 'https://foodbridge.qzz.io/login.html'; return; }
+                    if (userData.role !== 'orphanage') { 
                         if (userData.role === 'restaurant') window.location.href = 'restaurant.html';
                         else if (userData.role === 'admin') window.location.href = 'admin.html';
                         else window.location.href = 'login.html';
                         return;
                     }
-                    // --- ROLE VERIFICATION END ---
-
                     updateUIWithUserData();
+                    
+                    // Init Lat/Lng
+                    if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
+
                     document.getElementById('tab-overview').classList.remove('hidden');
                     loadHistory();
                     loadAvailableDonations();
@@ -383,13 +347,8 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                backdrop.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            }
+            if (sidebar.classList.contains('-translate-x-full')) { sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden'); } 
+            else { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); }
         }
 
         function switchTab(tab) {
@@ -407,173 +366,146 @@
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
             activeBtn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-orange-50', 'hover:text-brand-orange', 'border', 'hover:border-orange-100');
-            
             if(tab === 'alerts') activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
             else activeBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
             
             if (window.innerWidth < 768) toggleSidebar();
+
+            // Init Map
+            if (tab === 'details') { setTimeout(initMap, 200); }
         }
 
-        // --- AVAILABLE DONATIONS (Alerts Tab - Left Col) ---
+        // --- MAP ---
+        function initMap() {
+            if (map) { map.invalidateSize(); return; }
+            const lat = currentLat || 20.5937;
+            const lng = currentLng || 78.9629;
+            const zoom = currentLat ? 13 : 5;
+            map = L.map('map-container').setView([lat, lng], zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            marker.on('dragend', function(event) {
+                const position = marker.getLatLng();
+                currentLat = position.lat;
+                currentLng = position.lng;
+            });
+            if (!currentLat) {
+                map.locate({setView: true, maxZoom: 16});
+                map.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat; currentLng = e.latlng.lng; marker.setLatLng(e.latlng);
+                });
+            }
+        }
+
+        // --- DISTANCE CALCULATION ---
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c; 
+        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        // --- AVAILABLE DONATIONS (RADIUS FILTER 10km) ---
         function loadAvailableDonations() {
             db.collection('donations').where('status', '==', 'Available').orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('donations-container');
                 if(!container) return;
                 container.innerHTML = '';
-                if(snap.empty) { container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-utensils text-4xl mb-2'></i><p class='font-medium'>No available food nearby right now.</p></div>"; return; }
                 
+                let visibleCount = 0;
+                const myLat = userData.location?.lat;
+                const myLng = userData.location?.lng;
+
+                if (!myLat) {
+                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Needed</p><p class='text-sm'>Please set your location in 'Details' to find nearby food.</p></div>";
+                    return;
+                }
+
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const imageHtml = d.imageUrl ? `<img src="${d.imageUrl}" class="w-full h-32 object-cover" alt="Food">` : `<div class="w-full h-32 bg-orange-100 flex items-center justify-center text-brand-orange"><i class="fa-solid fa-bowl-food text-4xl"></i></div>`;
+                    // Radius Check
+                    const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
                     
-                    container.innerHTML += `
-                        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-orange-100 transform hover:-translate-y-1 transition duration-300">
-                            ${imageHtml}
-                            <div class="p-5">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h4 class="font-bold text-gray-800 text-lg">${d.foodName}</h4>
-                                    <span class="bg-orange-100 text-brand-orange text-xs font-bold px-2 py-1 rounded-full">${d.servings} Servings</span>
+                    if(dist <= 10) {
+                        visibleCount++;
+                        const distStr = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
+                        const imageHtml = d.imageUrl ? `<img src="${d.imageUrl}" class="w-full h-32 object-cover" alt="Food">` : `<div class="w-full h-32 bg-orange-100 flex items-center justify-center text-brand-orange"><i class="fa-solid fa-bowl-food text-4xl"></i></div>`;
+                        
+                        container.innerHTML += `
+                            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-orange-100 transform hover:-translate-y-1 transition duration-300 relative">
+                                <div class="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div>
+                                ${imageHtml}
+                                <div class="p-5">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-bold text-gray-800 text-lg">${d.foodName}</h4>
+                                        <span class="bg-orange-100 text-brand-orange text-xs font-bold px-2 py-1 rounded-full">${d.servings} Servings</span>
+                                    </div>
+                                    <div class="mb-4 text-sm text-gray-600 space-y-1">
+                                        <p class="font-bold"><i class="fa-solid fa-store mr-2 text-gray-400"></i> ${d.restaurantName}</p>
+                                        <p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.restaurantAddress || 'Location N/A'}</p>
+                                    </div>
+                                    <button onclick="initiateClaim('${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}')" class="w-full py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 text-base">
+                                        <span>Claim Food</span> <i class="fa-solid fa-hand-holding-heart"></i>
+                                    </button>
                                 </div>
-                                <div class="mb-4 text-sm text-gray-600 space-y-1">
-                                    <p class="font-bold"><i class="fa-solid fa-store mr-2 text-gray-400"></i> ${d.restaurantName}</p>
-                                    <p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.restaurantAddress || 'Location N/A'}</p>
-                                </div>
-                                <button onclick="initiateClaim('${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}')" class="w-full py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 text-base">
-                                    <span>Claim Food</span> <i class="fa-solid fa-hand-holding-heart"></i>
-                                </button>
-                            </div>
-                        </div>`;
+                            </div>`;
+                    }
                 });
+
+                if(visibleCount === 0) {
+                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-utensils text-4xl mb-2'></i><p class='font-medium'>No available food found within 10km.</p></div>";
+                }
             });
         }
         
-        // --- MY REQUESTS (Alerts Tab - Right Col) ---
+        // --- MY REQUESTS ---
         function loadMyRequests() {
              db.collection('requests').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('my-requests-list');
                 if(!container) return;
                 container.innerHTML = '';
                 if(snap.empty) { container.innerHTML = `<p class="text-gray-200 text-sm text-center italic">No active requests.</p>`; return; }
-                
                 snap.forEach(doc => {
                     const d = doc.data();
-                    container.innerHTML += `
-                        <div class="bg-white/90 rounded-xl p-3 shadow-sm border border-white/20">
-                            <div class="flex justify-between items-center mb-1">
-                                <h5 class="font-bold text-gray-800">${d.itemNeeded}</h5>
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Pending</span>
-                                    <button onclick="confirmDeleteRequest('${doc.id}')" class="text-red-400 hover:text-red-600 transition-colors" title="Delete Request">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-600">Qty: ${d.quantity} • Waiting for restaurant...</p>
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="bg-white/90 rounded-xl p-3 shadow-sm border border-white/20"><div class="flex justify-between items-center mb-1"><h5 class="font-bold text-gray-800">${d.itemNeeded}</h5><div class="flex items-center gap-2"><span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Pending</span><button onclick="confirmDeleteRequest('${doc.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash-can"></i></button></div></div><p class="text-xs text-gray-600">Qty: ${d.quantity} • Waiting for restaurant...</p></div>`;
                 });
              });
         }
 
-        // --- INCOMING DELIVERIES (Overview) ---
+        // --- INCOMING DELIVERIES ---
         function loadIncomingDeliveries() {
             db.collection('donations').where('claimedBy', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
                 const container = document.getElementById('incoming-deliveries-container');
                 if(!container) return;
                 container.innerHTML = '';
-                
                 if(snap.empty) { container.innerHTML = `<div class="bg-green-50 border border-green-100 rounded-xl p-4 text-center text-green-700 text-sm">No incoming deliveries. Request food or claim a donation!</div>`; return; }
-
                 snap.forEach(doc => {
                     const d = doc.data();
-                    container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> On The Way</h3>
-                            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                <div><p class="text-xs text-gray-500 uppercase">Incoming Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
-                                <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
-                                <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    <p class="text-xs text-gray-500 uppercase mb-1">Donor</p>
-                                    <p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-store text-brand-orange mr-2"></i> ${d.restaurantName}</p>
-                                    <p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.restaurantPhone || 'N/A'}</p>
-                                    <p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.restaurantAddress || 'N/A'}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-3">
-                                <button onclick="openReportModal('${doc.id}')" class="flex-1 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> Report
-                                </button>
-                                <button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-base flex items-center justify-center">
-                                    <i class="fa-solid fa-check-circle mr-2"></i> Confirm Receipt
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> On The Way</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Incoming Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Donor</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-store text-brand-orange mr-2"></i> ${d.restaurantName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.restaurantPhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.restaurantAddress || 'N/A'}</p></div></div><div class="flex gap-3"><button onclick="openReportModal('${doc.id}')" class="flex-1 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Report</button><button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-base flex items-center justify-center"><i class="fa-solid fa-check-circle mr-2"></i> Confirm Receipt</button></div></div>`;
                 });
             });
         }
 
-        // --- HISTORY & STATS ---
+        // --- HISTORY ---
         function loadHistory() {
-            // Fetch Donations (Completed/Claimed)
             db.collection('donations').where("claimedBy", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((donSnap) => {
-                // Fetch Requests (My Requests)
                 db.collection('requests').where("orphanageId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((reqSnap) => {
-                    
-                    const recentList = document.getElementById('recent-list'); 
-                    const historyBody = document.getElementById('history-table-body');
-                    if (recentList) recentList.innerHTML = ""; 
-                    if (historyBody) historyBody.innerHTML = "";
-                    
+                    const recentList = document.getElementById('recent-list'); const historyBody = document.getElementById('history-table-body');
+                    if (recentList) recentList.innerHTML = ""; if (historyBody) historyBody.innerHTML = "";
                     let allItems = [];
-
-                    // Process Donations
-                    donSnap.forEach(doc => {
-                        const data = doc.data();
-                        allItems.push({
-                            type: 'Donation',
-                            data: data,
-                            date: data.createdAt ? data.createdAt.seconds : 0
-                        });
-                    });
-
-                    // Process Requests (Only unfulfilled/pending ones, or all?)
-                    // User said "request info of only what is unfulfilled... should be in history tab also"
-                    // We will include ALL requests in history for completeness.
-                    reqSnap.forEach(doc => {
-                        const data = doc.data();
-                        allItems.push({
-                            type: 'Request',
-                            data: data,
-                            date: data.createdAt ? data.createdAt.seconds : 0
-                        });
-                    });
-
-                    // Sort combined list by date desc
+                    donSnap.forEach(doc => { allItems.push({ type: 'Donation', data: doc.data(), date: doc.data().createdAt ? doc.data().createdAt.seconds : 0 }); });
+                    reqSnap.forEach(doc => { allItems.push({ type: 'Request', data: doc.data(), date: doc.data().createdAt ? doc.data().createdAt.seconds : 0 }); });
                     allItems.sort((a, b) => b.date - a.date);
-
-                    totalReceived = 0;
-                    let count = 0;
-
-                    if (allItems.length === 0) {
-                         if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No history yet.</p>"; 
-                         if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>";
-                         return;
-                    }
-
+                    totalReceived = 0; let count = 0;
+                    if (allItems.length === 0) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No history yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; return; }
                     allItems.forEach(item => {
-                        const data = item.data;
-                        const isDonation = item.type === 'Donation';
+                        const data = item.data; const isDonation = item.type === 'Donation';
                         const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
-                        const dateStr = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-                        const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                        
-                        // Calc stats only for completed donations
-                        if(isDonation && (data.status === 'Completed' || data.status === 'Claimed')) {
-                            totalReceived += parseInt(data.servings || 0);
-                        }
-
-                        // Badge Logic
+                        const dateStr = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }); const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        if(isDonation && (data.status === 'Completed' || data.status === 'Claimed')) { totalReceived += parseInt(data.servings || 0); }
                         let statusBadge = '';
                         if (data.status === 'Available') statusBadge = `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">Available</span>`;
                         else if (data.status === 'Claimed') statusBadge = `<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded text-xs font-bold">On Way</span>`;
@@ -582,275 +514,103 @@
                         else if (data.status === 'Fulfilled') statusBadge = `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Fulfilled</span>`;
                         else if (data.status === 'Issue') statusBadge = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">Reported</span>`;
                         else if (data.status === 'Resolved') statusBadge = `<span class="bg-teal-100 text-teal-700 border border-teal-200 px-2 py-1 rounded text-xs font-bold">Resolved</span>`;
-
-                        const name = isDonation ? data.foodName : data.itemNeeded;
-                        const qty = isDonation ? data.servings : data.quantity;
-                        const source = isDonation ? (data.restaurantName || '-') : 'Broadcast';
-
-                        // Recent Activity (Top 5)
-                        if (count < 5 && recentList) {
-                             const icon = isDonation ? 'fa-box-open' : 'fa-bullhorn';
-                             recentList.innerHTML += `
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid ${icon}"></i></div>
-                                        <div><h4 class="font-bold text-gray-800 text-sm">${name}</h4><p class="text-xs text-gray-500">${qty} Qty • ${dateStr}</p></div>
-                                    </div>
-                                    ${statusBadge}
-                                </div>`;
-                        }
-
-                        // Table Row
-                        if (historyBody) {
-                             historyBody.innerHTML += `
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
-                                    <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
-                                    <td class="px-4 py-3 font-bold text-xs uppercase text-gray-400">${item.type}</td>
-                                    <td class="px-4 py-3 font-bold text-gray-800 text-sm">${name} <span class="text-gray-400 font-normal">(${qty})</span></td>
-                                    <td class="px-4 py-3">${statusBadge}</td>
-                                    <td class="px-4 py-3 text-gray-500 text-sm font-medium">${source}</td>
-                                </tr>`;
-                        }
+                        const name = isDonation ? data.foodName : data.itemNeeded; const qty = isDonation ? data.servings : data.quantity; const source = isDonation ? (data.restaurantName || '-') : 'Broadcast';
+                        if (count < 5 && recentList) { const icon = isDonation ? 'fa-box-open' : 'fa-bullhorn'; recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid ${icon}"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${name}</h4><p class="text-xs text-gray-500">${qty} Qty • ${dateStr}</p></div></div>${statusBadge}</div>`; }
+                        if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td><td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td><td class="px-4 py-3 font-bold text-xs uppercase text-gray-400">${item.type}</td><td class="px-4 py-3 font-bold text-gray-800 text-sm">${name} <span class="text-gray-400 font-normal">(${qty})</span></td><td class="px-4 py-3">${statusBadge}</td><td class="px-4 py-3 text-gray-500 text-sm font-medium">${source}</td></tr>`; }
                         count++;
                     });
-
-                    const elMeals = document.getElementById('stat-meals'); if (elMeals) elMeals.innerText = totalReceived;
-                    const elSaved = document.getElementById('stat-saved'); if (elSaved) elSaved.innerText = (totalReceived * 5).toLocaleString(); // Mock $5/meal
-                    const elCount = document.getElementById('history-count'); if (elCount) elCount.innerText = count;
-                    updateChart(totalReceived);
+                    document.getElementById('stat-meals').innerText = totalReceived; document.getElementById('stat-saved').innerText = (totalReceived * 5).toLocaleString(); document.getElementById('history-count').innerText = count; updateChart(totalReceived);
                 });
             });
         }
 
-        // --- ACTIONS & CONFIRMATIONS ---
-
+        // --- ACTIONS ---
         function initiateRequest(e) {
             e.preventDefault();
-            const item = document.getElementById('req-item').value;
-            const qty = document.getElementById('req-qty').value;
-
-            if(!userData.address || !userData.phone) {
-                showToast("Please update Address and Phone in Details tab first!", 'error');
-                switchTab('details');
-                return;
-            }
+            const item = document.getElementById('req-item').value; const qty = document.getElementById('req-qty').value;
+            if(!userData.address || !userData.phone) { showToast("Please update Address and Phone in Details tab first!", 'error'); switchTab('details'); return; }
             if (!item || !qty) return;
-
             pendingAction = { type: 'request', data: { item, qty, form: e.target } };
             showConfirmModal("Broadcast Request", `Broadcast a request for ${qty} ${item}? Nearby restaurants will be notified.`, 'request');
         }
 
         function initiateClaim(donationId, foodName, servings, restName) {
-            if(!userData.address || !userData.phone) {
-                showToast("Please update Address and Phone in Details tab first!", 'error');
-                switchTab('details');
-                return;
-            }
+            if(!userData.address || !userData.phone) { showToast("Please update Address and Phone in Details tab first!", 'error'); switchTab('details'); return; }
             pendingAction = { type: 'claim', data: { donationId, foodName, servings, restName } };
             showConfirmModal("Claim Donation", `Claim ${servings} servings of ${foodName} from ${restName}?`, 'claim');
         }
 
-        function confirmReceipt(donationId, foodName) {
-            pendingAction = { type: 'receive', data: { donationId, foodName } };
-            showConfirmModal("Confirm Receipt", `Have you received the ${foodName}? This will mark the order as complete.`, 'receive');
-        }
-
-        function confirmDeleteRequest(reqId) {
-            pendingAction = { type: 'deleteRequest', data: { reqId } };
-            showConfirmModal("Delete Request", "Are you sure you want to delete this request?", 'deleteRequest');
-        }
-
-        // Report Logic
-        function openReportModal(donationId) {
-            reportDonationId = donationId;
-            document.getElementById('report-reason-text').value = '';
-            const modal = document.getElementById('report-modal');
-            const content = document.getElementById('report-modal-content');
-            
-            modal.classList.remove('hidden');
-            setTimeout(() => { 
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10);
-        }
-
-        function closeReportModal() {
-            const modal = document.getElementById('report-modal');
-            const content = document.getElementById('report-modal-content');
-            
-            modal.classList.add('opacity-0');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-            setTimeout(() => { 
-                modal.classList.add('hidden'); 
-                reportDonationId = null; 
-            }, 300);
-        }
+        function confirmReceipt(donationId, foodName) { pendingAction = { type: 'receive', data: { donationId, foodName } }; showConfirmModal("Confirm Receipt", `Have you received the ${foodName}? This will mark the order as complete.`, 'receive'); }
+        function confirmDeleteRequest(reqId) { pendingAction = { type: 'deleteRequest', data: { reqId } }; showConfirmModal("Delete Request", "Are you sure you want to delete this request?", 'deleteRequest'); }
+        function openReportModal(donationId) { reportDonationId = donationId; document.getElementById('report-reason-text').value = ''; const modal = document.getElementById('report-modal'); const content = document.getElementById('report-modal-content'); modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10); }
+        function closeReportModal() { const modal = document.getElementById('report-modal'); const content = document.getElementById('report-modal-content'); modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); reportDonationId = null; }, 300); }
 
         async function submitReport() {
             const reason = document.getElementById('report-reason-text').value;
-            if (!reason) { alert("Please enter a reason."); return; }
-            
-            const btn = document.getElementById('btn-submit-report');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Submitting...';
-            btn.disabled = true;
-
-            try {
-                await db.collection('donations').doc(reportDonationId).update({
-                    status: 'Issue',
-                    reportReason: reason,
-                    reportedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                showToast("Report submitted successfully.");
-                closeReportModal();
-            } catch(e) {
-                console.error(e);
-                showToast("Error submitting report: " + e.message, 'error');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            if (!reason) { showToast("Please enter a reason.", 'error'); return; }
+            const btn = document.getElementById('btn-submit-report'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Submitting...'; btn.disabled = true;
+            try { await db.collection('donations').doc(reportDonationId).update({ status: 'Issue', reportReason: reason, reportedAt: firebase.firestore.FieldValue.serverTimestamp() }); showToast("Report submitted."); closeReportModal(); } catch(e) { console.error(e); showToast("Error: " + e.message, 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
         async function executeAction() {
             if (!pendingAction) return;
             closeConfirmModal();
-
             try {
                 if (pendingAction.type === 'request') {
                     const { item, qty, form } = pendingAction.data;
-                    const btn = document.getElementById('btn-submit-req');
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...';
-                    btn.disabled = true;
-
+                    const btn = document.getElementById('btn-submit-req'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...'; btn.disabled = true;
+                    // Add Request with Location
                     await db.collection('requests').add({
                         orphanageId: currentUser.uid, orphanageName: userData.name, orphanageEmail: currentUser.email, orphanagePhone: userData.phone, orphanageAddress: userData.address,
-                        itemNeeded: item, quantity: parseInt(qty), status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        itemNeeded: item, quantity: parseInt(qty), status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        location: userData.location || null // Save Location
                     });
-                    
-                    showToast("Request broadcasted successfully!");
-                    form.reset();
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    loadMyRequests(); // Refresh manually just in case
-
+                    showToast("Request broadcasted!"); form.reset(); btn.innerHTML = originalText; btn.disabled = false; loadMyRequests();
                 } else if (pendingAction.type === 'claim') {
                     const { donationId, foodName } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({
-                        status: 'Claimed',
-                        claimedBy: currentUser.uid,
-                        orphanageName: userData.name,
-                        orphanagePhone: userData.phone,
-                        orphanageAddress: userData.address,
-                        claimedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    showToast("Donation claimed! View in 'Overview' to track.");
-                    switchTab('overview');
-
+                    await db.collection('donations').doc(donationId).update({ status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    showToast("Donation claimed!"); switchTab('overview');
                 } else if (pendingAction.type === 'receive') {
                     const { donationId } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({
-                        status: 'Completed',
-                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    showToast("Order Completed. Bon Appétit!");
+                    await db.collection('donations').doc(donationId).update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    showToast("Order Completed.");
                 } else if (pendingAction.type === 'deleteRequest') {
-                    const { reqId } = pendingAction.data;
-                    await db.collection('requests').doc(reqId).delete();
-                    showToast("Request deleted successfully.");
+                    const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
                 }
-            } catch (err) {
-                console.error(err);
-                showToast("Action failed: " + err.message, 'error');
-            }
+            } catch (err) { console.error(err); showToast("Action failed: " + err.message, 'error'); }
         }
 
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
-            
-            const btn = document.getElementById('confirm-yes-btn');
-            const icon = document.getElementById('confirm-icon');
-            const iconContainer = document.getElementById('confirm-icon-container');
-
-            if (type === 'receive') {
+            document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
+            const btn = document.getElementById('confirm-yes-btn'); const icon = document.getElementById('confirm-icon'); const iconContainer = document.getElementById('confirm-icon-container');
+            if (type === 'receive' || type === 'request' || type === 'claim') {
                 btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base";
-                icon.className = "fa-solid fa-check";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
-            } else if (type === 'claim') {
-                btn.className = "flex-1 py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base";
-                icon.className = "fa-solid fa-hand-holding-heart";
-                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-orange/10 text-brand-orange rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
-            } else if (type === 'deleteRequest') {
+            } else { // Delete
                 btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base";
-                icon.className = "fa-solid fa-trash";
-                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
-            } else {
-                btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base";
-                icon.className = "fa-solid fa-bullhorn";
-                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-green-100 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
+                icon.className = "fa-solid fa-trash"; iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
             }
-
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); modal.querySelector('div').classList.add('scale-100'); }, 10);
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); modal.querySelector('div').classList.add('scale-100'); }, 10);
         }
 
-        function closeConfirmModal() {
-            const modal = document.getElementById('confirm-modal');
-            modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300);
-        }
+        function closeConfirmModal() { const modal = document.getElementById('confirm-modal'); modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300); }
 
         async function saveProfile(e) { 
             e.preventDefault(); 
-            const name = document.getElementById('detail-name').value; 
-            const phone = document.getElementById('detail-phone').value; 
-            const address = document.getElementById('detail-address').value; 
+            const name = document.getElementById('detail-name').value; const phone = document.getElementById('detail-phone').value; const address = document.getElementById('detail-address').value; 
             try { 
-                await db.collection('users').doc(currentUser.uid).update({ name, phone, address }); 
-                userData.name = name; userData.phone = phone; userData.address = address; 
-                updateUIWithUserData(); 
-                showToast("Profile Updated!"); 
+                await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } }); 
+                userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng }; updateUIWithUserData(); showToast("Profile Updated!"); 
             } catch (err) { showToast("Error: " + err.message, 'error'); } 
         }
 
-        function showToast(msg, type = 'success') { 
-            const t = document.getElementById('toast'); 
-            if (t) { 
-                const icon = t.querySelector('i');
-                t.classList.remove('bg-red-600', 'bg-brand-dark');
-                icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400');
-                if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } 
-                else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); }
-                document.getElementById('toast-message').innerText = msg; 
-                t.classList.remove('translate-y-32', 'opacity-0'); 
-                setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); 
-            } 
-        }
-
+        function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }); }
-        
-        let myChart; 
-        function updateChart(total) { 
-            const ctxElem = document.getElementById('motivationChart'); 
-            if (!ctxElem) return; 
-            const ctx = ctxElem.getContext('2d'); 
-            const avg = 500; 
-            if(myChart) myChart.destroy(); 
-            myChart = new Chart(ctx, { 
-                type: 'bar', 
-                data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } 
-            }); 
-        }
-
-        // Initial setup
+        let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
     </script>
 </body>
 </html>
+
+
