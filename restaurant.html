@@ -66,7 +66,12 @@
 
     <!-- SIDEBAR -->
     <!-- Fixed the positioning logic here -->
-    <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative md:h-auto smooth-scroll-touch" id="sidebar">
+    <aside
+  id="sidebar"
+  class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200
+         flex flex-col z-50 shadow-2xl flex-shrink-0
+         transition-transform duration-300 transform -translate-x-full
+         md:relative md:h-auto md:translate-x-0 smooth-scroll-touch">
         <div class="p-6 md:p-8 flex items-center justify-between border-b border-gray-100">
             <div class="flex items-center">
                 <div class="bg-brand-orange/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -393,19 +398,19 @@
         });
 
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            
-            if (sidebar.classList.contains('-translate-x-full')) {
-                // Open
-                sidebar.classList.remove('-translate-x-full');
-                backdrop.classList.remove('hidden');
-            } else {
-                // Close
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            }
-        }
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+
+    const isHidden = sidebar.classList.contains('-translate-x-full');
+
+    if (isHidden) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+    }
+}
 
         function switchTab(tab) {
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
@@ -428,9 +433,10 @@
             
             // Fixed Logic: Only toggle sidebar if it's currently open AND on mobile
             const sidebar = document.getElementById('sidebar');
-            if (window.innerWidth < 768 && !sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
-            }
+            if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+    document.getElementById('sidebar-backdrop').classList.add('hidden');
+}
 
             // Initialize Map if Details tab selected
             if (tab === 'details') {
