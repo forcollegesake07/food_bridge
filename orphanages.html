@@ -633,76 +633,13 @@
                     });
                     showToast("Request broadcasted!"); form.reset(); btn.innerHTML = originalText; btn.disabled = false; loadMyRequests();
                 } else if (pendingAction.type === 'claim') {
-    const { donationId, foodName, servings, restName } = pendingAction.data;
-    
-    // Fetch donation first to get restaurant email (needed for notification)
-    const donDoc = await db.collection('donations').doc(donationId).get();
-    const donData = donDoc.data();
-
-    await db.collection('donations').doc(donationId).update({
-        status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // --- EMAIL LOGIC: CLAIM CONFIRMATION ---
-    
-    // 1. Email to Restaurant (Donor)
-    const restSubject = "Action Required: Food Claimed! - FoodBridge";
-    const restBody = `
-        <h2>Food Claimed!</h2>
-        <p><strong>${userData.name}</strong> has claimed your donation: <strong>${foodName}</strong>.</p>
-        <p>They will arrive shortly for pickup.</p>
-        <p><strong>Orphanage Contact:</strong> ${userData.phone}</p>
-    `;
-    if(donData.restaurantEmail) sendEmail(donData.restaurantEmail, restName, restSubject, restBody);
-
-    // 2. Email to Orphanage (Self)
-    const orphSubject = "Claim Confirmation - FoodBridge";
-    const orphBody = `
-        <h2>Claim Successful</h2>
-        <p>You have reserved <strong>${foodName}</strong> from <strong>${restName}</strong>.</p>
-        <p><strong>Pickup Address:</strong> ${donData.restaurantAddress}</p>
-        <p><strong>Phone:</strong> ${donData.restaurantPhone}</p>
-    `;
-    if(currentUser.email) sendEmail(currentUser.email, userData.name, orphSubject, orphBody);
-
-    // --- END EMAIL LOGIC ---
-
-    showToast("Donation claimed!");
-    switchTab('overview');
-
-} else if (pendingAction.type === 'receive') {
-    const { donationId, foodName } = pendingAction.data;
-    
-    // Fetch donation to get restaurant email
-    const donDoc = await db.collection('donations').doc(donationId).get();
-    const donData = donDoc.data();
-
-    await db.collection('donations').doc(donationId).update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
-
-    // --- EMAIL LOGIC: DELIVERED/COMPLETED ---
-
-    // 1. Email to Restaurant (Delivery Confirmed)
-    const restSubject = "Delivery Complete - FoodBridge";
-    const restBody = `
-        <h2>Food Received Successfully</h2>
-        <p><strong>${userData.name}</strong> has confirmed receipt of <strong>${foodName}</strong>.</p>
-        <p>Thank you for making a difference today!</p>
-    `;
-    if(donData.restaurantEmail) sendEmail(donData.restaurantEmail, donData.restaurantName, restSubject, restBody);
-
-    // 2. Email to Orphanage (Self Receipt)
-    const orphSubject = "Receipt Confirmed - FoodBridge";
-    const orphBody = `
-        <h2>Bon Appétit!</h2>
-        <p>You have confirmed receipt of <strong>${foodName}</strong>.</p>
-        <p>Thank you for being part of FoodBridge.</p>
-    `;
-    if(currentUser.email) sendEmail(currentUser.email, userData.name, orphSubject, orphBody);
-
-    // --- END EMAIL LOGIC ---
-
-    showToast("Order Completed.");
-}
+                    const { donationId, foodName } = pendingAction.data;
+                    await db.collection('donations').doc(donationId).update({ status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    showToast("Donation claimed!"); switchTab('overview');
+                } else if (pendingAction.type === 'receive') {
+                    const { donationId } = pendingAction.data;
+                    await db.collection('donations').doc(donationId).update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    showToast("Order Completed.");
                 } else if (pendingAction.type === 'deleteRequest') {
                     const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
                 }
@@ -738,41 +675,6 @@
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index.html'; }); }
         let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
-        // --- BREVO EMAIL SYSTEM ---
-const BREVO_API_KEY = "xsmtpsib-12fafa3dab925376ea8c1d275d1cfb321311d72cf5b8236422f8391b7d4ab2bb-VFsgfmpf194AyIte"; // PASTE YOUR KEY HERE
-const SENDER_EMAIL = "forcollegesake07@gmail.com"; // MUST be verified in Brevo
-const SENDER_NAME = "FoodBridge";
-
-async function sendEmail(toEmail, toName, subject, htmlContent) {
-    const url = "https://api.brevo.com/v3/smtp/email";
-    
-    const data = {
-        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
-        to: [{ email: toEmail, name: toName }],
-        subject: subject,
-        htmlContent: htmlContent
-    };
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'content-type': 'application/json',
-                'api-key': BREVO_API_KEY
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-            console.log("Email sent successfully to", toEmail);
-        } else {
-            console.error("Brevo Error:", await response.json());
-        }
-    } catch (error) {
-        console.error("Network Error sending email:", error);
-    }
-}
     </script>
 </body>
 </html>
