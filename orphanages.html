@@ -676,5 +676,31 @@
         let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
     </script>
+    <script>
+  (function () {
+    emailjs.init("tCVsZfaRZ9RSbMw33");
+  })();
+</script>
+<script>
+  function sendConfirmationEmail(data) {
+    return emailjs.send(
+      "service_ug3hj2o",
+      "template_dva8yqz",
+      {
+        restaurant_name: data.restaurant_name,
+        restaurant_phone: data.restaurant_phone,
+        restaurant_address: data.restaurant_address,
+
+        orphanage_name: data.orphanage_name,
+        orphanage_phone: data.orphanage_phone,
+        orphanage_address: data.orphanage_address,
+
+        food_name: data.food_name,
+        food_quantity: data.food_quantity,
+        status: data.status
+      }
+    );
+  }
+</script>
 </body>
 </html>
