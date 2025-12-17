@@ -178,6 +178,32 @@
                             </div>
                             <img id="image-preview" class="hidden w-full h-20 object-cover rounded-lg mx-auto relative z-10">
                         </div>
+<button onclick="testEmail()" style="padding:10px;background:#16a34a;color:white;">
+  Test EmailJS
+</button>
+
+<script>
+  function testEmail() {
+    sendConfirmationEmail({
+      restaurant_name: "Test Restaurant",
+      restaurant_phone: "+91 9999999999",
+      restaurant_address: "Test Street, City",
+
+      orphanage_name: "Test Orphanage",
+      orphanage_phone: "+91 8888888888",
+      orphanage_address: "Care Road, City",
+
+      food_name: "Veg Biryani",
+      food_quantity: 50,
+      status: "TEST EMAIL"
+    })
+    .then(() => alert("✅ Email sent successfully"))
+    .catch(err => {
+      console.error(err);
+      alert("❌ Email failed");
+    });
+  }
+</script>
 
                         <button type="submit" id="btn-submit" class="w-full py-4 bg-brand-orange text-white font-bold text-base md:text-lg rounded-xl shadow-md hover:bg-orange-600 hover:shadow-lg transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 touch-manipulation">
                             <span>Post Donation</span>
