@@ -4,49 +4,36 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /**
- * MIDDLEWARE
- * We serve all your existing static files (HTML, CSS, JS).
- * Note: Keep your .html files in the root directory or a folder named 'public'.
+ * STATIC FILE SERVING
+ * This setup looks into the 'public' folder.
+ * The 'extensions' option allows users to visit /login and Express 
+ * will automatically find and serve login.html.
  */
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    extensions: ['html', 'htm']
+}));
 
 /**
- * ROUTES
- * Express will serve your index.html by default at the root URL.
- * These routes ensure that navigating to /login or /admin works correctly.
+ * CORE ROUTES
+ * Explicit routing for the home page.
  */
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/restaurant', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'restaurant.html'));
-});
-
-app.get('/orphanages', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'orphanages.html'));
-});
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/terms', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'terms&conditions.html'));
-});
-
 /**
- * 404 HANDLER
- * If a user goes to a route that doesn't exist, send them back home.
+ * 404 / CATCH-ALL
+ * If a user types an invalid URL, we redirect them back to the 
+ * landing page to keep them within the app flow.
  */
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.status(404).redirect('/');
 });
 
 app.listen(PORT, () => {
-    console.log(`FoodBridge Backend running on port ${PORT}`);
+    console.log(`-----------------------------------------`);
+    console.log(`FoodBridge Backend is LIVE`);
+    console.log(`Port: ${PORT}`);
+    console.log(`Mode: Clean URLs Enabled`);
+    console.log(`-----------------------------------------`);
 });
