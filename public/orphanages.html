@@ -619,32 +619,152 @@
         }
 
         async function executeAction() {
-            if (!pendingAction) return;
-            closeConfirmModal();
-            try {
-                if (pendingAction.type === 'request') {
-                    const { item, qty, form } = pendingAction.data;
-                    const btn = document.getElementById('btn-submit-req'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...'; btn.disabled = true;
-                    // Add Request with Location
-                    await db.collection('requests').add({
-                        orphanageId: currentUser.uid, orphanageName: userData.name, orphanageEmail: currentUser.email, orphanagePhone: userData.phone, orphanageAddress: userData.address,
-                        itemNeeded: item, quantity: parseInt(qty), status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        location: userData.location || null // Save Location
+    if (!pendingAction) return;
+    closeConfirmModal();
+    try {
+        if (pendingAction.type === 'request') {
+            const { item, qty, form } = pendingAction.data;
+            const btn = document.getElementById('btn-submit-req'); 
+            const originalText = btn.innerHTML; 
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...'; 
+            btn.disabled = true;
+
+            await db.collection('requests').add({
+                orphanageId: currentUser.uid, 
+                orphanageName: userData.name, 
+                orphanageEmail: currentUser.email, 
+                orphanagePhone: userData.phone, 
+                orphanageAddress: userData.address,
+                itemNeeded: item, 
+                quantity: parseInt(qty), 
+                status: 'Pending', 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                location: userData.location || null 
+            });
+            showToast("Request broadcasted!"); 
+            form.reset(); 
+            btn.innerHTML = originalText; 
+            btn.disabled = false; 
+            loadMyRequests();
+
+        } else if (pendingAction.type === 'claim') {
+            const { donationId, foodName, servings } = pendingAction.data;
+            
+            // 1. Fetch current donation details to get Restaurant Info
+            const donDoc = await db.collection('donations').doc(donationId).get();
+            const d = donDoc.data();
+
+            // 2. Update status in Firestore
+            await db.collection('donations').doc(donationId).update({ 
+                status: 'Claimed', 
+                claimedBy: currentUser.uid, 
+                orphanageName: userData.name, 
+                orphanagePhone: userData.phone, 
+                orphanageAddress: userData.address, 
+                orphanageEmail: currentUser.email,
+                claimedAt: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+
+            // 3. Trigger Contact Exchange Email
+            const recipients = [currentUser.email, d.restaurantEmail].filter(e => !!e).join(', ');
+            
+            if (recipients) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: recipients,
+                            subject: `Food Claimed: ${foodName} - Contact Exchange`,
+                            text: `Donation of ${foodName} claimed! Restaurant: ${d.restaurantName} (${d.restaurantPhone}). Orphanage: ${userData.name} (${userData.phone}).`,
+                            html: `
+                                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px;">
+                                    <h2 style="color: #10B981;">Donation Claimed!</h2>
+                                    <p>The donation of <strong>${foodName} (${servings} servings)</strong> is now reserved. Please coordinate the pickup.</p>
+                                    
+                                    <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                                        <div style="margin-bottom: 20px;">
+                                            <h3 style="color: #F97316; font-size: 14px; margin: 0;">DONOR (RESTAURANT)</h3>
+                                            <p style="margin: 5px 0;"><strong>${d.restaurantName}</strong><br>
+                                            📞 ${d.restaurantPhone || 'N/A'}<br>
+                                            📍 ${d.restaurantAddress || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <h3 style="color: #10B981; font-size: 14px; margin: 0;">RECIPIENT (ORPHANAGE)</h3>
+                                            <p style="margin: 5px 0;"><strong>${userData.name}</strong><br>
+                                            📞 ${userData.phone || 'N/A'}<br>
+                                            📍 ${userData.address || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 11px; color: #999; margin-top: 30px;">This is an automated match from FoodBridge.</p>
+                                </div>
+                            `
+                        })
                     });
-                    showToast("Request broadcasted!"); form.reset(); btn.innerHTML = originalText; btn.disabled = false; loadMyRequests();
-                } else if (pendingAction.type === 'claim') {
-                    const { donationId, foodName } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({ status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    showToast("Donation claimed!"); switchTab('overview');
-                } else if (pendingAction.type === 'receive') {
-                    const { donationId } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    showToast("Order Completed.");
-                } else if (pendingAction.type === 'deleteRequest') {
-                    const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
-                }
-            } catch (err) { console.error(err); showToast("Action failed: " + err.message, 'error'); }
+                } catch (e) { console.error("Email exchange failed", e); }
+            }
+
+            showToast("Donation claimed! Emails sent."); 
+            switchTab('overview');
+
+        } else if (pendingAction.type === 'receive') {
+            const { donationId, foodName } = pendingAction.data;
+
+            // 1. Fetch current donation details to get both parties' emails
+            const donDoc = await db.collection('donations').doc(donationId).get();
+            const d = donDoc.data();
+
+            // 2. Update status in Firestore
+            await db.collection('donations').doc(donationId).update({ 
+                status: 'Completed', 
+                completedAt: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+
+            // 3. Trigger Confirmation Email to both parties
+            const recipients = [d.orphanageEmail, d.restaurantEmail].filter(e => !!e).join(', ');
+
+            if (recipients) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: recipients,
+                            subject: `Success: Delivery Confirmed for ${foodName}`,
+                            text: `Great news! ${d.orphanageName} has confirmed receiving the donation of ${foodName} from ${d.restaurantName}.`,
+                            html: `
+                                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px; text-align: center;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+                                    <h2 style="color: #10B981; margin-top: 0;">Delivery Successful!</h2>
+                                    <p style="color: #333; font-size: 16px;">
+                                        <strong>${d.orphanageName}</strong> has confirmed receiving the donation of <strong>${foodName}</strong>.
+                                    </p>
+                                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+                                        <p style="margin: 0; font-size: 14px; color: #666;">
+                                            Thank you <strong>${d.restaurantName}</strong> for your generosity and <strong>${d.orphanageName}</strong> for your service to the community. 
+                                            Together, we've saved another meal from being wasted!
+                                        </p>
+                                    </div>
+                                    <p style="font-size: 11px; color: #999; margin-top: 20px;">FoodBridge Zero Waste Initiative</p>
+                                </div>
+                            `
+                        })
+                    });
+                } catch (e) { console.error("Completion email failed", e); }
+            }
+
+            showToast("Order Completed. Confirmation emails sent.");
+
+        } else if (pendingAction.type === 'deleteRequest') {
+            const { reqId } = pendingAction.data; 
+            await db.collection('requests').doc(reqId).delete(); 
+            showToast("Request deleted.");
         }
+    } catch (err) { 
+        console.error(err); 
+        showToast("Action failed: " + err.message, 'error'); 
+    }
+}
 
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
