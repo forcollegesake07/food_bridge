@@ -410,7 +410,7 @@
                         if (!doc.exists) {
                             alert("User profile not found.");
                             await auth.signOut();
-                            window.location.href = 'login.html';
+                            window.location.href = 'login';
                             return;
                         }
 
@@ -420,16 +420,16 @@
                         if (userData.isDisable) {
                             alert("Your account has been disabled.");
                             await auth.signOut();
-                            window.location.href = 'login.html';
+                            window.location.href = 'login';
                             return;
                         }
 
                         // Security Check: Role Verification
                         if (userData.role !== 'admin') {
                             // Unauthorized access attempt - Redirect based on role
-                            if (userData.role === 'restaurant') window.location.href = 'restaurant.html';
-                            else if (userData.role === 'orphanage') window.location.href = 'orphanages.html';
-                            else window.location.href = 'index.html';
+                            if (userData.role === 'restaurant') window.location.href = 'restaurant';
+                            else if (userData.role === 'orphanage') window.location.href = 'orphanages';
+                            else window.location.href = 'index';
                             return;
                         }
 
@@ -442,10 +442,10 @@
 
                     } catch (error) {
                         console.error("Auth Verification Error:", error);
-                        window.location.href = 'login.html';
+                        window.location.href = 'login';
                     }
                 } else {
-                    window.location.href = 'login.html';
+                    window.location.href = 'login';
                 }
             });
         });
@@ -908,7 +908,7 @@
             setTimeout(() => { modal.classList.add('hidden'); currentModalUserId = null; }, 300);
         }
 
-        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/index.html'); }
+        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/index'); }
     </script>
 </body>
 </html>
