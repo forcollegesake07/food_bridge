@@ -1,13 +1,13 @@
 {
   "name": "foodbridge-backend",
-  "version": "1.3.0",
-  "description": "Clean backend service for FoodBridge hosted on Render",
+  "version": "1.4.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "@getbrevo/brevo": "^2.0.0"
   },
   "engines": {
     "node": "20.x"
