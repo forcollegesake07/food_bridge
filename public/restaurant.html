@@ -613,25 +613,164 @@
         function initiateFulfillment(reqId, item, qty, orphId, orphName) { if(!userData.address || !userData.phone) { showToast("Update details first!", 'error'); switchTab('details'); return; } pendingAction = { type: 'fulfill', data: { reqId, item, qty, orphId, orphName } }; showConfirmModal("Confirm Fulfillment", `Fulfill request for ${qty} ${item}?`, 'fulfill'); }
 
         async function executeAction() {
-            if (!pendingAction) return; closeConfirmModal();
-            try {
-                if (pendingAction.type === 'donate') {
-                    const { name, qty, form } = pendingAction.data; const btn = document.getElementById('btn-submit'); const org = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
-                    if (!userData.address) throw new Error("Missing profile details.");
-                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null });
-                    showToast("Posted!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); btn.innerHTML = org; btn.disabled = false;
-                } else if (pendingAction.type === 'fulfill') {
-                    const { reqId, item, qty, orphId, orphName } = pendingAction.data;
-                    const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
-                    await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
-                    showToast(`Reserved ${item}.`); switchTab('history');
-                } else if (pendingAction.type === 'deleteDonation') {
-                    await db.collection('donations').doc(pendingAction.data.id).delete();
-                    showToast("Listing deleted.");
-                }
-            } catch (err) { console.error(err); showToast("Error: " + err.message, 'error'); }
+    if (!pendingAction) return;
+    closeConfirmModal();
+    try {
+        if (pendingAction.type === 'donate') {
+            const { name, qty, form } = pendingAction.data; 
+            const btn = document.getElementById('btn-submit'); 
+            const org = btn.innerHTML; 
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Posting & Notifying...'; 
+            btn.disabled = true;
+
+            if (!userData.address) throw new Error("Missing profile details.");
+
+            // 1. Save Donation to Firestore
+            await db.collection('donations').add({ 
+                restaurantId: currentUser.uid, 
+                restaurantName: userData.name, 
+                restaurantEmail: currentUser.email, 
+                restaurantAddress: userData.address, 
+                restaurantPhone: userData.phone, 
+                foodName: name, 
+                servings: parseInt(qty), 
+                imageUrl: base64Image || null, 
+                status: "Available", 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                location: userData.location || null 
+            });
+
+            // 2. Fetch all Orphanage Emails
+            const snapshot = await db.collection('users').where('role', '==', 'orphanage').get();
+            const emails = [];
+            snapshot.forEach(doc => {
+                if (doc.data().email) emails.push(doc.data().email);
+            });
+
+            // 3. Send Broadcast Email to all Orphanages
+            if (emails.length > 0) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: emails.join(', '),
+                            subject: `New Food Available: ${name}`,
+                            text: `A new donation of ${qty} servings of ${name} has been posted by ${userData.name}. Log in to claim it!`,
+                            html: `
+                                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 500px;">
+                                    <h2 style="color: #F97316; margin-top: 0;">Food Alert!</h2>
+                                    <p><strong>${userData.name}</strong> just posted <strong>${qty} servings</strong> of <strong>${name}</strong>.</p>
+                                    <p>Visit your dashboard to claim this donation before someone else does!</p>
+                                    <br>
+                                    <a href="https://${window.location.host}/login" style="background-color: #10B981; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Available Food</a>
+                                </div>
+                            `
+                        })
+                    });
+                } catch (e) { console.warn("Broadcast email failed", e); }
+            }
+
+            showToast("Posted & Orphanages Notified!"); 
+            form.reset(); 
+            base64Image = ""; 
+            document.getElementById('image-preview').classList.add('hidden'); 
+            document.getElementById('upload-placeholder').classList.remove('hidden'); 
+            btn.innerHTML = org; 
+            btn.disabled = false;
+
+        } else if (pendingAction.type === 'fulfill') {
+            const { reqId, item, qty, orphId, orphName } = pendingAction.data;
+
+            // 1. Fetch current request details to get Orphanage Email
+            const reqDoc = await db.collection('requests').doc(reqId).get(); 
+            const reqData = reqDoc.data();
+            
+            // 2. Update Request Status
+            await db.collection('requests').doc(reqId).update({ 
+                status: 'Fulfilled', 
+                fulfilledBy: currentUser.uid, 
+                restaurantName: userData.name, 
+                fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+
+            // 3. Create a 'Claimed' Donation Record
+            await db.collection('donations').add({ 
+                restaurantId: currentUser.uid, 
+                restaurantName: userData.name, 
+                restaurantEmail: currentUser.email, 
+                restaurantAddress: userData.address, 
+                restaurantPhone: userData.phone, 
+                foodName: item, 
+                servings: parseInt(qty), 
+                imageUrl: null, 
+                status: "Claimed", 
+                claimedBy: orphId, 
+                orphanageName: orphName, 
+                orphanageEmail: reqData.orphanageEmail, 
+                orphanagePhone: reqData.orphanagePhone, 
+                orphanageAddress: reqData.orphanageAddress || '', 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                claimedAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                isFulfillment: true, 
+                originalRequestId: reqId, 
+                location: userData.location || null 
+            });
+
+            // 4. Send Contact Exchange Email to both parties
+            const recipients = [currentUser.email, reqData.orphanageEmail].filter(e => !!e).join(', ');
+            
+            if (recipients) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: recipients,
+                            subject: `Success: Urgent Request Fulfilled - Contact Exchange`,
+                            text: `Request for ${item} fulfilled! Restaurant: ${userData.name} (${userData.phone}). Orphanage: ${orphName} (${reqData.orphanagePhone}).`,
+                            html: `
+                                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px;">
+                                    <h2 style="color: #10B981; margin-top: 0;">Request Fulfilled!</h2>
+                                    <p>The urgent request for <strong>${item} (${qty})</strong> is now matched. Please coordinate the delivery.</p>
+                                    
+                                    <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                                        <div style="margin-bottom: 20px; background: #FFF7ED; padding: 15px; border-radius: 8px;">
+                                            <h3 style="color: #F97316; font-size: 14px; margin: 0; text-transform: uppercase;">The Donor (Restaurant)</h3>
+                                            <p style="margin: 5px 0;"><strong>${userData.name}</strong><br>
+                                            📞 ${userData.phone || 'N/A'}<br>
+                                            📍 ${userData.address || 'N/A'}</p>
+                                        </div>
+                                        <div style="background: #ECFDF5; padding: 15px; border-radius: 8px;">
+                                            <h3 style="color: #10B981; font-size: 14px; margin: 0; text-transform: uppercase;">The Recipient (Orphanage)</h3>
+                                            <p style="margin: 5px 0;"><strong>${orphName}</strong><br>
+                                            📞 ${reqData.orphanagePhone || 'N/A'}<br>
+                                            📍 ${reqData.orphanageAddress || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 11px; color: #999; margin-top: 30px;">FoodBridge Automated Matching Service.</p>
+                                </div>
+                            `
+                        })
+                    });
+                } catch (e) { console.error("Fulfillment email failed", e); }
+            }
+
+            showToast(`Fulfillment confirmed. Emails sent.`); 
+            switchTab('history');
+
+        } else if (pendingAction.type === 'deleteDonation') {
+            await db.collection('donations').doc(pendingAction.data.id).delete();
+            showToast("Listing deleted.");
         }
+    } catch (err) { 
+        console.error(err); 
+        showToast("Action failed: " + err.message, 'error'); 
+        const btn = document.getElementById('btn-submit');
+        if (btn) { btn.disabled = false; btn.innerText = "Post Donation"; }
+    }
+}
 
         function loadData() {
             db.collection('donations').where("restaurantId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((snapshot) => {
