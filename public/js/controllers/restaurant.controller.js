@@ -1,3 +1,4 @@
+import { createDonation } from "../services/donation.service.js";
 import { state } from "./state.js";
 
 /**
@@ -23,8 +24,39 @@ function bindUI() {
   window.switchTab = switchTab;
   window.logout = logout;
 
+  // 👉 Donation form
+  const form = document.querySelector("form");
+  if (form) {
+    form.addEventListener("submit", handleDonate);
+  }
+
   // Initial tab
   switchTab("overview");
+}
+async function handleDonate(event) {
+  event.preventDefault();
+
+  try {
+    const foodName = document.getElementById("food-name")?.value;
+    const qty = document.getElementById("food-qty")?.value;
+
+    if (!foodName || !qty) {
+      alert("Please enter food name and quantity");
+      return;
+    }
+
+    await createDonation(foodName, Number(qty));
+
+    alert("✅ Donation posted successfully");
+
+    // reset form
+    document.getElementById("food-name").value = "";
+    document.getElementById("food-qty").value = "";
+
+  } catch (err) {
+    console.error("Donation failed", err);
+    alert(err.message || "Donation failed");
+  }
 }
 
 /* =========================
