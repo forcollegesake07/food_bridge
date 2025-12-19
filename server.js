@@ -9,12 +9,7 @@ const PORT = process.env.PORT || 3000;
 /* ============================
    MIDDLEWARE
 ============================ */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
-
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "public"), {
@@ -22,17 +17,17 @@ app.use(express.static(path.join(__dirname, "public"), {
 }));
 
 /* ============================
-   BREVO CONFIG
+   BREVO SETUP
 ============================ */
 if (!process.env.BREVO_API_KEY) {
-  console.error("❌ BREVO_API_KEY is missing");
+  console.error("❌ BREVO_API_KEY missing");
   process.exit(1);
 }
 
 const emailApi = new Brevo.TransactionalEmailsApi();
 
 /* ============================
-   EMAIL HELPER (FIXED)
+   EMAIL HELPER (MINIMAL)
 ============================ */
 async function sendTemplateEmail({ to, templateId, params }) {
   try {
@@ -42,9 +37,9 @@ async function sendTemplateEmail({ to, templateId, params }) {
         templateId,
         params,
 
-        // ✅ REQUIRED: VERIFIED SENDER
+        // ⚠️ MUST BE VERIFIED IN BREVO
         sender: {
-          email: "forcollegesake07@gmail.com", // MUST be verified in Brevo
+          email: "no-reply@yourdomain.com",
           name: "FoodBridge"
         }
       },
@@ -55,18 +50,13 @@ async function sendTemplateEmail({ to, templateId, params }) {
       }
     );
 
-    console.log("✅ BREVO RESPONSE:", response);
+    console.log("✅ BREVO SENT:", response);
     return response;
   } catch (err) {
-    console.error(
-      "❌ BREVO ERROR:",
-      err.response?.body || err.message || err
-    );
+    console.error("❌ BREVO ERROR:", err.response?.body || err);
     throw err;
   }
 }
-
-console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
 
 /* ============================
    API: CLAIM FOOD
@@ -75,34 +65,16 @@ app.post("/api/claim-food", async (req, res) => {
   try {
     const { restaurant, orphanage, food } = req.body;
 
-    // 🔐 SAFETY CHECK
-    if (
-      !restaurant ||
-      !orphanage ||
-      !restaurant.location ||
-      !orphanage.location ||
-      restaurant.location.lat == null ||
-      restaurant.location.lng == null ||
-      orphanage.location.lat == null ||
-      orphanage.location.lng == null
-    ) {
-      return res.status(400).json({
-        error: "Location data missing for restaurant or orphanage"
-      });
+    if (!restaurant || !orphanage || !food) {
+      return res.status(400).json({ error: "Missing data" });
     }
-
-    const restaurantMapLink =
-      `https://www.google.com/maps?q=${restaurant.location.lat},${restaurant.location.lng}`;
-
-    const orphanageMapLink =
-      `https://www.google.com/maps?q=${orphanage.location.lat},${orphanage.location.lng}`;
 
     await sendTemplateEmail({
       to: [
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      templateId: 1, // ⚠️ MUST MATCH BREVO TEMPLATE ID
+      templateId: 1, // ⚠️ Must match Brevo template ID
       params: {
         food_name: food.name,
         food_quantity: food.quantity,
@@ -110,18 +82,16 @@ app.post("/api/claim-food", async (req, res) => {
         restaurant_name: restaurant.name,
         restaurant_phone: restaurant.phone,
         restaurant_address: restaurant.address,
-        restaurant_map: restaurantMapLink,
 
         orphanage_name: orphanage.name,
         orphanage_phone: orphanage.phone,
-        orphanage_address: orphanage.address,
-        orphanage_map: orphanageMapLink
+        orphanage_address: orphanage.address
       }
     });
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: "Failed to send claim email" });
+    res.status(500).json({ error: "Email failed" });
   }
 });
 
@@ -137,7 +107,7 @@ app.post("/api/confirm-receipt", async (req, res) => {
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      templateId: 2, // ⚠️ MUST MATCH BREVO TEMPLATE ID
+      templateId: 2, // ⚠️ Must match Brevo template ID
       params: {
         food_name: food.name,
         food_quantity: food.quantity,
@@ -147,7 +117,7 @@ app.post("/api/confirm-receipt", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: "Failed to send confirmation email" });
+    res.status(500).json({ error: "Confirmation email failed" });
   }
 });
 
