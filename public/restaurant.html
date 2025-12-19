@@ -728,12 +728,13 @@
   import { state } from "./js/state.js";
   import { initAuthGuard } from "./js/auth.guard.js";
   import { auth, db } from "./js/firebase.js";
+  import { initRestaurant } from "./js/restaurant.controller.js";
 
   initAuthGuard(auth, db, "restaurant");
 
   document.addEventListener("APP_READY", () => {
-    console.log("✅ App ready");
-    console.log(state);
+    console.log("✅ App ready → starting restaurant app");
+    initRestaurant();
   });
 </script>
 </body>
