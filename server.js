@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const Brevo = require("@getbrevo/brevo");
 
 const app = express();
@@ -10,6 +11,16 @@ const PORT = process.env.PORT || 3000;
 ============================ */
 app.use(cors({ origin: "*" }));
 app.use(express.json());
+
+/* ============================
+   🔥 STATIC FRONTEND (FIX)
+   This is what broke earlier
+============================ */
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    extensions: ["html"]
+  })
+);
 
 console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
 
@@ -94,6 +105,17 @@ app.post("/api/confirm-receipt", async (req, res) => {
   }
 });
 
+/* ============================
+   🔥 FALLBACK (IMPORTANT)
+   Allows refresh on any page
+============================ */
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* ============================
+   START SERVER
+============================ */
 app.listen(PORT, () => {
   console.log(`🚀 FoodBridge backend running on port ${PORT}`);
 });
