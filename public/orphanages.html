@@ -360,7 +360,7 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let totalReceived = 0;
         let pendingAction = null; let reportDonationId = null;
-        
+         const API_BASE = " https://food-bridge-fzvr.onrender.com";
         // Map Vars
         let map, marker;
         let currentLat = 0, currentLng = 0;
@@ -633,18 +633,83 @@
                     });
                     showToast("Request broadcasted!"); form.reset(); btn.innerHTML = originalText; btn.disabled = false; loadMyRequests();
                 } else if (pendingAction.type === 'claim') {
-                    const { donationId, foodName } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({ status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    showToast("Donation claimed!"); switchTab('overview');
-                } else if (pendingAction.type === 'receive') {
-                    const { donationId } = pendingAction.data;
-                    await db.collection('donations').doc(donationId).update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    showToast("Order Completed.");
-                } else if (pendingAction.type === 'deleteRequest') {
-                    const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
-                }
-            } catch (err) { console.error(err); showToast("Action failed: " + err.message, 'error'); }
-        }
+    const { donationId, foodName, servings, restName } = pendingAction.data;
+
+    // 1️⃣ Update Firestore
+    const donationRef = db.collection('donations').doc(donationId);
+    const donationSnap = await donationRef.get();
+    const donationData = donationSnap.data();
+
+    await donationRef.update({
+        status: 'Claimed',
+        claimedBy: currentUser.uid,
+        orphanageName: userData.name,
+        orphanagePhone: userData.phone,
+        orphanageAddress: userData.address,
+        claimedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 2️⃣ Trigger Brevo email via backend
+    await fetch(`${API_BASE}/api/claim-food`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            food: {
+                name: donationData.foodName,
+                quantity: donationData.servings
+            },
+            restaurant: {
+                name: donationData.restaurantName,
+                email: donationData.restaurantEmail,
+                phone: donationData.restaurantPhone,
+                address: donationData.restaurantAddress
+            },
+            orphanage: {
+                name: userData.name,
+                email: currentUser.email,
+                phone: userData.phone,
+                address: userData.address
+            }
+        })
+    });
+
+    showToast("Donation claimed! Contact details sent by email 📧");
+    switchTab('overview');
+}} else if (pendingAction.type === 'receive') {
+    const { donationId } = pendingAction.data;
+
+    const donationRef = db.collection('donations').doc(donationId);
+    const donationSnap = await donationRef.get();
+    const donationData = donationSnap.data();
+
+    // 1️⃣ Update Firestore
+    await donationRef.update({
+        status: 'Completed',
+        completedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 2️⃣ Trigger confirmation email
+    await fetch(`${API_BASE}/api/confirm-receipt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            food: {
+                name: donationData.foodName,
+                quantity: donationData.servings
+            },
+            restaurant: {
+                name: donationData.restaurantName,
+                email: donationData.restaurantEmail
+            },
+            orphanage: {
+                name: userData.name,
+                email: currentUser.email
+            }
+        })
+    });
+
+    showToast("Order completed! Confirmation email sent 📧");
+}
 
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
