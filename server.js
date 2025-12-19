@@ -30,18 +30,13 @@ const emailApi = new Brevo.TransactionalEmailsApi();
    EMAIL HELPER
 ============================ */
 async function sendTemplateEmail({ to, templateId, params }) {
-  return emailApi.sendTransacEmail(
-    {
-      to,
-      templateId,
-      params
-    },
-    {
-      headers: {
-        "api-key": process.env.BREVO_API_KEY
-      }
-    }
+  const response = await emailApi.sendTransacEmail(
+    { to, templateId, params },
+    { headers: { "api-key": process.env.BREVO_API_KEY } }
   );
+
+  console.log("BREVO RESPONSE:", response);
+  return response;
 }
 console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
 /* ============================
