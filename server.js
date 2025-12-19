@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
+const Brevo = require("@getbrevo/brevo");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 /* ============================
    MIDDLEWARE
@@ -11,39 +11,26 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, "public"), {
-  extensions: ["html"]
-}));
-
 console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
 
 /* ============================
-   BREVO EMAIL (RAW REST API)
+   BREVO EMAIL SENDER (STABLE)
 ============================ */
 async function sendTemplateEmail({ to, templateId, params }) {
-  const response = await fetch(
-    "https://api.brevo.com/v3/smtp/email",
+  const api = new Brevo.TransactionalEmailsApi();
+
+  return api.sendTransacEmail(
     {
-      method: "POST",
+      to,
+      templateId,
+      params
+    },
+    {
       headers: {
-        "Content-Type": "application/json",
         "api-key": process.env.BREVO_API_KEY
-      },
-      body: JSON.stringify({
-        to,
-        templateId,
-        params
-      })
+      }
     }
   );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw data;
-  }
-
-  return data;
 }
 
 /* ============================
@@ -53,6 +40,10 @@ app.post("/api/claim-food", async (req, res) => {
   try {
     const { restaurant, orphanage, food } = req.body;
 
+    if (!restaurant || !orphanage || !food) {
+      return res.status(400).json({ error: "Invalid request data" });
+    }
+
     await sendTemplateEmail({
       to: [
         { email: restaurant.email, name: restaurant.name },
@@ -60,27 +51,23 @@ app.post("/api/claim-food", async (req, res) => {
       ],
       templateId: 1,
       params: {
-  food_name: food.name,
-  food_quantity: food.quantity,
+        food_name: food.name,
+        food_quantity: food.quantity,
 
-  restaurant_name: restaurant.name,
-  restaurant_phone: restaurant.phone,
-  restaurant_address: restaurant.address,
-  restaurant_lat: restaurant.location.lat,
-  restaurant_lng: restaurant.location.lng,
+        restaurant_name: restaurant.name,
+        restaurant_phone: restaurant.phone,
+        restaurant_address: restaurant.address,
 
-  orphanage_name: orphanage.name,
-  orphanage_phone: orphanage.phone,
-  orphanage_address: orphanage.address,
-  orphanage_lat: orphanage.location.lat,
-  orphanage_lng: orphanage.location.lng
-}
+        orphanage_name: orphanage.name,
+        orphanage_phone: orphanage.phone,
+        orphanage_address: orphanage.address
+      }
     });
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ BREVO ERROR:", err);
-    res.status(500).json({ error: "Email failed", details: err });
+    console.error("❌ BREVO ERROR:", err.response?.body || err);
+    res.status(500).json({ error: "Email failed" });
   }
 });
 
@@ -106,18 +93,14 @@ app.post("/api/confirm-receipt", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ BREVO ERROR:", err);
-    res.status(500).json({ error: "Email failed", details: err });
+    console.error("❌ BREVO ERROR:", err.response?.body || err);
+    res.status(500).json({ error: "Email failed" });
   }
 });
 
 /* ============================
-   FALLBACK
+   START SERVER
 ============================ */
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 app.listen(PORT, () => {
   console.log(`🚀 FoodBridge backend running on port ${PORT}`);
 });
