@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, "public"), {
 }));
 
 /* ============================
-   BREVO CONFIG
+   BREVO CONFIG (SAFE)
 ============================ */
 const brevoClient = Brevo.ApiClient.instance;
 const apiKey = brevoClient.authentications["api-key"];
@@ -23,17 +23,13 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 const emailApi = new Brevo.TransactionalEmailsApi();
 
 /* ============================
-   EMAIL HELPERS
+   EMAIL HELPER (TEMPLATE)
 ============================ */
-async function sendEmail({ to, subject, html }) {
+async function sendTemplateEmail({ to, templateId, params }) {
   return emailApi.sendTransacEmail({
-    sender: {
-      email: process.env.FROM_EMAIL,
-      name: process.env.FROM_NAME
-    },
     to,
-    subject,
-    htmlContent: html
+    templateId,
+    params
   });
 }
 
@@ -44,40 +40,31 @@ app.post("/api/claim-food", async (req, res) => {
   try {
     const { restaurant, orphanage, food } = req.body;
 
-    const html = `
-      <h2>🍽 Food Claim Initiated</h2>
-      <p><strong>Food:</strong> ${food.name} (${food.quantity} people)</p>
-
-      <h3>🏪 Restaurant Details</h3>
-      <p>
-        ${restaurant.name}<br>
-        📞 ${restaurant.phone}<br>
-        📍 ${restaurant.address}
-      </p>
-
-      <h3>🏠 Orphanage Details</h3>
-      <p>
-        ${orphanage.name}<br>
-        📞 ${orphanage.phone}<br>
-        📍 ${orphanage.address}
-      </p>
-
-      <p>Please coordinate for pickup/delivery.</p>
-    `;
-
-    await sendEmail({
+    await sendTemplateEmail({
       to: [
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      subject: "FoodBridge – Food Claim Details",
-      html
+      templateId: 1, // ✅ REPLACE WITH YOUR REAL CLAIM TEMPLATE ID
+      params: {
+        receiver_name: restaurant.name,
+        food_name: food.name,
+        food_quantity: food.quantity,
+
+        restaurant_name: restaurant.name,
+        restaurant_phone: restaurant.phone,
+        restaurant_address: restaurant.address,
+
+        orphanage_name: orphanage.name,
+        orphanage_phone: orphanage.phone,
+        orphanage_address: orphanage.address
+      }
     });
 
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Email failed" });
+    console.error("Claim email error:", err);
+    res.status(500).json({ error: "Failed to send claim email" });
   }
 });
 
@@ -88,30 +75,26 @@ app.post("/api/confirm-receipt", async (req, res) => {
   try {
     const { restaurant, orphanage, food } = req.body;
 
-    const html = `
-      <h2>✅ Food Received Successfully</h2>
-      <p>
-        <strong>${orphanage.name}</strong> has confirmed receiving:
-      </p>
-      <p>
-        🍛 ${food.name} – for ${food.quantity} people
-      </p>
-      <p>Thank you for reducing food waste ❤️</p>
-    `;
-
-    await sendEmail({
+    await sendTemplateEmail({
       to: [
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      subject: "FoodBridge – Delivery Confirmed",
-      html
+      templateId: 2, // ✅ REPLACE WITH YOUR REAL CONFIRM TEMPLATE ID
+      params: {
+        receiver_name: restaurant.name,
+        food_name: food.name,
+        food_quantity: food.quantity,
+
+        orphanage_name: orphanage.name,
+        orphanage_address: orphanage.address
+      }
     });
 
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Confirmation email failed" });
+    console.error("Confirm email error:", err);
+    res.status(500).json({ error: "Failed to send confirmation email" });
   }
 });
 
