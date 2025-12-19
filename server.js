@@ -98,6 +98,7 @@ app.post("/api/confirm-receipt", async (req, res) => {
       params: {
         food_name: food.name,
         food_quantity: food.quantity,
+         restaurant_name: restaurant.name,
         orphanage_name: orphanage.name
       }
     });
