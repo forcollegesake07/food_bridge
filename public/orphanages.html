@@ -451,11 +451,14 @@
             map = L.map('map-container').setView([lat, lng], zoom);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            marker.on('dragend', function(event) {
-                const position = marker.getLatLng();
-                currentLat = position.lat;
-                currentLng = position.lng;
-            });
+           marker.on('dragend', function () {
+  const position = marker.getLatLng();
+  currentLat = position.lat;
+  currentLng = position.lng;
+
+  fetchAddressFromLatLng(currentLat, currentLng);
+});
+
             if (!currentLat) {
                 map.locate({setView: true, maxZoom: 16});
                 map.on('locationfound', function(e) {
@@ -774,6 +777,20 @@
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/index'; }); }
         let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
         document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
+        async function fetchAddressFromLatLng(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+    );
+    const data = await res.json();
+
+    if (data && data.display_name) {
+      document.getElementById("detail-address").value = data.display_name;
+    }
+  } catch (err) {
+    console.error("Address fetch failed", err);
+  }
+}
     </script>
 </body>
 </html>
