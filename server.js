@@ -50,27 +50,48 @@ async function sendTemplateEmail({ to, templateId, params }) {
 app.post("/api/claim-food", async (req, res) => {
   try {
     const { restaurant, orphanage, food } = req.body;
+     // 🔐 SAFETY CHECK: location must exist
+if (
+  !restaurant ||
+  !orphanage ||
+  !restaurant.location ||
+  !orphanage.location ||
+  restaurant.location.lat == null ||
+  restaurant.location.lng == null ||
+  orphanage.location.lat == null ||
+  orphanage.location.lng == null
+) {
+  return res.status(400).json({
+    error: "Location data missing for restaurant or orphanage"
+  });
+}
+     const restaurantMapLink =
+  `https://www.google.com/maps?q=${restaurant.location.lat},${restaurant.location.lng}`;
 
-    await sendTemplateEmail({
-      to: [
-        { email: restaurant.email, name: restaurant.name },
-        { email: orphanage.email, name: orphanage.name }
-      ],
-      templateId: 1,
-      params: {
-        food_name: food.name,
-        food_quantity: food.quantity,
+const orphanageMapLink =
+  `https://www.google.com/maps?q=${orphanage.location.lat},${orphanage.location.lng}`;
 
-        restaurant_name: restaurant.name,
-        restaurant_phone: restaurant.phone,
-        restaurant_address: restaurant.address,
+   await sendTemplateEmail({
+  to: [
+    { email: restaurant.email, name: restaurant.name },
+    { email: orphanage.email, name: orphanage.name }
+  ],
+  templateId: 1,
+  params: {
+    food_name: food.name,
+    food_quantity: food.quantity,
 
-        orphanage_name: orphanage.name,
-        orphanage_phone: orphanage.phone,
-        orphanage_address: orphanage.address
-      }
-    });
+    restaurant_name: restaurant.name,
+    restaurant_phone: restaurant.phone,
+    restaurant_address: restaurant.address,
+    restaurant_map: restaurantMapLink,
 
+    orphanage_name: orphanage.name,
+    orphanage_phone: orphanage.phone,
+    orphanage_address: orphanage.address,
+    orphanage_map: orphanageMapLink
+  }
+});
     res.json({ success: true });
   } catch (err) {
     console.error("Claim email error:", err.response?.body || err);
