@@ -14,16 +14,17 @@ app.use(express.static(path.join(__dirname, "public"), {
 }));
 
 /* ============================
-   BREVO CONFIG (SAFE)
+   BREVO CONFIG (CORRECT)
 ============================ */
-const brevoClient = Brevo.ApiClient.instance;
-const apiKey = brevoClient.authentications["api-key"];
-apiKey.apiKey = process.env.BREVO_API_KEY;
-
 const emailApi = new Brevo.TransactionalEmailsApi();
 
+emailApi.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
 /* ============================
-   EMAIL HELPER (TEMPLATE)
+   EMAIL HELPER
 ============================ */
 async function sendTemplateEmail({ to, templateId, params }) {
   return emailApi.sendTransacEmail({
@@ -34,7 +35,7 @@ async function sendTemplateEmail({ to, templateId, params }) {
 }
 
 /* ============================
-   API: ORPHANAGE CLAIMS FOOD
+   API: CLAIM FOOD
 ============================ */
 app.post("/api/claim-food", async (req, res) => {
   try {
@@ -45,7 +46,7 @@ app.post("/api/claim-food", async (req, res) => {
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      templateId: 1, // ✅ REPLACE WITH YOUR REAL CLAIM TEMPLATE ID
+      templateId: 1, // ✅ your template ID
       params: {
         receiver_name: restaurant.name,
         food_name: food.name,
@@ -80,7 +81,7 @@ app.post("/api/confirm-receipt", async (req, res) => {
         { email: restaurant.email, name: restaurant.name },
         { email: orphanage.email, name: orphanage.name }
       ],
-      templateId: 2, // ✅ REPLACE WITH YOUR REAL CONFIRM TEMPLATE ID
+      templateId: 2, // ✅ your template ID
       params: {
         receiver_name: restaurant.name,
         food_name: food.name,
