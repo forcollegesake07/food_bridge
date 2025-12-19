@@ -360,89 +360,25 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let totalReceived = 0;
         let pendingAction = null; let reportDonationId = null;
-         const API_BASE = "https://food-bridge-fzvr.onrender.com";
+        const API_BASE = "https://food-bridge-fzvr.onrender.com";
+        
         // Map Vars
         let map, marker;
         let currentLat = 0, currentLng = 0;
 
         auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-        window.location.href = "https://foodbridge.qzz.io/login";
-        return;
-    }
-
-    // ✅ EMAIL VERIFICATION CHECK
-    if (!user.emailVerified) {
-        await auth.signOut();
-        alert("Please verify your email before logging in.");
-        window.location.href = "https://foodbridge.qzz.io/login";
-        return;
-    }
-
-    currentUser = user;
-
-    try {
-        const userRef = db.collection("users").doc(user.uid);
-        const docSnap = await userRef.get();
-
-        // ✅ CREATE USER DOC IF MISSING
-        if (!docSnap.exists) {
-            const defaultUser = {
-                name: "New Orphanage",
-                email: user.email,
-                role: "orphanage",
-                phone: "",
-                address: "",
-                isDisable: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            await userRef.set(defaultUser);
-            userData = defaultUser;
-        } else {
-            userData = docSnap.data();
-        }
-
-        // ✅ DISABLED ACCOUNT CHECK
-        if (userData.isDisable === true) {
-            await auth.signOut();
-            alert("Your account has been disabled by admin.");
-            window.location.href = "https://foodbridge.qzz.io/login";
-            return;
-        }
-
-        // ✅ ROLE VERIFICATION (THIS WAS FAILING)
-        if (userData.role !== "orphanage") {
-            if (userData.role === "restaurant") {
-                window.location.href = "restaurant";
-            } else if (userData.role === "admin") {
-                window.location.href = "admin";
-            } else {
-                window.location.href = "login";
-            }
-            return;
-        }
-
-        // ✅ LOGIN VERIFIED — LOAD DASHBOARD
-        updateUIWithUserData();
-
-        if (userData.location) {
-            currentLat = userData.location.lat;
-            currentLng = userData.location.lng;
-        }
-
-        document.getElementById("tab-overview").classList.remove("hidden");
-        loadHistory();
-        loadAvailableDonations();
-        loadIncomingDeliveries();
-        loadMyRequests();
-
-    } catch (err) {
-        console.error("Auth verification failed:", err);
-        alert("Authentication error. Please login again.");
-        await auth.signOut();
-        window.location.href = "https://foodbridge.qzz.io/login";
-    }
-});
+            if (user) {
+                currentUser = user;
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    if (userData.isDisable === true) { await auth.signOut(); window.location.href = 'https://foodbridge.qzz.io/login'; return; }
+                    if (userData.role !== 'orphanage') { 
+                        if (userData.role === 'restaurant') window.location.href = 'restaurant';
+                        else if (userData.role === 'admin') window.location.href = 'admin';
+                        else window.location.href = 'login';
+                        return;
+                    }
                     updateUIWithUserData();
                     
                     // Init Lat/Lng
@@ -690,9 +626,9 @@
     try {
         if (pendingAction.type === 'request') {
             const { item, qty, form } = pendingAction.data;
-
             const btn = document.getElementById('btn-submit-req');
             const originalText = btn.innerHTML;
+
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...';
             btn.disabled = true;
 
@@ -715,13 +651,15 @@
             btn.disabled = false;
             loadMyRequests();
 
-        } else if (pendingAction.type === 'claim') {
+        } 
+        else if (pendingAction.type === 'claim') {
             const { donationId } = pendingAction.data;
 
             const donationRef = db.collection('donations').doc(donationId);
             const donationSnap = await donationRef.get();
             const donationData = donationSnap.data();
 
+            // 1️⃣ Firestore update
             await donationRef.update({
                 status: 'Claimed',
                 claimedBy: currentUser.uid,
@@ -731,6 +669,7 @@
                 claimedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            // 2️⃣ Trigger Brevo email
             await fetch(`${API_BASE}/api/claim-food`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -757,18 +696,21 @@
             showToast("Donation claimed! Contact details sent by email 📧");
             switchTab('overview');
 
-        } else if (pendingAction.type === 'receive') {
+        } 
+        else if (pendingAction.type === 'receive') {
             const { donationId } = pendingAction.data;
 
             const donationRef = db.collection('donations').doc(donationId);
             const donationSnap = await donationRef.get();
             const donationData = donationSnap.data();
 
+            // 1️⃣ Firestore update
             await donationRef.update({
                 status: 'Completed',
                 completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            // 2️⃣ Confirmation email
             await fetch(`${API_BASE}/api/confirm-receipt`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -789,17 +731,20 @@
             });
 
             showToast("Order completed! Confirmation email sent 📧");
+        } 
+        else if (pendingAction.type === 'deleteRequest') {
+            const { reqId } = pendingAction.data;
+            await db.collection('requests').doc(reqId).delete();
+            showToast("Request deleted.");
         }
 
     } catch (err) {
         console.error(err);
-        showToast("Something went wrong. Please try again.", "error");
+        showToast("Action failed. Please try again.", "error");
     } finally {
         pendingAction = null;
     }
 }
-
-
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
             document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
