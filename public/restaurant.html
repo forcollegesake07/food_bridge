@@ -621,10 +621,45 @@
             if (!pendingAction) return; closeConfirmModal();
             try {
                 if (pendingAction.type === 'donate') {
-                    const { name, qty, form } = pendingAction.data; const btn = document.getElementById('btn-submit'); const org = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
-                    if (!userData.address) throw new Error("Missing profile details.");
-                    await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: name, servings: parseInt(qty), imageUrl: base64Image || null, status: "Available", createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null });
-                    showToast("Posted!"); form.reset(); base64Image = ""; document.getElementById('image-preview').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); btn.innerHTML = org; btn.disabled = false;
+  const { name, qty, form } = pendingAction.data;
+  const btn = document.getElementById('btn-submit');
+  const originalHTML = btn.innerHTML;
+
+  try {
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+    btn.disabled = true;
+
+    await db.collection('donations').add({
+      restaurantId: currentUser.uid,
+      restaurantName: userData.name,
+      restaurantEmail: currentUser.email,
+      restaurantAddress: userData.address,
+      restaurantPhone: userData.phone,
+      foodName: name,
+      servings: parseInt(qty),
+      imageUrl: base64Image || null,
+      status: "Available",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      location: userData.location || null
+    });
+
+    // ✅ SUCCESS RESET
+    form.reset();
+    base64Image = "";
+
+    document.getElementById('image-preview').classList.add('hidden');
+    document.getElementById('upload-placeholder').classList.remove('hidden');
+
+    showToast("Donation posted successfully!");
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to post donation", "error");
+  } finally {
+    // 🔁 ALWAYS RESET BUTTON
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+    pendingAction = null;
+  }
                 } else if (pendingAction.type === 'fulfill') {
                     const { reqId, item, qty, orphId, orphName } = pendingAction.data;
                     const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
