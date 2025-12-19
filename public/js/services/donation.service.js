@@ -1,31 +1,31 @@
 import { db } from "../firebase.js";
 import { state } from "../state.js";
+import { serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 /**
  * Create a new food donation
  */
-export async function createDonation(foodName, quantity, imageBase64 = null) {
-  if (!state.authUser) {
-    throw new Error("User not authenticated");
+export async function createDonation({ foodName, quantity }) {
+  if (!state.authUser || !state.profile) {
+    throw new Error("User not ready");
   }
 
-  if (!state.profile) {
-    throw new Error("User profile not loaded");
-  }
-
-  const donationData = {
+  const donation = {
     restaurantId: state.authUser.uid,
-    restaurantName: state.profile.name,
-    restaurantEmail: state.authUser.email,
+    restaurantName: state.profile.name || "Unnamed Restaurant",
+    restaurantEmail: state.profile.email || "",
     restaurantPhone: state.profile.phone || "",
     restaurantAddress: state.profile.address || "",
-    foodName: foodName,
+
+    foodName,
     servings: Number(quantity),
-    imageUrl: imageBase64,
+
     status: "Available",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    location: state.location || null
+    createdAt: serverTimestamp(),
+    location: state.profile.location || null,
   };
 
-  await db.collection("donations").add(donationData);
+  await db.collection("donations").add(donation);
+
+  return donation;
 }
