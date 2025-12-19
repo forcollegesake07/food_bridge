@@ -22,12 +22,36 @@ function bindUI() {
   window.switchTab = switchTab;
   window.logout = logout;
 
-  const form = document.getElementById("donate-form");
-  if (form) {
-    form.addEventListener("submit", handleDonate);
+  const donateForm = document.getElementById("donation-form");
+  if (donateForm) {
+    donateForm.addEventListener("submit", handleDonateSubmit);
   }
 
   switchTab("overview");
+}
+
+  switchTab("overview");
+}
+function handleDonateSubmit(e) {
+  e.preventDefault();
+
+  const nameInput = document.getElementById("food-name");
+  const qtyInput = document.getElementById("food-qty");
+
+  const foodName = nameInput.value.trim();
+  const quantity = qtyInput.value.trim();
+
+  if (!foodName || !quantity) {
+    console.warn("Missing food details");
+    return;
+  }
+
+  console.log("🍛 Donation Form Submitted");
+  console.log("Food:", foodName);
+  console.log("Quantity:", quantity);
+
+  // TEMP: reset form (no DB yet)
+  e.target.reset();
 }
 
 async function handleDonate(event) {
