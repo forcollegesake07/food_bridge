@@ -335,6 +335,15 @@
                 btn.disabled = false; 
             } 
         }
+        auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
+
+  const doc = await db.collection("users").doc(user.uid).get();
+  if (!doc.exists) return;
+
+  const role = doc.data().role;
+  performRedirect(role);
+});
     </script>
 </body>
 </html>
