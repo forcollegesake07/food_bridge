@@ -351,6 +351,8 @@
         const auth = firebase.auth(); const db = firebase.firestore();
         let currentUser = null; let userData = {}; let base64Image = ""; let totalMeals = 0;
         let pendingAction = null;
+        let broadcastNotifs = [];
+        let operationalNotifs = [];
         
         // Map Variables
         let map, marker;
@@ -384,6 +386,7 @@
                     loadData();
                     loadUrgentRequests(); // This now uses location filtering
                     loadActivePickups();
+                    loadBroadcasts();
                 } else {
                     userData = { name: "New Restaurant", phone: "", address: "" };
                     await db.collection('users').doc(user.uid).set(userData);
@@ -391,6 +394,7 @@
                     loadData();
                     loadUrgentRequests();
                     loadActivePickups();
+                    loadBroadcasts();
                 }
             } else { window.location.href = 'https://foodbridge.qzz.io/login'; }
         });
@@ -496,6 +500,26 @@
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
         // --- NOTIFICATIONS LOGIC ---
+        function loadBroadcasts() {
+            db.collection('notifications')
+              .where('targetAudience', 'in', ['all', 'restaurant'])
+              .orderBy('createdAt', 'desc')
+              .limit(10)
+              .onSnapshot(snap => {
+                  broadcastNotifs = [];
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      broadcastNotifs.push({
+                          type: 'broadcast',
+                          title: d.title || 'System Broadcast',
+                          message: d.message,
+                          time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
+                      });
+                  });
+                  renderAllNotifs();
+              });
+        }
+
         function toggleNotifications() {
             const dropdown = document.getElementById('notif-dropdown');
             if (dropdown.classList.contains('hidden')) {
@@ -507,27 +531,26 @@
             }
         }
 
-        function updateNotifications(snapshot) {
+        function renderAllNotifs() {
             const list = document.getElementById('notif-list');
             const badge = document.getElementById('notif-badge');
-            const notifications = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const date = data.reportedAt || data.resolvedAt || data.createdAt; 
-                if (data.status === 'Issue') {
-                    notifications.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: date ? new Date(date.seconds * 1000) : new Date() });
-                } else if (data.status === 'Resolved') {
-                    notifications.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: date ? new Date(date.seconds * 1000) : new Date() });
-                }
-            });
-            notifications.sort((a, b) => b.time - a.time);
-            if (notifications.length === 0) { list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>'; badge.classList.add('hidden'); } 
-            else {
+            
+            const all = [...broadcastNotifs, ...operationalNotifs].sort((a,b) => b.time - a.time);
+            
+            if (all.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
                 list.innerHTML = '';
-                notifications.forEach(n => {
-                    const iconColor = n.type === 'issue' ? 'text-red-500' : 'text-green-500';
-                    const iconClass = n.type === 'issue' ? 'fa-circle-exclamation' : 'fa-circle-check';
-                    list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.text}</p><p class="text-xs text-gray-600 truncate">${n.subtext}</p></div></div></div>`;
+                all.forEach(n => {
+                    let iconClass = 'fa-circle-info';
+                    let iconColor = 'text-blue-500';
+                    
+                    if(n.type === 'broadcast') { iconClass = 'fa-tower-broadcast'; iconColor = 'text-brand-orange'; }
+                    if(n.type === 'issue') { iconClass = 'fa-circle-exclamation'; iconColor = 'text-red-500'; }
+                    if(n.type === 'resolved') { iconClass = 'fa-circle-check'; iconColor = 'text-green-500'; }
+                    
+                    list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.title || n.text}</p><p class="text-xs text-gray-600 line-clamp-2">${n.message || n.subtext}</p><p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p></div></div></div>`;
                 });
                 badge.classList.remove('hidden');
             }
@@ -696,12 +719,25 @@ await sendClaimEmail({
 
         function loadData() {
             db.collection('donations').where("restaurantId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const recentList = document.getElementById('recent-list'); const historyBody = document.getElementById('history-table-body');
-                if (recentList) recentList.innerHTML = ""; if (historyBody) historyBody.innerHTML = "";
-                totalMeals = 0; let docCount = 0; updateNotifications(snapshot);
-                if (snapshot.empty) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='7' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; }
+                const recentList = document.getElementById('recent-list'); 
+                const historyBody = document.getElementById('history-table-body');
+                if (recentList) recentList.innerHTML = ""; 
+                if (historyBody) historyBody.innerHTML = "";
+                
+                totalMeals = 0; 
+                let docCount = 0; 
+                operationalNotifs = []; // Clear to rebuild
+
+                if (snapshot.empty) { 
+                    if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; 
+                    if (historyBody) historyBody.innerHTML = "<tr><td colspan='7' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; 
+                }
+                
                 snapshot.forEach(doc => {
-                    const data = doc.data(); docCount++; totalMeals += parseInt(data.servings || 0);
+                    const data = doc.data(); 
+                    docCount++; 
+                    totalMeals += parseInt(data.servings || 0);
+                    
                     const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Just now';
                     let statusBadge = `<span class="text-green-600 bg-green-50 px-2 py-1 rounded-lg text-xs font-bold border border-green-100">${data.status}</span>`;
                     let deleteBtn = '';
@@ -718,8 +754,21 @@ await sendClaimEmail({
                     let contactInfo = '-'; if(data.status === 'Claimed' || data.status === 'Completed') { contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p><p><i class="fa-solid fa-location-dot text-brand-orange mr-1"></i> ${data.orphanageAddress || 'N/A'}</p></div>`; }
                     if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div><div class="flex items-center">${statusBadge}${deleteBtn}</div></div>`; }
                     if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${date}</td><td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-4 py-3 md:px-6 md:py-4">${contactInfo}</td><td class="px-4 py-3 text-center">${deleteBtn}</td></tr>`; }
+
+                    // Notification Logic
+                    const notifDate = data.reportedAt || data.resolvedAt || data.createdAt; 
+                    if (data.status === 'Issue') {
+                        operationalNotifs.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: notifDate ? new Date(notifDate.seconds * 1000) : new Date() });
+                    } else if (data.status === 'Resolved') {
+                        operationalNotifs.push({ type: 'resolved', text: `Resolved: ${data.foodName}`, subtext: data.adminAction, time: notifDate ? new Date(notifDate.seconds * 1000) : new Date() });
+                    }
                 });
-                document.getElementById('stat-meals').innerText = totalMeals; document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); document.getElementById('history-count').innerText = docCount; updateChart(totalMeals);
+                
+                renderAllNotifs(); // Update notifications
+                document.getElementById('stat-meals').innerText = totalMeals; 
+                document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); 
+                document.getElementById('history-count').innerText = docCount; 
+                updateChart(totalMeals);
             });
         }
 
