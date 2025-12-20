@@ -258,12 +258,32 @@
             </div>
         </div>
 
-        <!-- TAB: HISTORY -->
+        <!-- TAB: HISTORY (Updated with Bell Icon) -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
-                <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
-                    <span class="text-brand-green font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
+                <div class="flex items-center gap-3">
+                    <!-- Notification Bell -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-green transition relative z-20 active:bg-gray-100 touch-manipulation">
+                            <i class="fa-solid fa-bell text-xl"></i>
+                            <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
+                        </button>
+                        <!-- Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
+                            <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
+                                <span>Notifications</span>
+                                <span class="text-[10px] text-gray-400 font-normal">Broadcasts & Updates</span>
+                            </div>
+                            <div id="notif-list" class="max-h-64 overflow-y-auto smooth-scroll-touch">
+                                <p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Records Count -->
+                    <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
+                        <span class="text-brand-green font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
+                    </div>
                 </div>
             </div>
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
@@ -362,6 +382,10 @@
         let pendingAction = null; let reportDonationId = null;
         const API_BASE = "https://food-bridge-fzvr.onrender.com";
         
+        // Notifications
+        let broadcastNotifs = [];
+        let operationalNotifs = [];
+
         // Map Vars
         let map, marker;
         let currentLat = 0, currentLng = 0;
@@ -385,6 +409,7 @@
                     if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
 
                     document.getElementById('tab-overview').classList.remove('hidden');
+                    loadBroadcasts(); // NEW: Load Admin Broadcasts
                     loadHistory();
                     loadAvailableDonations();
                     loadIncomingDeliveries();
@@ -394,6 +419,7 @@
                     await db.collection('users').doc(user.uid).set(userData);
                     updateUIWithUserData();
                     document.getElementById('tab-overview').classList.remove('hidden');
+                    loadBroadcasts(); // NEW
                     loadHistory();
                     loadAvailableDonations();
                     loadIncomingDeliveries();
@@ -452,12 +478,11 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
            marker.on('dragend', function () {
-  const position = marker.getLatLng();
-  currentLat = position.lat;
-  currentLng = position.lng;
-
-  fetchAddressFromLatLng(currentLat, currentLng);
-});
+              const position = marker.getLatLng();
+              currentLat = position.lat;
+              currentLng = position.lng;
+              fetchAddressFromLatLng(currentLat, currentLng);
+            });
 
             if (!currentLat) {
                 map.locate({setView: true, maxZoom: 16});
@@ -478,6 +503,63 @@
         }
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
+        // --- NOTIFICATIONS LOGIC ---
+        function loadBroadcasts() {
+            db.collection('notifications')
+              .where('targetAudience', 'in', ['all', 'orphanage'])
+              .orderBy('createdAt', 'desc')
+              .limit(10)
+              .onSnapshot(snap => {
+                  broadcastNotifs = [];
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      broadcastNotifs.push({
+                          type: 'broadcast',
+                          title: d.title || 'System Broadcast',
+                          message: d.message,
+                          time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
+                      });
+                  });
+                  renderAllNotifs();
+              });
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function renderAllNotifs() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
+            // Merge & Sort
+            const all = [...broadcastNotifs, ...operationalNotifs].sort((a,b) => b.time - a.time);
+            
+            if (all.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
+                list.innerHTML = '';
+                all.forEach(n => {
+                    let iconClass = 'fa-circle-info';
+                    let iconColor = 'text-blue-500';
+                    
+                    if(n.type === 'broadcast') { iconClass = 'fa-tower-broadcast'; iconColor = 'text-brand-orange'; }
+                    if(n.type === 'fulfilled') { iconClass = 'fa-circle-check'; iconColor = 'text-green-500'; }
+                    
+                    list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.title}</p><p class="text-xs text-gray-600 line-clamp-2">${n.message}</p><p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p></div></div></div>`;
+                });
+                badge.classList.remove('hidden');
+            }
+        }
+
         // --- AVAILABLE DONATIONS (RADIUS FILTER 10km) ---
         function loadAvailableDonations() {
             db.collection('donations').where('status', '==', 'Available').orderBy('createdAt', 'desc').onSnapshot(snap => {
@@ -496,7 +578,6 @@
 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    // Radius Check
                     const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
                     
                     if(dist <= 10) {
@@ -559,15 +640,35 @@
             });
         }
 
-        // --- HISTORY ---
+        // --- HISTORY (Modified for Notifications) ---
         function loadHistory() {
             db.collection('donations').where("claimedBy", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((donSnap) => {
                 db.collection('requests').where("orphanageId", "==", currentUser.uid).orderBy("createdAt", "desc").onSnapshot((reqSnap) => {
                     const recentList = document.getElementById('recent-list'); const historyBody = document.getElementById('history-table-body');
                     if (recentList) recentList.innerHTML = ""; if (historyBody) historyBody.innerHTML = "";
+                    
                     let allItems = [];
+                    operationalNotifs = []; // Clear notifications to rebuild
+
                     donSnap.forEach(doc => { allItems.push({ type: 'Donation', data: doc.data(), date: doc.data().createdAt ? doc.data().createdAt.seconds : 0 }); });
-                    reqSnap.forEach(doc => { allItems.push({ type: 'Request', data: doc.data(), date: doc.data().createdAt ? doc.data().createdAt.seconds : 0 }); });
+                    reqSnap.forEach(doc => { 
+                        const d = doc.data();
+                        allItems.push({ type: 'Request', data: d, date: d.createdAt ? d.createdAt.seconds : 0 }); 
+                        
+                        // Check for Notification (Fulfilled Request)
+                        if (d.status === 'Fulfilled') {
+                            operationalNotifs.push({
+                                type: 'fulfilled',
+                                title: 'Request Accepted',
+                                message: `${d.restaurantName || 'A restaurant'} accepted your request for ${d.itemNeeded}`,
+                                time: d.fulfilledAt ? new Date(d.fulfilledAt.seconds * 1000) : new Date()
+                            });
+                        }
+                    });
+                    
+                    // Update Notifications UI
+                    renderAllNotifs();
+
                     allItems.sort((a, b) => b.date - a.date);
                     totalReceived = 0; let count = 0;
                     if (allItems.length === 0) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No history yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; return; }
@@ -623,136 +724,67 @@
         }
 
         async function executeAction() {
-    if (!pendingAction) return;
-    closeConfirmModal();
+            if (!pendingAction) return;
+            closeConfirmModal();
 
-    try {
-        if (pendingAction.type === 'request') {
-            const { item, qty, form } = pendingAction.data;
-            const btn = document.getElementById('btn-submit-req');
-            const originalText = btn.innerHTML;
+            try {
+                if (pendingAction.type === 'request') {
+                    const { item, qty, form } = pendingAction.data;
+                    const btn = document.getElementById('btn-submit-req');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...'; btn.disabled = true;
 
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Broadcasting...';
-            btn.disabled = true;
+                    await db.collection('requests').add({
+                        orphanageId: currentUser.uid, orphanageName: userData.name, orphanageEmail: currentUser.email, orphanagePhone: userData.phone, orphanageAddress: userData.address,
+                        itemNeeded: item, quantity: parseInt(qty), status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp(), location: userData.location || null
+                    });
 
-            await db.collection('requests').add({
-                orphanageId: currentUser.uid,
-                orphanageName: userData.name,
-                orphanageEmail: currentUser.email,
-                orphanagePhone: userData.phone,
-                orphanageAddress: userData.address,
-                itemNeeded: item,
-                quantity: parseInt(qty),
-                status: 'Pending',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                location: userData.location || null
-            });
+                    showToast("Request broadcasted!"); form.reset(); btn.innerHTML = originalText; btn.disabled = false; loadMyRequests();
+                } 
+                else if (pendingAction.type === 'claim') {
+                    const { donationId } = pendingAction.data;
+                    const donationRef = db.collection('donations').doc(donationId);
+                    const donationSnap = await donationRef.get();
+                    const donationData = donationSnap.data();
 
-            showToast("Request broadcasted!");
-            form.reset();
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            loadMyRequests();
+                    await donationRef.update({
+                        status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
-        } 
-        else if (pendingAction.type === 'claim') {
-            const { donationId } = pendingAction.data;
+                    await fetch(`${API_BASE}/api/claim-food`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            food: { name: donationData.foodName, quantity: donationData.servings },
+                            restaurant: { name: donationData.restaurantName, email: donationData.restaurantEmail, phone: donationData.restaurantPhone, address: donationData.restaurantAddress, location: donationData.location },
+                            orphanage: { name: userData.name, email: currentUser.email, phone: userData.phone, address: userData.address, location: userData.location }
+                        })
+                    });
+                    showToast("Donation claimed! Contact details sent by email 📧"); switchTab('overview');
+                } 
+                else if (pendingAction.type === 'receive') {
+                    const { donationId } = pendingAction.data;
+                    const donationRef = db.collection('donations').doc(donationId);
+                    const donationSnap = await donationRef.get();
+                    const donationData = donationSnap.data();
 
-            const donationRef = db.collection('donations').doc(donationId);
-            const donationSnap = await donationRef.get();
-            const donationData = donationSnap.data();
+                    await donationRef.update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-            // 1️⃣ Firestore update
-            await donationRef.update({
-                status: 'Claimed',
-                claimedBy: currentUser.uid,
-                orphanageName: userData.name,
-                orphanagePhone: userData.phone,
-                orphanageAddress: userData.address,
-                claimedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // 2️⃣ Trigger Brevo email
-            await fetch(`${API_BASE}/api/claim-food`, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-        food: {
-            name: donationData.foodName,
-            quantity: donationData.servings
-        },
-        restaurant: {
-            name: donationData.restaurantName,
-            email: donationData.restaurantEmail,
-            phone: donationData.restaurantPhone,
-            address: donationData.restaurantAddress,
-            location: donationData.location
-        },
-        orphanage: {
-            name: userData.name,
-            email: currentUser.email,
-            phone: userData.phone,
-            address: userData.address,
-            location: userData.location
-        }
-    })
-});
-
-
-            showToast("Donation claimed! Contact details sent by email 📧");
-            switchTab('overview');
-
-        } 
-        else if (pendingAction.type === 'receive') {
-            const { donationId } = pendingAction.data;
-
-            const donationRef = db.collection('donations').doc(donationId);
-            const donationSnap = await donationRef.get();
-            const donationData = donationSnap.data();
-
-            // 1️⃣ Firestore update
-            await donationRef.update({
-                status: 'Completed',
-                completedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // 2️⃣ Confirmation email
-            await fetch(`${API_BASE}/api/confirm-receipt`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    food: {
-                        name: donationData.foodName,
-                        quantity: donationData.servings
-                    },
-                    restaurant: {
-                        name: donationData.restaurantName,
-                        email: donationData.restaurantEmail
-                    },
-                    orphanage: {
-                        name: userData.name,
-                        email: currentUser.email
-                    }
-                })
-            });
-
-            showToast("Order completed! Confirmation email sent 📧");
-        } 
-        else if (pendingAction.type === 'deleteRequest') {
-            const { reqId } = pendingAction.data;
-            await db.collection('requests').doc(reqId).delete();
-            showToast("Request deleted.");
+                    await fetch(`${API_BASE}/api/confirm-receipt`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            food: { name: donationData.foodName, quantity: donationData.servings },
+                            restaurant: { name: donationData.restaurantName, email: donationData.restaurantEmail },
+                            orphanage: { name: userData.name, email: currentUser.email }
+                        })
+                    });
+                    showToast("Order completed! Confirmation email sent 📧");
+                } 
+                else if (pendingAction.type === 'deleteRequest') {
+                    const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
+                }
+            } catch (err) { console.error(err); showToast("Action failed. Please try again.", "error"); } finally { pendingAction = null; }
         }
 
-    } catch (err) {
-        console.error(err);
-        showToast("Action failed. Please try again.", "error");
-    } finally {
-        pendingAction = null;
-    }
-}
         function showConfirmModal(title, message, type) {
             const modal = document.getElementById('confirm-modal');
             document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
