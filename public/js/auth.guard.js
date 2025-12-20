@@ -7,6 +7,7 @@ export function initAuthGuard(auth, db, role) {
       return;
     }
 
+    // Save auth user
     state.authUser = user;
 
     const snap = await db.collection("users").doc(user.uid).get();
@@ -19,32 +20,32 @@ export function initAuthGuard(auth, db, role) {
 
     const data = snap.data();
 
-    if (data.isDisable) {
+    // Disabled account
+    if (data.isDisable === true) {
       await auth.signOut();
       alert("Account disabled");
       window.location.href = "/login";
       return;
     }
 
-    if (data.role !== role) {
+    // Role protection
+    if (role && data.role !== role) {
       redirectByRole(data.role);
       return;
     }
 
+    // ✅ SAFE STATE ASSIGNMENT
     state.profile = data;
+    state.location = data.location || null;
 
-    // Store location safely
-    if (data.location) {
-      state.location.lat = data.location.lat;
-      state.location.lng = data.location.lng;
-    }
-
+    // 🔔 Notify app that auth + profile are ready
     document.dispatchEvent(new Event("APP_READY"));
   });
 }
 
 function redirectByRole(role) {
   if (role === "restaurant") window.location.href = "/restaurant";
-  if (role === "orphanage") window.location.href = "/orphanages";
-  if (role === "admin") window.location.href = "/admin";
+  else if (role === "orphanage") window.location.href = "/orphanages";
+  else if (role === "admin") window.location.href = "/admin";
+  else window.location.href = "/login";
 }
