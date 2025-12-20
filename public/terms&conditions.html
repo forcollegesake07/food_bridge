@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Legal | FoodBridge</title>
+    
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937', light: '#FFF7ED' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; width: 100%; overflow-x: hidden; }
+        nav, .transform-gpu { will-change: transform; transform: translateZ(0); }
+        html { -webkit-text-size-adjust: 100%; }
+        .tab-active { border-bottom: 3px solid #F97316; color: #F97316; }
+        .tab-inactive { border-bottom: 3px solid transparent; color: #6B7280; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans selection:bg-brand-orange selection:text-white flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white/95 backdrop-blur-md shadow-md fixed w-full z-50 transform-gpu">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <a href="index" class="flex items-center cursor-pointer group touch-manipulation active:opacity-80 transition-opacity">
+                    <div class="bg-brand-orange/10 p-2 rounded-lg mr-2 group-hover:bg-brand-orange/20 transition">
+                        <i class="fa-solid fa-hand-holding-heart text-brand-orange text-2xl"></i>
+                    </div>
+                    <span class="font-bold text-xl text-brand-dark tracking-wide">Food<span class="text-brand-green">Bridge</span></span>
+                </a>
+                <a href="index" class="text-gray-600 hover:text-brand-orange font-bold transition flex items-center touch-manipulation active:scale-95">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="pt-32 pb-20 px-4 flex-grow">
+        <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 transform-gpu">
+            
+            <!-- Header & Tabs -->
+            <div class="bg-white border-b border-gray-100 sticky top-0 z-10">
+                <div class="bg-brand-dark p-8 md:p-10 text-center text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2 relative z-10">Legal Center</h1>
+                    <p class="text-gray-400 relative z-10 text-sm">Transparency is our priority.</p>
+                </div>
+                <div class="flex">
+                    <button onclick="switchLegalTab('terms')" id="btn-terms" class="flex-1 py-4 font-bold text-sm md:text-base transition-colors duration-200 tab-active">Terms & Conditions</button>
+                    <button onclick="switchLegalTab('privacy')" id="btn-privacy" class="flex-1 py-4 font-bold text-sm md:text-base transition-colors duration-200 tab-inactive">Privacy Policy</button>
+                </div>
+            </div>
+            
+            <div class="p-8 md:p-12 min-h-[500px]">
+                
+                <!-- TERMS TAB -->
+                <div id="tab-terms" class="space-y-10 animate-fade-in">
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <span class="w-8 h-8 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center text-sm mr-3">1</span>
+                            Platform Role & Liability
+                        </h2>
+                        <div class="pl-11 text-gray-600 space-y-3 leading-relaxed text-sm md:text-base">
+                            <p><strong>FoodBridge acts solely as an intermediary technology platform</strong> connecting food donors (Restaurants) with recipients (Orphanages). We do not cook, handle, package, or transport any food items.</p>
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                                <p class="text-red-800 font-bold mb-1">Disclaimer of Liability</p>
+                                <p class="text-sm text-red-700">FoodBridge, its developers, and affiliates are <strong>not responsible or liable</strong> for any health issues, food poisoning, allergic reactions, illness, or damages arising from the consumption of donated food. The responsibility for food safety lies entirely with the donor (Restaurant).</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <span class="w-8 h-8 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center text-sm mr-3">2</span>
+                            Strict Action Against Negligence
+                        </h2>
+                        <div class="pl-11 text-gray-600 space-y-3 leading-relaxed text-sm md:text-base">
+                            <p>While FoodBridge claims no liability, we enforce a <strong>Zero Tolerance Policy</strong> regarding food safety to protect our community.</p>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li><strong>Reporting Mechanism:</strong> Orphanages are encouraged to report any instance of spoiled, stale, or unhygienic food immediately via the dashboard using the "Report Issue" button.</li>
+                                <li><strong>Administrative Action:</strong> Upon receiving a report, our Admin team will investigate. If a Restaurant is found to have donated unsafe food:
+                                    <ul class="list-none mt-2 pl-2 space-y-2 text-sm font-medium text-brand-dark">
+                                        <li class="flex items-center"><i class="fa-solid fa-triangle-exclamation text-brand-orange mr-2"></i> 1st Offense: Formal Warning & 7-day account suspension.</li>
+                                        <li class="flex items-center"><i class="fa-solid fa-ban text-red-600 mr-2"></i> Repeated Offense: Permanent ban from the platform and potential reporting to local food safety authorities.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <span class="w-8 h-8 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center text-sm mr-3">3</span>
+                            User Obligations
+                        </h2>
+                        <div class="pl-11 text-gray-600 space-y-4 leading-relaxed text-sm md:text-base">
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">For Restaurants (Donors):</h3>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>You represent and warrant that all food donated is fresh, edible, and packaged hygienically in food-grade containers.</li>
+                                    <li>You must provide an accurate location pin (within 15km accuracy) to ensure feasible pickups.</li>
+                                    <li><strong>No Leftovers:</strong> You must not donate food that has been served to customers or touched. Only untouched surplus food from the kitchen is permitted.</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">For Orphanages (Recipients):</h3>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>You agree to arrange transportation and pick up claimed donations within the agreed timeframe.</li>
+                                    <li>You must inspect food upon collection. Accepting the food implies you are satisfied with its visible condition and temperature.</li>
+                                    <li>False reports against restaurants for personal grievances will result in immediate account suspension.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <span class="w-8 h-8 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center text-sm mr-3">4</span>
+                            Logistics & Indemnification
+                        </h2>
+                        <div class="pl-11 text-gray-600 space-y-3 leading-relaxed text-sm md:text-base">
+                            <p>FoodBridge does not provide logistics services. The arrangement of transport is the sole responsibility of the recipient (Orphanage) unless the Restaurant voluntarily offers delivery.</p>
+                            <p class="mt-2">You agree to indemnify, defend, and hold harmless FoodBridge, its creators, and affiliates from any claims, liabilities, damages, or legal fees arising out of your use of the platform.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PRIVACY TAB -->
+                <div id="tab-privacy" class="hidden space-y-10 animate-fade-in">
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <i class="fa-solid fa-user-shield text-brand-green mr-3 text-2xl"></i>
+                            Information We Collect
+                        </h2>
+                        <div class="text-gray-600 space-y-3 leading-relaxed text-sm md:text-base border-l-2 border-gray-100 pl-4">
+                            <p>To operate FoodBridge effectively, we collect the following types of information when you register:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>Identity Data:</strong> Organization Name, Contact Person Name.</li>
+                                <li><strong>Contact Data:</strong> Email address, Phone number.</li>
+                                <li><strong>Technical Data:</strong> Login credentials (via Google Auth or Email/Password), IP address.</li>
+                                <li><strong>Geolocation Data:</strong> Precise latitude and longitude coordinates when you use the "Pin Location" feature.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <i class="fa-solid fa-map-location-dot text-brand-green mr-3 text-2xl"></i>
+                            How We Use Location Data
+                        </h2>
+                        <div class="text-gray-600 space-y-3 leading-relaxed text-sm md:text-base border-l-2 border-gray-100 pl-4">
+                            <p>Your location data is critical to the core functionality of FoodBridge. We use your coordinates specifically to:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Calculate the distance between Restaurants and Orphanages.</li>
+                                <li>Filter "Urgent Requests" and "Available Donations" to show only those within a <strong>15km operational radius</strong>.</li>
+                                <li>Provide accurate pickup addresses to the other party once a donation is claimed.</li>
+                            </ul>
+                            <p class="text-sm italic mt-2">We do not track your location in real-time or background; we only store the static location you explicitly save in your profile.</p>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <i class="fa-solid fa-share-nodes text-brand-green mr-3 text-2xl"></i>
+                            Data Sharing & Disclosure
+                        </h2>
+                        <div class="text-gray-600 space-y-3 leading-relaxed text-sm md:text-base border-l-2 border-gray-100 pl-4">
+                            <p>We respect your privacy. <strong>We do not sell your personal data</strong> to advertisers or third parties.</p>
+                            <p>However, essential contact information (Phone, Address, Name) is shared automatically with:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>The Counterparty:</strong> When a donation is claimed, the Restaurant sees the Orphanage's details, and vice versa, to facilitate the pickup.</li>
+                                <li><strong>Service Providers:</strong> We use Firebase (Google) for secure data storage and authentication services.</li>
+                                <li><strong>Legal Authorities:</strong> If required by law or to protect the safety of our users.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl md:text-2xl font-bold text-brand-dark mb-4 flex items-center">
+                            <i class="fa-solid fa-lock text-brand-green mr-3 text-2xl"></i>
+                            Data Security
+                        </h2>
+                        <div class="text-gray-600 space-y-3 leading-relaxed text-sm md:text-base border-l-2 border-gray-100 pl-4">
+                            <p>We implement robust security measures to protect your data. All data is transmitted via secure SSL/TLS encryption. User authentication is handled securely through Google Firebase Auth standards.</p>
+                            <p>While we strive for maximum security, no internet transmission is 100% secure. You are responsible for keeping your login credentials confidential.</p>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+            
+            <div class="bg-gray-50 p-6 text-center border-t border-gray-100">
+                <p class="text-gray-400 text-xs italic">By continuing to use FoodBridge, you acknowledge that you have read and understood these policies.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white py-8 border-t border-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-500 text-sm">&copy; 2025 FoodBridge Project.</p>
+        </div>
+    </footer>
+
+    <script>
+        function switchLegalTab(tab) {
+            const termsTab = document.getElementById('tab-terms');
+            const privacyTab = document.getElementById('tab-privacy');
+            const btnTerms = document.getElementById('btn-terms');
+            const btnPrivacy = document.getElementById('btn-privacy');
+
+            if (tab === 'terms') {
+                termsTab.classList.remove('hidden');
+                privacyTab.classList.add('hidden');
+                btnTerms.classList.add('tab-active');
+                btnTerms.classList.remove('tab-inactive');
+                btnPrivacy.classList.add('tab-inactive');
+                btnPrivacy.classList.remove('tab-active');
+            } else {
+                termsTab.classList.add('hidden');
+                privacyTab.classList.remove('hidden');
+                btnPrivacy.classList.add('tab-active');
+                btnPrivacy.classList.remove('tab-inactive');
+                btnTerms.classList.add('tab-inactive');
+                btnTerms.classList.remove('tab-active');
+            }
+            window.scrollTo(0, 0);
+        }
+
+        // Check URL hash on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash === '#privacy') {
+                switchLegalTab('privacy');
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+
