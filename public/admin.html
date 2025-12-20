@@ -97,6 +97,10 @@
             <button onclick="switchTab('reports')" id="btn-reports" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all active:scale-95 touch-manipulation">
                 <i class="fa-solid fa-triangle-exclamation w-6 text-lg mr-3"></i> Reports
             </button>
+            <!-- NEW FEATURE: BROADCAST -->
+            <button onclick="switchTab('broadcast')" id="btn-broadcast" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-blue-50 hover:text-blue-500 rounded-xl transition-all active:scale-95 touch-manipulation">
+                <i class="fa-solid fa-tower-broadcast w-6 text-lg mr-3"></i> Broadcast
+            </button>
         </nav>
 
         <div class="p-6 border-t border-gray-100 bg-gray-50/50">
@@ -172,13 +176,21 @@
 
         <!-- TAB: USERS -->
         <div id="tab-users" class="hidden max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">User Management</h1>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">User Management</h1>
+                <!-- EXPORT BUTTON -->
+                <button onclick="exportToCSV('users-table')" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition flex items-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export CSV
+                </button>
+            </div>
+            
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto smooth-scroll-touch">
-                    <table class="w-full text-sm text-left">
+                    <table id="users-table" class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 font-bold tracking-wider">User Name</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Role</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Phone</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Address</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
@@ -191,17 +203,21 @@
             </div>
         </div>
 
-        <!-- TAB: HISTORY LOG (TOGGLE) -->
+        <!-- TAB: HISTORY LOG -->
         <div id="tab-history" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Activity Log</h1>
-                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+                    <!-- Export Button -->
+                    <button onclick="exportActiveHistory()" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition flex items-center gap-2 active:scale-95 whitespace-nowrap h-10">
+                        <i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export
+                    </button>
                     <!-- Search Input -->
-                    <div class="relative w-full sm:w-64">
+                    <div class="relative w-full sm:w-56">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Filter by User..." class="pl-10 pr-4 py-2 rounded-xl border-none focus:ring-2 focus:ring-blue-500 shadow-md w-full text-base font-medium focus:outline-none">
+                        <input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Filter by User..." class="pl-10 pr-4 py-2 rounded-xl border-none focus:ring-2 focus:ring-blue-500 shadow-md w-full text-base font-medium focus:outline-none h-10">
                     </div>
                     <!-- Toggle Buttons -->
                     <div class="flex bg-white/20 backdrop-blur-md rounded-xl p-1 shadow-inner self-start sm:self-auto">
@@ -214,7 +230,7 @@
             <!-- DONATIONS TABLE -->
             <div id="block-hist-donations" class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto smooth-scroll-touch">
-                    <table class="w-full text-sm text-left">
+                    <table id="donations-table" class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-4 py-3 font-bold">Date</th>
@@ -236,7 +252,7 @@
             <!-- REQUESTS TABLE -->
             <div id="block-hist-requests" class="hidden bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto smooth-scroll-touch">
-                    <table class="w-full text-sm text-left">
+                    <table id="requests-table" class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-4 py-3 font-bold">Date</th>
@@ -299,7 +315,47 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <!-- NEW TAB: BROADCAST -->
+        <div id="tab-broadcast" class="hidden max-w-4xl mx-auto space-y-6 animate-fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">System Broadcast</h1>
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-200">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Send Notification</h3>
+                    <p class="text-gray-500 text-sm">This message will appear on the dashboard of all selected users.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Title</label>
+                        <input type="text" id="bc-title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. System Maintenance">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Message</label>
+                        <textarea id="bc-message" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Enter your announcement here..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Target Audience</label>
+                        <select id="bc-target" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            <option value="all">All Users</option>
+                            <option value="restaurant">Restaurants Only</option>
+                            <option value="orphanage">Orphanages Only</option>
+                        </select>
+                    </div>
+                    <button onclick="sendBroadcast()" id="btn-send-bc" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Send Broadcast
+                    </button>
+                </div>
+            </div>
+
+            <!-- Previous Broadcasts (Mockup for now, or could link to DB) -->
+            <div class="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md">
+                <h4 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wide">Recent Broadcasts</h4>
+                <div id="broadcast-history" class="space-y-3">
+                    <div class="text-gray-400 text-center text-sm italic py-2">No recent broadcasts sent in this session.</div>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -358,14 +414,18 @@
             </button>
             
             <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-brand-light rounded-full mx-auto flex items-center justify-center text-3xl text-brand-blue mb-3 shadow-inner">
+                <div class="w-20 h-20 bg-brand-light rounded-full mx-auto flex items-center justify-center text-3xl text-brand-blue mb-3 shadow-inner relative">
                     <i class="fa-solid fa-user" id="modal-user-icon"></i>
+                    <!-- Verified Badge in Modal -->
+                    <div id="modal-verify-badge" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hidden">
+                        <i class="fa-solid fa-circle-check text-blue-500 text-xl"></i>
+                    </div>
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900" id="modal-user-name">Loading...</h3>
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-100 text-gray-600" id="modal-user-role">User</span>
             </div>
 
-            <div class="space-y-4 mb-8 bg-gray-50 p-5 rounded-xl border border-gray-100 text-sm">
+            <div class="space-y-4 mb-6 bg-gray-50 p-5 rounded-xl border border-gray-100 text-sm">
                 <div class="flex justify-between border-b border-gray-200 pb-2">
                     <span class="text-gray-500 font-medium">Email</span>
                     <span class="font-bold text-gray-800" id="modal-user-email">...</span>
@@ -384,13 +444,19 @@
                 </div>
             </div>
 
-            <button id="btn-disable-user" class="w-full py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation">
-                <!-- Text and color set dynamically -->
-            </button>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-verify-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation border-2">
+                    <!-- Dynamic Text -->
+                </button>
+                <button id="btn-disable-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation">
+                    <!-- Dynamic Text -->
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- KEEPING EXISTING CONFIG ---
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -399,7 +465,7 @@
         let dailyChart, monthlyChart, lifetimeChart;
         let currentInvestigateId = null;
         let currentDeleteId = null;
-        let currentDeleteCollection = null; // Track which collection to delete from
+        let currentDeleteCollection = null; 
         let currentModalUserId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -416,7 +482,7 @@
 
                         const userData = doc.data();
 
-                        // Security Check: Account Disabled?
+                        // Security Check
                         if (userData.isDisable) {
                             alert("Your account has been disabled.");
                             await auth.signOut();
@@ -424,9 +490,7 @@
                             return;
                         }
 
-                        // Security Check: Role Verification
                         if (userData.role !== 'admin') {
-                            // Unauthorized access attempt - Redirect based on role
                             if (userData.role === 'restaurant') window.location.href = 'restaurant';
                             else if (userData.role === 'orphanage') window.location.href = 'orphanages';
                             else window.location.href = 'index';
@@ -463,15 +527,97 @@
         }
 
         function switchTab(tab) {
-            ['overview', 'users', 'history', 'reports'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
+            ['overview', 'users', 'history', 'reports', 'broadcast'].forEach(t => {
+                const tabEl = document.getElementById('tab-' + t);
+                if(tabEl) tabEl.classList.add('hidden');
+                
                 const btn = document.getElementById('btn-' + t);
-                btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation";
+                if(btn) btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation";
             });
             document.getElementById('tab-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('btn-' + tab);
             activeBtn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl bg-brand-blue text-white shadow-md transition-all active:scale-95 touch-manipulation";
             if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        // --- EXPORT TO CSV FUNCTIONALITY ---
+        function exportToCSV(tableId) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll("tr");
+            let csv = [];
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll("td, th");
+                
+                // Skip rows that are hidden (filtered out)
+                if(rows[i].style.display === 'none') continue;
+
+                for (let j = 0; j < cols.length; j++) {
+                    // Get clean text, remove standard HTML garbage
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s)/gm, " ");
+                    // Escape double quotes
+                    data = data.replace(/"/g, '""');
+                    // Push escaped data
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(","));
+            }
+
+            const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+            const downloadLink = document.createElement("a");
+            downloadLink.download = "foodbridge_data_" + new Date().toISOString().slice(0,10) + ".csv";
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        function exportActiveHistory() {
+            const isDonations = !document.getElementById('block-hist-donations').classList.contains('hidden');
+            exportToCSV(isDonations ? 'donations-table' : 'requests-table');
+        }
+
+        // --- BROADCAST FUNCTIONALITY ---
+        async function sendBroadcast() {
+            const title = document.getElementById('bc-title').value;
+            const message = document.getElementById('bc-message').value;
+            const target = document.getElementById('bc-target').value;
+            const btn = document.getElementById('btn-send-bc');
+
+            if(!title || !message) { alert("Please fill in all fields."); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                // We create a new collection 'notifications'
+                await db.collection('notifications').add({
+                    title: title,
+                    message: message,
+                    targetAudience: target, // 'all', 'restaurant', 'orphanage'
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isRead: false
+                });
+
+                // Update UI log
+                const history = document.getElementById('broadcast-history');
+                const newItem = `<div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-sm animate-fade-in"><span class="font-bold block text-gray-800">${title}</span><span class="text-gray-600">${new Date().toLocaleTimeString()} - Target: ${target}</span></div>`;
+                if(history.innerHTML.includes("No recent")) history.innerHTML = newItem;
+                else history.innerHTML = newItem + history.innerHTML;
+
+                // Clear form
+                document.getElementById('bc-title').value = '';
+                document.getElementById('bc-message').value = '';
+                alert("Broadcast sent successfully!");
+
+            } catch(e) {
+                console.error("Broadcast Error:", e);
+                alert("Failed to send broadcast.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Broadcast';
+            }
         }
 
         // --- HISTORY TOGGLE LOGIC ---
@@ -494,30 +640,22 @@
                 btnReq.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue active:scale-95 touch-manipulation";
                 btnDon.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10 active:scale-95 touch-manipulation";
             }
-            // Re-apply filter on switch
             filterHistory();
         }
 
-        // --- FILTER HISTORY ---
         function filterHistory() {
             const input = document.getElementById('history-search');
             const filter = input.value.toUpperCase();
-            
-            // Determine active table
             const isDonations = !document.getElementById('block-hist-donations').classList.contains('hidden');
             const tbodyId = isDonations ? 'donation-history-body' : 'request-history-body';
             const tbody = document.getElementById(tbodyId);
             const tr = tbody.getElementsByTagName('tr');
 
             for (let i = 0; i < tr.length; i++) {
-                // Skip rows that don't have enough columns (loading/empty messages)
                 const tds = tr[i].getElementsByTagName('td');
                 if (tds.length < 4) continue;
-
-                // Column 2 is User 1 (Restaurant/Orphanage), Column 3 is User 2 (Accepted By)
                 const user1 = tds[2].textContent || tds[2].innerText;
                 const user2 = tds[3].textContent || tds[3].innerText;
-
                 if (user1.toUpperCase().indexOf(filter) > -1 || user2.toUpperCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
@@ -526,7 +664,7 @@
             }
         }
 
-        // --- OVERVIEW & GRAPHS ---
+        // --- OVERVIEW ---
         async function loadOverview() {
             const donationsSnap = await db.collection('donations').get();
             const usersSnap = await db.collection('users').get();
@@ -536,7 +674,6 @@
             const dailyData = Array(7).fill(0);
             const monthlyData = Array(12).fill(0);
             const yearlyData = {}; 
-
             const today = new Date();
             
             donationsSnap.forEach(doc => {
@@ -545,7 +682,6 @@
                 if(data.status !== 'Completed' && data.status !== 'Claimed') return; 
 
                 totalMeals += meals;
-                
                 if (data.createdAt) {
                     const date = new Date(data.createdAt.seconds * 1000);
                     const diffTime = Math.abs(today - date);
@@ -588,25 +724,27 @@
                 snap.forEach(doc => {
                     const data = doc.data();
                     const isDisabled = !!data.isDisable;
+                    const isVerified = !!data.isVerified;
+
+                    // Badges
                     const statusBadge = isDisabled 
                         ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` 
                         : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
                     
-                    const actionBtnClass = isDisabled 
-                        ? "text-green-600 bg-green-50 border-green-200 hover:bg-green-100" 
-                        : "text-red-600 bg-red-50 border-red-200 hover:bg-red-100";
-                    const actionBtnText = isDisabled ? "Enable" : "Disable";
-                    const actionIcon = isDisabled ? "fa-lock-open" : "fa-ban";
+                    const verifyIcon = isVerified ? `<i class="fa-solid fa-circle-check text-blue-500 ml-1" title="Verified"></i>` : '';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 font-bold text-gray-800">${data.name || 'Unknown'}</td>
+                            <td class="px-6 py-4 font-bold text-gray-800">
+                                ${data.name || 'Unknown'} ${verifyIcon}
+                            </td>
+                             <td class="px-6 py-4 text-gray-500 capitalize">${data.role || 'User'}</td>
                             <td class="px-6 py-4 text-gray-500">${data.phone || 'N/A'}</td>
                             <td class="px-6 py-4 text-gray-500 truncate max-w-xs">${data.address || 'N/A'}</td>
                             <td class="px-6 py-4">${statusBadge}</td>
                             <td class="px-6 py-4 text-center">
-                                <button onclick="openUserModal('${doc.id}')" class="text-xs ${actionBtnClass} px-3 py-1.5 rounded-lg border transition font-bold active:scale-95 touch-manipulation">
-                                    <i class="fa-solid ${actionIcon} mr-1"></i> Manage
+                                <button onclick="openUserModal('${doc.id}')" class="text-xs text-brand-blue bg-blue-50 border-blue-200 border px-3 py-1.5 rounded-lg transition font-bold active:scale-95 touch-manipulation hover:bg-blue-100">
+                                    <i class="fa-solid fa-gear mr-1"></i> Manage
                                 </button>
                             </td>
                         </tr>
@@ -615,9 +753,8 @@
             });
         }
 
-        // --- HISTORY (SPLIT & UPDATED COLUMNS) ---
+        // --- HISTORY ---
         function loadHistory() {
-            // 1. Load Restaurant Donations
             db.collection('donations').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
                 const tbody = document.getElementById('donation-history-body');
                 tbody.innerHTML = '';
@@ -636,10 +773,7 @@
                         if(data.status === 'Issue' || data.status === 'Resolved') statusColor = 'text-red-600 bg-red-50 border border-red-200';
 
                         const restHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Unknown'}</span>`;
-                        
-                        const acceptorId = data.claimedBy;
-                        const acceptorName = data.orphanageName || 'Pending...';
-                        const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
+                        const acceptorHtml = data.claimedBy ? `<span onclick="openUserModal('${data.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Pending...'}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
 
                         tbody.innerHTML += `
                             <tr class="hover:bg-gray-50 transition-colors">
@@ -657,12 +791,10 @@
                             </tr>
                         `;
                     });
-                    // Re-apply filter if needed
                     filterHistory();
                 }
             });
 
-            // 2. Load Orphanage Requests
             db.collection('requests').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
                 const tbody = document.getElementById('request-history-body');
                 tbody.innerHTML = '';
@@ -680,10 +812,7 @@
                         if(data.status === 'Pending') statusColor = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
 
                         const orphHtml = `<span onclick="openUserModal('${data.orphanageId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Unknown'}</span>`;
-                        
-                        const acceptorId = data.fulfilledBy;
-                        const acceptorName = data.restaurantName || 'Pending...';
-                        const acceptorHtml = acceptorId ? `<span onclick="openUserModal('${acceptorId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${acceptorName}</span>` : `<span class="text-gray-400 italic">Not fulfilled</span>`;
+                        const acceptorHtml = data.fulfilledBy ? `<span onclick="openUserModal('${data.fulfilledBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Pending...'}</span>` : `<span class="text-gray-400 italic">Not fulfilled</span>`;
 
                         tbody.innerHTML += `
                             <tr class="hover:bg-gray-50 transition-colors">
@@ -701,13 +830,12 @@
                             </tr>
                         `;
                     });
-                    // Re-apply filter if needed
                     filterHistory();
                 }
             });
         }
 
-        // --- REPORTS (Split Pending vs Resolved) ---
+        // --- REPORTS ---
         function loadReports() {
             db.collection('donations').onSnapshot(snap => {
                 const pendingTbody = document.getElementById('reports-table-body');
@@ -715,7 +843,6 @@
                 
                 pendingTbody.innerHTML = '';
                 resolvedTbody.innerHTML = '';
-
                 const pending = [];
                 const resolved = [];
 
@@ -734,7 +861,6 @@
                 if (pending.length === 0) pendingTbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No active issues.</td></tr>`;
                 if (resolved.length === 0) resolvedTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No resolved history.</td></tr>`;
 
-                // Render Pending
                 pending.forEach(item => {
                     const date = item.reportedAt ? new Date(item.reportedAt.seconds * 1000).toLocaleDateString() : '-';
                     const reporterHtml = `<span onclick="openUserModal('${item.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${item.orphanageName}</span>`;
@@ -753,7 +879,6 @@
                     `;
                 });
 
-                // Render Resolved
                 resolved.forEach(item => {
                     const date = item.resolvedAt ? new Date(item.resolvedAt.seconds * 1000).toLocaleDateString() : '-';
                     resolvedTbody.innerHTML += `
@@ -772,7 +897,7 @@
             });
         }
 
-        // --- INVESTIGATE POPUP ---
+        // --- ACTIONS & MODALS ---
         function openInvestigateModal(id, reason) {
             currentInvestigateId = id;
             document.getElementById('inv-reason').value = reason;
@@ -793,11 +918,7 @@
 
         async function submitInvestigation() {
             const action = document.getElementById('inv-action').value;
-            if(!action) { 
-                // Using alert here as per original code structure, though toast is better
-                alert("Please enter the action taken."); 
-                return; 
-            }
+            if(!action) { alert("Please enter the action taken."); return; }
             try {
                 await db.collection('donations').doc(currentInvestigateId).update({
                     status: 'Resolved',
@@ -808,7 +929,6 @@
             } catch(e) { console.error(e); alert("Error resolving issue."); }
         }
 
-        // --- DELETE HISTORY ---
         function confirmDeleteHistory(id, collection) {
             currentDeleteId = id;
             currentDeleteCollection = collection;
@@ -833,7 +953,6 @@
             } catch(e) { console.error(e); alert("Error deleting record."); }
         }
 
-        // --- USER DETAILS POPUP ---
         async function openUserModal(userId) {
             if(!userId) return;
             currentModalUserId = userId;
@@ -841,6 +960,7 @@
             const content = document.getElementById('user-modal-content');
             document.getElementById('modal-user-name').innerText = 'Loading...';
             document.getElementById('btn-disable-user').className = 'hidden'; 
+            document.getElementById('btn-verify-user').className = 'hidden';
 
             modal.classList.remove('hidden');
             setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
@@ -849,7 +969,9 @@
                 const doc = await db.collection('users').doc(userId).get();
                 if(doc.exists) {
                     const data = doc.data();
-                    const isDisabled = !!data.isDisable; // Robust check
+                    const isDisabled = !!data.isDisable;
+                    const isVerified = !!data.isVerified;
+
                     document.getElementById('modal-user-name').innerText = data.name || 'Unknown User';
                     document.getElementById('modal-user-email').innerText = data.email || 'No Email'; 
                     document.getElementById('modal-user-phone').innerText = data.phone || 'N/A';
@@ -862,17 +984,37 @@
                     statusEl.innerText = isDisabled ? 'Disabled' : 'Active';
                     statusEl.className = isDisabled ? 'font-bold text-red-500' : 'font-bold text-green-500';
 
-                    const btn = document.getElementById('btn-disable-user');
-                    btn.classList.remove('hidden');
+                    // Verify Badge in Modal
+                    const badge = document.getElementById('modal-verify-badge');
+                    if(isVerified) badge.classList.remove('hidden');
+                    else badge.classList.add('hidden');
+
+                    // Setup Disable/Enable Button
+                    const btnDisable = document.getElementById('btn-disable-user');
+                    btnDisable.classList.remove('hidden');
                     if (isDisabled) {
-                        btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable Account';
-                        btn.className = 'w-full py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation';
-                        btn.onclick = function() { toggleUserStatus(userId, false); };
+                        btnDisable.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable';
+                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation w-full';
+                        btnDisable.onclick = function() { toggleUserStatus(userId, false); };
                     } else {
-                        btn.innerHTML = '<i class="fa-solid fa-ban"></i> Disable Account';
-                        btn.className = 'w-full py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation';
-                        btn.onclick = function() { toggleUserStatus(userId, true); };
+                        btnDisable.innerHTML = '<i class="fa-solid fa-ban"></i> Disable';
+                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation w-full';
+                        btnDisable.onclick = function() { toggleUserStatus(userId, true); };
                     }
+
+                    // Setup Verify Button
+                    const btnVerify = document.getElementById('btn-verify-user');
+                    btnVerify.classList.remove('hidden');
+                    if (isVerified) {
+                        btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Un-Verify';
+                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 border w-full';
+                        btnVerify.onclick = function() { toggleVerification(userId, false); };
+                    } else {
+                        btnVerify.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
+                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border w-full';
+                        btnVerify.onclick = function() { toggleVerification(userId, true); };
+                    }
+
                 } else { document.getElementById('modal-user-name').innerText = 'User not found'; }
             } catch(e) { console.error(e); alert("Error fetching user details"); }
         }
@@ -881,21 +1023,33 @@
             const btn = document.getElementById('btn-disable-user');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
             try {
-                await db.collection('users').doc(userId).update({ 
-                    isDisable: disable 
-                });
-                
-                // Re-open modal to refresh data
+                await db.collection('users').doc(userId).update({ isDisable: disable });
                 await openUserModal(userId);
-                // Re-load user list in main view
                 loadUsers(); 
-
             } catch(e) {
                 console.error("Firebase Error:", e);
-                alert("Error updating status: " + e.message);
+                alert("Error updating status.");
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function toggleVerification(userId, verify) {
+            const btn = document.getElementById('btn-verify-user');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+            try {
+                await db.collection('users').doc(userId).update({ isVerified: verify });
+                await openUserModal(userId);
+                loadUsers();
+            } catch(e) {
+                console.error("Firebase Error:", e);
+                alert("Error updating verification.");
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
