@@ -665,6 +665,27 @@
                     const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
                     await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
+                    // 📧 SEND CLAIM EMAIL (FIX)
+await sendClaimEmail({
+  restaurant: {
+    name: userData.name,
+    email: currentUser.email,
+    phone: userData.phone,
+    address: userData.address,
+    location: userData.location || null
+  },
+  orphanage: {
+    name: orphName,
+    email: reqData.orphanageEmail,
+    phone: reqData.orphanagePhone,
+    address: reqData.orphanageAddress || '',
+    location: reqData.location || null
+  },
+  food: {
+    name: item,
+    quantity: qty
+  }
+});
                     showToast(`Reserved ${item}.`); switchTab('history');
                 } else if (pendingAction.type === 'deleteDonation') {
                     await db.collection('donations').doc(pendingAction.data.id).delete();
@@ -720,6 +741,34 @@
     }
   } catch (err) {
     console.error("Address fetch failed", err);
+  }
+}
+async function sendClaimEmail({ restaurant, orphanage, food }) {
+  try {
+    const response = await fetch("/api/claim-food", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        restaurant,
+        orphanage,
+        food
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Claim email failed");
+    }
+
+    console.log("✅ Claim email sent successfully");
+    alert("Donation claimed! Email sent to both parties.");
+
+  } catch (error) {
+    console.error("❌ Claim Email Error:", error);
+    alert("Failed to send claim email. Please try again.");
   }
 }
     </script>
