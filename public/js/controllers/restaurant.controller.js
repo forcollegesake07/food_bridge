@@ -14,7 +14,7 @@ let marker = null;
  */
 export function initRestaurant() {
   console.log("🍽️ Restaurant controller started");
-
+  
   console.log("User:", state.authUser);
   console.log("Profile:", state.profile);
   console.log("Location:", state.location);
@@ -22,11 +22,11 @@ export function initRestaurant() {
   hydrateProfileUI();
   bindUI();
   bindProfileForm();
-
   listenToMyDonations(donations => {
     renderDonations(donations); // ✅ FIXED
     renderHistory(donations);
   });
+  listenToUrgentRequests();
 }
 function hydrateProfileUI() {
   // Sidebar
@@ -263,6 +263,21 @@ async function handleDonateSubmit(e) {
     alert(err.message || "Failed to create donation");
   }
 }
+function getDistanceKm(lat1, lng1, lat2, lng2) {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return Infinity;
+
+  const R = 6371; // Earth radius in KM
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) ** 2;
+
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
 
 /* =========================
    RENDER DONATIONS (OVERVIEW)
@@ -303,6 +318,86 @@ function renderDonations(donations) {
     `;
   });
 }
+function listenToUrgentRequests() {
+  const container = document.getElementById("requests-container");
+  if (!container) return;
+
+  container.innerHTML = `
+    <p class="col-span-full text-center text-white py-6">
+      Loading urgent requests...
+    </p>
+  `;
+
+  db.collection("requests")
+    .where("status", "==", "Pending")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      container.innerHTML = "";
+
+      const myLat = state.location.lat;
+      const myLng = state.location.lng;
+
+      if (!myLat || !myLng) {
+        container.innerHTML = `
+          <div class="col-span-full bg-red-50 border border-red-100 rounded-xl p-6 text-center text-red-600">
+            📍 Please set your location in the Details tab to view urgent requests.
+          </div>
+        `;
+        return;
+      }
+
+      let found = false;
+
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        const rLat = r.location?.lat;
+        const rLng = r.location?.lng;
+
+        const distance = getDistanceKm(myLat, myLng, rLat, rLng);
+
+        if (distance <= 15) {
+          found = true;
+
+          container.innerHTML += `
+            <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="font-bold text-lg text-gray-800">
+                  ${r.itemNeeded}
+                </h3>
+                <span class="text-xs font-bold text-red-500">
+                  ${distance.toFixed(1)} km
+                </span>
+              </div>
+
+              <p class="text-sm text-gray-600 mb-2">
+                Quantity: <strong>${r.quantity}</strong>
+              </p>
+
+              <p class="text-sm text-gray-500 mb-3">
+                🏠 ${r.orphanageName}
+              </p>
+
+              <button
+                class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition"
+                onclick="alert('Fulfillment comes in Step 13')"
+              >
+                Donate Now
+              </button>
+            </div>
+          `;
+        }
+      });
+
+      if (!found) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-white py-8">
+            ✅ No urgent requests within 15 km
+          </div>
+        `;
+      }
+    });
+}
+
 
 /* =========================
    BASIC NAV
