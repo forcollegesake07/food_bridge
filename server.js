@@ -57,22 +57,21 @@ app.post("/api/claim-food", async (req, res) => {
       ],
       templateId: 1,
       params: {
-  food_name: food.name,
-  food_quantity: food.quantity,
+        food_name: food.name ?? "Food",
+        food_quantity: food.quantity ?? "N/A",
 
-  restaurant_name: restaurant.name,
-  restaurant_phone: restaurant.phone,
-  restaurant_address: restaurant.address,
-  restaurant_lat: restaurant.location?.lat,
-  restaurant_lng: restaurant.location?.lng,
+        restaurant_name: restaurant.name ?? "Restaurant",
+        restaurant_phone: restaurant.phone ?? "N/A",
+        restaurant_address: restaurant.address ?? "N/A",
+        restaurant_lat: restaurant.location?.lat ?? "N/A",
+        restaurant_lng: restaurant.location?.lng ?? "N/A",
 
-  orphanage_name: orphanage.name,
-  orphanage_phone: orphanage.phone,
-  orphanage_address: orphanage.address,
-  orphanage_lat: orphanage.location?.lat,
-  orphanage_lng: orphanage.location?.lng
-}
-
+        orphanage_name: orphanage.name ?? "Orphanage",
+        orphanage_phone: orphanage.phone ?? "N/A",
+        orphanage_address: orphanage.address ?? "N/A",
+        orphanage_lat: orphanage.location?.lat ?? "N/A",
+        orphanage_lng: orphanage.location?.lng ?? "N/A"
+      }
     });
 
     res.json({ success: true });
