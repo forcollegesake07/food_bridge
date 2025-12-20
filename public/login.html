@@ -135,6 +135,20 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white py-8 border-t border-gray-800 mt-auto relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+                <p>&copy; 2025 FoodBridge Project.</p>
+                <div class="mt-4 md:mt-0 space-x-4">
+                    <a href="terms&conditions" class="hover:text-brand-orange transition">Terms & Conditions</a>
+                    <span>|</span>
+                    <a href="terms&conditions#privacy" class="hover:text-brand-orange transition">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <!-- Google Role Modal -->
     <div id="google-role-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
         <div class="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl text-center transform transition-all scale-100">
@@ -163,7 +177,53 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.firestore(); let pendingGoogleUser = null;
         
-        window.addEventListener('DOMContentLoaded', () => { const urlParams = new URLSearchParams(window.location.search); if (urlParams.get('mode') === 'signup') toggleView('signup'); });
+        window.addEventListener('DOMContentLoaded', () => { 
+            const urlParams = new URLSearchParams(window.location.search); 
+            if (urlParams.get('mode') === 'signup') toggleView('signup'); 
+        });
+
+        // --- AUTO LOGIN LOGIC ---
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // If the modal for selecting role is currently open, do not auto-redirect yet
+                // as we are likely in the middle of a first-time google login
+                if (!document.getElementById('google-role-modal').classList.contains('hidden')) {
+                    return;
+                }
+
+                try {
+                    const doc = await db.collection('users').doc(user.uid).get();
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        if (userData.isDisable) {
+                            auth.signOut();
+                            showMessage("Account disabled by Admin.", "error");
+                            return;
+                        }
+                        
+                        // Update UI to show we are resuming session
+                        const btnLogin = document.getElementById('btn-login');
+                        if (btnLogin) {
+                            btnLogin.innerText = "Resuming Session...";
+                            btnLogin.disabled = true;
+                        }
+                        
+                        showMessage(`Welcome back, ${userData.name}! Redirecting...`, "success");
+                        performRedirect(userData.role);
+                    } else {
+                        // User is authenticated but has no profile document. 
+                        // This usually happens if they refreshed during the Google Signup Modal step.
+                        // We check if we are NOT already in the middle of handleGoogleLogin flow (which sets pendingGoogleUser)
+                        if (!pendingGoogleUser) {
+                             pendingGoogleUser = user;
+                             document.getElementById('google-role-modal').classList.remove('hidden');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Auto-login failed:", e);
+                }
+            }
+        });
 
         function toggleView(view) {
             const loginForm = document.getElementById('login-form'); const signupForm = document.getElementById('signup-form'); const tabLogin = document.getElementById('tab-login'); const tabSignup = document.getElementById('tab-signup'); document.getElementById('auth-message').classList.add('hidden');
@@ -190,12 +250,13 @@
         
         function performRedirect(role) { 
             const base = window.location.origin + "/";
+            // Reduce delay for auto-login smoothness
             setTimeout(() => { 
-                if (role === 'restaurant') window.location.href = base + "restaurant"; 
-                else if (role === 'orphanage') window.location.href = base + "orphanages"; 
-                else if (role === 'admin') window.location.href = base + "admin"; 
-                else window.location.href = base + "index";
-            }, 1000); 
+                if (role === 'restaurant') window.location.href = "restaurant"; 
+                else if (role === 'orphanage') window.location.href = "orphanages"; 
+                else if (role === 'admin') window.location.href = "admin"; 
+                else window.location.href = "index";
+            }, 500); 
         }
         
         async function handleGoogleLogin() { 
@@ -214,7 +275,6 @@
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
-                    // CRITICAL CHECK: Using 'isDisable'
                     if (userData.isDisable === true) { 
                         showMessage("Your account has been disabled by Admin.", "error"); 
                         await firebase.auth().signOut(); 
@@ -250,7 +310,7 @@
                     email: pendingGoogleUser.email, 
                     role: role, 
                     googleDisplayName: pendingGoogleUser.displayName, 
-                    isDisable: false, // Standardized to isDisable
+                    isDisable: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 }); 
                 document.getElementById('google-role-modal').classList.add('hidden'); 
@@ -279,7 +339,7 @@
                     name: name, 
                     email: email, 
                     role: role, 
-                    isDisable: false, // Standardized to isDisable
+                    isDisable: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 }); 
                 showMessage("Account created! Redirecting...", "success"); 
@@ -308,7 +368,6 @@
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
-                    // CRITICAL CHECK: Using 'isDisable' now
                     if (userData.isDisable === true) { 
                         showMessage("Your account has been disabled by Admin.", "error"); 
                         await firebase.auth().signOut(); 
