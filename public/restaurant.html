@@ -418,23 +418,37 @@
         // Updated switchTab logic
           window.__tabHistory = [];
   window.currentTab = "overview"; // default
+  function switchTab(tab, fromPopState = false) {
 
-  function switchTab(tab) {
-    // Prevent duplicate pushes
-    if (window.currentTab && window.currentTab !== tab) {
-      window.__tabHistory.push(window.currentTab);
+    // Push history only when user clicks
+    if (!fromPopState) {
+      history.pushState({ tab }, "", "#" + tab);
     }
 
-    window.currentTab = tab;
-
-    // --- YOUR EXISTING TAB LOGIC ---
+    // Hide all tabs
     document.querySelectorAll('[id^="tab-"]').forEach(el => {
       el.style.display = 'none';
     });
 
+    // Show selected tab
     const active = document.getElementById('tab-' + tab);
     if (active) active.style.display = 'block';
+
+    window.currentTab = tab;
   }
+
+  // Handle BACK / FORWARD (browser + Android)
+  window.addEventListener("popstate", function (e) {
+    if (e.state && e.state.tab) {
+      switchTab(e.state.tab, true);
+    }
+  });
+
+  // Default tab on first load
+  document.addEventListener("DOMContentLoaded", function () {
+    const initialTab = location.hash.replace("#", "") || "overview";
+    switchTab(initialTab, true);
+  });
 
   function goBackTab() {
     if (window.__tabHistory.length === 0) {
