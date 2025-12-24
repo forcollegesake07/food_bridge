@@ -2,23 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimized Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Restaurant Dashboard | FoodBridge</title>
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
-    <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Leaflet Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -65,12 +60,8 @@
 
     <div class="fixed-bg-layer"></div>
 
-    <!-- SIDEBAR BACKDROP (Mobile) -->
-    <!-- Hidden by default (opacity-0 + hidden class managed by JS) -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <!-- SIDEBAR -->
-    <!-- Default state: -translate-x-full (Closed on Mobile) -->
     <aside class="fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-50 shadow-2xl flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:h-full smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center justify-between border-b border-gray-100">
             <div class="flex items-center">
@@ -82,7 +73,6 @@
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partner</span>
                 </div>
             </div>
-            <!-- Close Button (Mobile Only) -->
             <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-600 p-2 rounded-lg active:bg-gray-100 transition touch-manipulation">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
@@ -117,7 +107,6 @@
         </div>
     </aside>
 
-    <!-- MOBILE HEADER -->
     <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur shadow-md z-30 flex items-center justify-between px-4 transition-all">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-hand-holding-heart text-brand-orange text-xl"></i>
@@ -128,10 +117,8 @@
         </button>
     </div>
 
-    <!-- MAIN CONTENT AREA -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full smooth-scroll-touch" id="main-scroll-container">
         
-        <!-- TAB: OVERVIEW -->
         <div id="tab-overview" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
@@ -144,10 +131,8 @@
                 </button>
             </div>
 
-            <!-- Active Listings Block -->
             <div id="scheduled-pickups-container" class="space-y-4"></div>
 
-            <!-- Post Donation Form -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 bg-orange-50/50 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -187,9 +172,7 @@
                 </div>
             </div>
 
-            <!-- Stats & Motivation -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Metrics -->
                 <div class="space-y-4 md:space-y-6">
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-orange flex items-center justify-between">
                         <div>
@@ -207,7 +190,6 @@
                     </div>
                 </div>
 
-                <!-- Chart -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-bold text-gray-800 text-base md:text-lg">Community Impact</h4>
@@ -220,7 +202,6 @@
                 </div>
             </div>
 
-            <!-- Recent Activity -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
@@ -233,7 +214,6 @@
             </div>
         </div>
 
-        <!-- TAB: URGENT ALERTS -->
         <div id="tab-alerts" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
              <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Urgent Requests</h1>
@@ -247,18 +227,15 @@
             </div>
         </div>
 
-        <!-- TAB: HISTORY -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
             <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="flex items-center gap-3">
-                    <!-- Notification Bell -->
                     <div class="relative">
                         <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-orange transition relative z-20 active:bg-gray-100 touch-manipulation">
                             <i class="fa-solid fa-bell text-xl"></i>
                             <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                         </button>
-                        <!-- Dropdown -->
                         <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
                             <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
                                 <span>Notifications</span>
@@ -280,12 +257,11 @@
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Food Item</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Quantity</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Time</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Type</th>
+                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Item/Qty</th>
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Status</th>
                                 <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Recipient</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Contact Info</th>
-                                <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
@@ -294,7 +270,6 @@
             </div>
         </div>
 
-        <!-- TAB: DETAILS -->
         <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-6 md:pt-10">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
                 <div class="h-24 md:h-32 bg-gradient-to-r from-gray-800 to-gray-900 relative">
@@ -312,7 +287,6 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Restaurant Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
-                    <!-- Updated Address & Map Section -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
                         <textarea id="detail-address" rows="2" enterkeyhint="done" class="w-full px-4 py-3 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-orange focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use the map below..."></textarea>
@@ -326,7 +300,6 @@
         </div>
     </main>
 
-    <!-- CONFIRMATION MODAL -->
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300 transform-gpu" id="confirm-modal-content">
             <div class="text-center">
@@ -618,63 +591,35 @@
         function confirmDeleteDonation(id) { pendingAction = { type: 'deleteDonation', data: { id } }; showConfirmModal("Delete Listing", "Are you sure you want to delete this available food listing?", 'delete'); }
 
         function showConfirmModal(title, message, type) {
-    const modal = document.getElementById('confirm-modal');
-    const btn = document.getElementById('confirm-yes-btn');
-    const iconContainer = document.getElementById('confirm-icon-container');
-    const icon = document.getElementById('confirm-icon');
-
-    document.getElementById('confirm-title').innerText = title;
-    document.getElementById('confirm-message').innerText = message;
-
-    btn.onclick = executeAction;
-
-    // RESET
-    btn.className = "flex-1 py-3.5 font-bold rounded-xl transition-all transform active:scale-95";
-    iconContainer.className = "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4";
-    icon.className = "fa-solid";
-
-    if (type === 'delete') {
-        btn.innerText = "Delete";
-        btn.classList.add("bg-red-500", "text-white");
-        iconContainer.classList.add("bg-red-100", "text-red-500");
-        icon.classList.add("fa-trash-can");
-    }
-
-    else if (type === 'fulfill') {
-        btn.innerText = "Confirm";
-        btn.classList.add("bg-red-500", "text-white");
-        iconContainer.classList.add("bg-red-100", "text-red-500");
-        icon.classList.add("fa-truck-fast");
-    }
-
-    else if (type === 'donate') {
-        btn.innerText = "Post";
-        btn.classList.add("bg-brand-orange", "text-white");
-        iconContainer.classList.add("bg-brand-orange/10", "text-brand-orange");
-        icon.classList.add("fa-hand-holding-heart");
-    }
-
-    else if (type === 'profile') {
-        btn.innerText = "Save";
-        btn.classList.add("bg-brand-green", "text-white");
-        iconContainer.classList.add("bg-green-100", "text-brand-green");
-        icon.classList.add("fa-circle-check");
-    }
-
-    else if (type === 'success') {
-        btn.innerText = "OK";
-        btn.onclick = closeConfirmModal;
-        btn.classList.add("bg-brand-green", "text-white");
-        iconContainer.classList.add("bg-green-100", "text-green-500");
-        icon.classList.add("fa-circle-check");
-    }
-
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-    }, 10);
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
+            const btn = document.getElementById('confirm-yes-btn'); const iconContainer = document.getElementById('confirm-icon-container'); const icon = document.getElementById('confirm-icon');
+            if (type === 'delete') {
+                btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation"; btn.innerText = "Delete";
+                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-trash-can";
+            } else if (type === 'fulfill') {
+                btn.innerText = 'Confirm'; btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
+                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-truck-fast";
+            } 
+            else if (type === 'profile') {
+    btn.innerText = "Save";
+    btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all transform active:scale-95";
+    iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-green-100 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4";
+    icon.className = "fa-solid fa-circle-check";
 }
 
+else if (type === 'success') {
+    btn.innerText = "OK";
+    btn.onclick = closeConfirmModal;
+    btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all";
+    iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4";
+    icon.className = "fa-solid fa-circle-check";
+}else { // Donate
+                btn.innerText = 'Post'; btn.className = "flex-1 py-3.5 bg-brand-orange text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
+                iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-orange/10 text-brand-orange rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm"; icon.className = "fa-solid fa-hand-holding-heart";
+            }
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); modal.querySelector('div').classList.add('scale-100'); }, 10);
+        }
 
         function closeConfirmModal() { const modal = document.getElementById('confirm-modal'); modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300); }
 
@@ -740,22 +685,26 @@
         location: { lat: currentLat, lng: currentLng }
     });
 
+    // Update local state
     userData.name = name;
     userData.phone = phone;
     userData.address = address;
     userData.location = { lat: currentLat, lng: currentLng };
 
+    // Force UI sync
+    document.getElementById('detail-name').value = name;
+    document.getElementById('detail-phone').value = phone;
+    document.getElementById('detail-address').value = address;
     document.getElementById('sidebar-name').innerText = name;
+
+    pendingAction = null;
 
     showConfirmModal(
         "Profile Updated",
         "Your profile details have been saved successfully.",
         "success"
     );
-
-    pendingAction = null;
 }
-
             } catch (err) { console.error(err); showToast("Error: " + err.message, 'error'); }
         }
 
@@ -772,7 +721,7 @@
 
                 if (snapshot.empty) { 
                     if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; 
-                    if (historyBody) historyBody.innerHTML = "<tr><td colspan='7' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; 
+                    if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; 
                 }
                 
                 snapshot.forEach(doc => {
@@ -780,12 +729,17 @@
                     docCount++; 
                     totalMeals += parseInt(data.servings || 0);
                     
-                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Just now';
+                    // Fixed Date/Time Parsing
+                    const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                    const dateStr = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                    const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const type = data.isFulfillment ? 'Fulfillment' : 'Donation';
+
                     let statusBadge = `<span class="text-green-600 bg-green-50 px-2 py-1 rounded-lg text-xs font-bold border border-green-100">${data.status}</span>`;
-                    let deleteBtn = '';
+                    
                     if(data.status === 'Available') { 
                         statusBadge = `<span class="text-brand-orange bg-orange-50 px-2 py-1 rounded-lg text-xs font-bold border border-orange-100">Available</span>`;
-                        deleteBtn = `<button onclick="confirmDeleteDonation('${doc.id}')" class="text-red-400 hover:text-red-600 ml-2"><i class="fa-solid fa-trash-can"></i></button>`;
                     }
                     if(data.status === 'Completed') statusBadge = `<span class="text-white bg-brand-green px-2 py-1 rounded-lg text-xs font-bold">Completed</span>`;
                     if(data.status === 'Issue') statusBadge = `<span class="text-white bg-red-500 px-2 py-1 rounded-lg text-xs font-bold">Issue Reported</span>`;
@@ -793,9 +747,28 @@
                     if(data.status === 'Resolved') statusBadge = `<span class="text-teal-600 bg-teal-50 px-2 py-1 rounded-lg text-xs font-bold border border-teal-100">Resolved</span>`;
                     
                     const recipient = data.orphanageName || '-';
-                    let contactInfo = '-'; if(data.status === 'Claimed' || data.status === 'Completed') { contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p><p><i class="fa-solid fa-location-dot text-brand-orange mr-1"></i> ${data.orphanageAddress || 'N/A'}</p></div>`; }
-                    if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div><div class="flex items-center">${statusBadge}${deleteBtn}</div></div>`; }
-                    if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${date}</td><td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-4 py-3 md:px-6 md:py-4">${contactInfo}</td><td class="px-4 py-3 text-center">${deleteBtn}</td></tr>`; }
+                    let contactInfo = '-'; 
+                    if(data.status === 'Claimed' || data.status === 'Completed') { 
+                        contactInfo = `<div class="text-xs text-gray-500 space-y-0.5"><p><i class="fa-solid fa-phone text-brand-orange mr-1"></i> ${data.orphanagePhone || 'N/A'}</p><p><i class="fa-solid fa-location-dot text-brand-orange mr-1"></i> ${data.orphanageAddress || 'N/A'}</p></div>`; 
+                    }
+                    
+                    // Recent Activity
+                    if (docCount <= 5 && recentList) { 
+                        recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${dateStr}</p></div></div><div class="flex items-center">${statusBadge}</div></div>`; 
+                    }
+                    
+                    // History Table (FIXED: Added Time, Type, Removed Action)
+                    if (historyBody) { 
+                        historyBody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${dateStr}</td>
+                            <td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${timeStr}</td>
+                            <td class="px-4 py-3 md:px-6 md:py-4 font-bold text-xs uppercase text-gray-400">${type}</td>
+                            <td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
+                            <td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td>
+                            <td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td>
+                        </tr>`; 
+                    }
 
                     const notifDate = data.reportedAt || data.resolvedAt || data.createdAt; 
                     if (data.status === 'Issue') {
@@ -825,7 +798,6 @@
     );
 }
 
-
         async function sendClaimEmail({ restaurant, orphanage, food }) {
             try {
                 const response = await fetch("/api/claim-food", {
@@ -836,31 +808,6 @@
                 console.log("✅ Claim email sent successfully");
             } catch (error) { console.error("❌ Claim Email Error:", error); }
         }
-        async function fetchAddressFromLatLng(lat, lng) {
-    try {
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-            {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }
-        );
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        if (data && data.display_name) {
-            document.getElementById('detail-address').value = data.display_name;
-
-            // Keep local state in sync
-            userData.address = data.display_name;
-        }
-    } catch (err) {
-        console.error("Reverse geocoding failed", err);
-    }
-}
     </script>
 </body>
 </html>
