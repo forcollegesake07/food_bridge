@@ -384,7 +384,7 @@
 
                     document.getElementById('tab-overview').classList.remove('hidden');
                     loadData();
-                    loadUrgentRequests(); // This now uses location filtering
+                    loadUrgentRequests(); 
                     loadActivePickups();
                     loadBroadcasts();
                 } else {
@@ -405,110 +405,103 @@
             const backdrop = document.getElementById('sidebar-backdrop');
             
             if (sidebar.classList.contains('-translate-x-full')) {
-                // Open
                 sidebar.classList.remove('-translate-x-full');
                 backdrop.classList.remove('hidden');
             } else {
-                // Close
                 sidebar.classList.add('-translate-x-full');
                 backdrop.classList.add('hidden');
             }
         }
 
-        // Updated switchTab logic
-          window.__tabHistory = [];
-  window.currentTab = "overview"; // default
-  function switchTab(tab, fromPopState = false) {
+        // ============================================================
+        //  FIXED TAB LOGIC (Supports Android Back Button)
+        // ============================================================
+        window.currentTab = "overview"; 
 
-    // Push history only when user clicks
-    if (!fromPopState) {
-      history.pushState({ tab }, "", "#" + tab);
-    }
+        function switchTab(tab, fromPopState = false) {
+            // 1. Push history only when user clicks (not when pressing Back)
+            if (!fromPopState) {
+                // This creates a "browser history" entry that Android can see
+                history.pushState({ tab }, "", "#" + tab);
+            }
 
-    // Hide all tabs
-    document.querySelectorAll('[id^="tab-"]').forEach(el => {
-      el.style.display = 'none';
-    });
+            // 2. Hide all tabs
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.style.display = 'none'; // Hide content
+                el.classList.add('hidden'); // Ensure hidden class is added
+            });
 
-    // Show selected tab
-    const active = document.getElementById('tab-' + tab);
-    if (active) active.style.display = 'block';
+            // 3. Show selected tab
+            const active = document.getElementById('tab-' + tab);
+            if (active) {
+                active.style.display = 'block';
+                active.classList.remove('hidden');
+            }
 
-    window.currentTab = tab;
-  }
+            // 4. Update Button Styles (Optional but good for sidebar)
+            // (You can add your button styling logic here if needed)
 
-  // Handle BACK / FORWARD (browser + Android)
-  window.addEventListener("popstate", function (e) {
-    if (e.state && e.state.tab) {
-      switchTab(e.state.tab, true);
-    }
-  });
+            window.currentTab = tab;
 
-  // Default tab on first load
-  document.addEventListener("DOMContentLoaded", function () {
-    const initialTab = location.hash.replace("#", "") || "overview";
-    switchTab(initialTab, true);
-  });
+            // 5. Initialize Map if switching to Details
+            if (tab === 'details') { setTimeout(initMap, 200); }
+        }
 
-  function goBackTab() {
-    if (window.__tabHistory.length === 0) {
-      return false;
-    }
-    const prev = window.__tabHistory.pop();
-    switchTab(prev);
-    return true;
-  }
+        // Listen for Browser/Android Back Button
+        window.addEventListener("popstate", function (e) {
+            if (e.state && e.state.tab) {
+                switchTab(e.state.tab, true);
+            } else {
+                // If history is empty, default to overview
+                switchTab("overview", true);
+            }
+        });
+
+        // Default tab on first load
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check URL hash (e.g. #alerts) or default to overview
+            const initialTab = location.hash.replace("#", "") || "overview";
+            switchTab(initialTab, true);
+        });
+        // ============================================================
 
         // --- MAP LOGIC ---
         function initMap() {
-            if (map) { map.invalidateSize(); return; } // Already init
-
-            // Default to India Center or existing user loc
+            if (map) { map.invalidateSize(); return; } 
             const lat = currentLat || 20.5937;
             const lng = currentLng || 78.9629;
             const zoom = currentLat ? 13 : 5;
-
             map = L.map('map-container').setView([lat, lng], zoom);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-           marker.on('dragend', function () {
-  const position = marker.getLatLng();
-  currentLat = position.lat;
-  currentLng = position.lng;
-
-  fetchAddressFromLatLng(currentLat, currentLng);
-});
+            marker.on('dragend', function () {
+                const position = marker.getLatLng();
+                currentLat = position.lat;
+                currentLng = position.lng;
+                fetchAddressFromLatLng(currentLat, currentLng);
+            });
             
-            // If user has no location, try to get current position
             if (!currentLat) {
                 map.locate({setView: true, maxZoom: 16});
                 map.on('locationfound', function(e) {
-  currentLat = e.latlng.lat;
-  currentLng = e.latlng.lng;
-  marker.setLatLng(e.latlng);
-
-  fetchAddressFromLatLng(currentLat, currentLng);
-});
-
+                    currentLat = e.latlng.lat;
+                    currentLng = e.latlng.lng;
+                    marker.setLatLng(e.latlng);
+                    fetchAddressFromLatLng(currentLat, currentLng);
+                });
             }
         }
 
         // --- DISTANCE CALCULATION (Haversine) ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999; // Return huge distance if coords missing
-            var R = 6371; // Radius of the earth in km
-            var dLat = deg2rad(lat2-lat1);  // deg2rad below
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999; 
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1); 
             var dLon = deg2rad(lon2-lon1); 
-            var a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            var d = R * c; // Distance in km
+            var d = R * c; 
             return d;
         }
 
@@ -560,11 +553,9 @@
                 all.forEach(n => {
                     let iconClass = 'fa-circle-info';
                     let iconColor = 'text-blue-500';
-                    
                     if(n.type === 'broadcast') { iconClass = 'fa-tower-broadcast'; iconColor = 'text-brand-orange'; }
                     if(n.type === 'issue') { iconClass = 'fa-circle-exclamation'; iconColor = 'text-red-500'; }
                     if(n.type === 'resolved') { iconClass = 'fa-circle-check'; iconColor = 'text-green-500'; }
-                    
                     list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.title || n.text}</p><p class="text-xs text-gray-600 line-clamp-2">${n.message || n.subtext}</p><p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p></div></div></div>`;
                 });
                 badge.classList.remove('hidden');
@@ -577,10 +568,7 @@
                 const container = document.getElementById('requests-container');
                 if(!container) return;
                 container.innerHTML = '';
-                
                 let visibleCount = 0;
-
-                // Check if user has location set
                 const myLat = userData.location?.lat;
                 const myLng = userData.location?.lng;
 
@@ -591,8 +579,6 @@
 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    
-                    // Filter by Radius (15km)
                     const reqLat = d.location?.lat;
                     const reqLng = d.location?.lng;
                     const distance = getDistanceFromLatLonInKm(myLat, myLng, reqLat, reqLng);
@@ -600,7 +586,6 @@
                     if (distance <= 15) {
                         visibleCount++;
                         const distStr = distance < 1 ? "< 1 km" : distance.toFixed(1) + " km";
-                        
                         const cardHtml = `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-red-500 relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10"><i class="fa-solid fa-location-arrow mr-1"></i>${distStr}</div><div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-bullhorn"></i></div><div><h4 class="font-bold text-gray-800 text-lg">${d.itemNeeded}</h4><p class="text-xs text-red-500 font-bold uppercase tracking-wide">Qty: ${d.quantity}</p></div></div></div><div class="mb-6 text-sm text-gray-600 space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="font-bold text-gray-800"><i class="fa-solid fa-house-chimney mr-2 text-brand-orange"></i> ${d.orphanageName}</p><p><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> ${d.orphanageAddress || 'Address not listed'}</p><p><i class="fa-solid fa-phone mr-2 text-gray-400"></i> ${d.orphanagePhone || 'Phone not listed'}</p></div><button onclick="initiateFulfillment('${doc.id}', '${d.itemNeeded}', '${d.quantity}', '${d.orphanageId}', '${d.orphanageName}')" class="w-full py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation"><span>Donate Now</span> <i class="fa-solid fa-hand-holding-heart"></i></button></div>`;
                         container.innerHTML += cardHtml;
                     }
@@ -612,7 +597,6 @@
             });
         }
 
-        // Modified to handle Active Listings (Claimed + Available)
         function loadActivePickups() {
             db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('scheduled-pickups-container'); if(!container) return; container.innerHTML = '';
@@ -659,71 +643,44 @@
             if (!pendingAction) return; closeConfirmModal();
             try {
                 if (pendingAction.type === 'donate') {
-  const { name, qty, form } = pendingAction.data;
-  const btn = document.getElementById('btn-submit');
-  const originalHTML = btn.innerHTML;
+                    const { name, qty, form } = pendingAction.data;
+                    const btn = document.getElementById('btn-submit');
+                    const originalHTML = btn.innerHTML;
 
-  try {
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-    btn.disabled = true;
+                    try {
+                        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+                        btn.disabled = true;
 
-    await db.collection('donations').add({
-      restaurantId: currentUser.uid,
-      restaurantName: userData.name,
-      restaurantEmail: currentUser.email,
-      restaurantAddress: userData.address,
-      restaurantPhone: userData.phone,
-      foodName: name,
-      servings: parseInt(qty),
-      imageUrl: base64Image || null,
-      status: "Available",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      location: userData.location || null
-    });
-
-    // ✅ SUCCESS RESET
-    form.reset();
-    base64Image = "";
-
-    document.getElementById('image-preview').classList.add('hidden');
-    document.getElementById('upload-placeholder').classList.remove('hidden');
-
-    showToast("Donation posted successfully!");
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to post donation", "error");
-  } finally {
-    // 🔁 ALWAYS RESET BUTTON
-    btn.innerHTML = originalHTML;
-    btn.disabled = false;
-    pendingAction = null;
-  }
+                        await db.collection('donations').add({
+                            restaurantId: currentUser.uid,
+                            restaurantName: userData.name,
+                            restaurantEmail: currentUser.email,
+                            restaurantAddress: userData.address,
+                            restaurantPhone: userData.phone,
+                            foodName: name,
+                            servings: parseInt(qty),
+                            imageUrl: base64Image || null,
+                            status: "Available",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            location: userData.location || null
+                        });
+                        form.reset();
+                        base64Image = "";
+                        document.getElementById('image-preview').classList.add('hidden');
+                        document.getElementById('upload-placeholder').classList.remove('hidden');
+                        showToast("Donation posted successfully!");
+                    } catch (err) { console.error(err); showToast("Failed to post donation", "error"); } 
+                    finally { btn.innerHTML = originalHTML; btn.disabled = false; pendingAction = null; }
                 } else if (pendingAction.type === 'fulfill') {
                     const { reqId, item, qty, orphId, orphName } = pendingAction.data;
                     const reqDoc = await db.collection('requests').doc(reqId).get(); const reqData = reqDoc.data();
                     await db.collection('requests').doc(reqId).update({ status: 'Fulfilled', fulfilledBy: currentUser.uid, restaurantName: userData.name, fulfilledAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await db.collection('donations').add({ restaurantId: currentUser.uid, restaurantName: userData.name, restaurantEmail: currentUser.email, restaurantAddress: userData.address, restaurantPhone: userData.phone, foodName: item, servings: parseInt(qty), imageUrl: null, status: "Claimed", claimedBy: orphId, orphanageName: orphName, orphanageEmail: reqData.orphanageEmail, orphanagePhone: reqData.orphanagePhone, orphanageAddress: reqData.orphanageAddress || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), claimedAt: firebase.firestore.FieldValue.serverTimestamp(), isFulfillment: true, originalRequestId: reqId, location: userData.location || null });
-                    // 📧 SEND CLAIM EMAIL (FIX)
-await sendClaimEmail({
-  restaurant: {
-    name: userData.name,
-    email: currentUser.email,
-    phone: userData.phone,
-    address: userData.address,
-    location: userData.location || null
-  },
-  orphanage: {
-    name: orphName,
-    email: reqData.orphanageEmail,
-    phone: reqData.orphanagePhone,
-    address: reqData.orphanageAddress || '',
-    location: reqData.location || null
-  },
-  food: {
-    name: item,
-    quantity: qty
-  }
-});
+                    await sendClaimEmail({
+                        restaurant: { name: userData.name, email: currentUser.email, phone: userData.phone, address: userData.address, location: userData.location || null },
+                        orphanage: { name: orphName, email: reqData.orphanageEmail, phone: reqData.orphanagePhone, address: reqData.orphanageAddress || '', location: reqData.location || null },
+                        food: { name: item, quantity: qty }
+                    });
                     showToast(`Reserved ${item}.`); switchTab('history');
                 } else if (pendingAction.type === 'deleteDonation') {
                     await db.collection('donations').doc(pendingAction.data.id).delete();
@@ -741,7 +698,7 @@ await sendClaimEmail({
                 
                 totalMeals = 0; 
                 let docCount = 0; 
-                operationalNotifs = []; // Clear to rebuild
+                operationalNotifs = [];
 
                 if (snapshot.empty) { 
                     if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No donations yet.</p>"; 
@@ -770,7 +727,6 @@ await sendClaimEmail({
                     if (docCount <= 5 && recentList) { recentList.innerHTML += `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100"><i class="fa-solid fa-utensils"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${data.foodName}</h4><p class="text-xs text-gray-500">${data.servings} Servings • ${date}</p></div></div><div class="flex items-center">${statusBadge}${deleteBtn}</div></div>`; }
                     if (historyBody) { historyBody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm">${date}</td><td class="px-4 py-3 md:px-6 md:py-4 font-bold text-gray-800 text-sm">${data.foodName}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-600 text-sm">${data.servings}</td><td class="px-4 py-3 md:px-6 md:py-4">${statusBadge}</td><td class="px-4 py-3 md:px-6 md:py-4 text-gray-500 text-sm font-medium">${recipient}</td><td class="px-4 py-3 md:px-6 md:py-4">${contactInfo}</td><td class="px-4 py-3 text-center">${deleteBtn}</td></tr>`; }
 
-                    // Notification Logic
                     const notifDate = data.reportedAt || data.resolvedAt || data.createdAt; 
                     if (data.status === 'Issue') {
                         operationalNotifs.push({ type: 'issue', text: `Issue: ${data.foodName}`, subtext: data.reportReason, time: notifDate ? new Date(notifDate.seconds * 1000) : new Date() });
@@ -779,7 +735,7 @@ await sendClaimEmail({
                     }
                 });
                 
-                renderAllNotifs(); // Update notifications
+                renderAllNotifs();
                 document.getElementById('stat-meals').innerText = totalMeals; 
                 document.getElementById('stat-waste').innerText = (totalMeals * 0.5).toFixed(1); 
                 document.getElementById('history-count').innerText = docCount; 
@@ -792,71 +748,27 @@ await sendClaimEmail({
         function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
         function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/login'; }); }
         let myChart; function updateChart(userTotal) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals', data: [avg, userTotal], backgroundColor: ['#D1D5DB', '#F97316'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } } }); }
-        document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
+        
         async function fetchAddressFromLatLng(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-    );
-    const data = await res.json();
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                if (data && data.display_name) {
+                    document.getElementById("detail-address").value = data.display_name;
+                }
+            } catch (err) { console.error("Address fetch failed", err); }
+        }
 
-    if (data && data.display_name) {
-      document.getElementById("detail-address").value = data.display_name;
-    }
-  } catch (err) {
-    console.error("Address fetch failed", err);
-  }
-}
-async function sendClaimEmail({ restaurant, orphanage, food }) {
-  try {
-    const response = await fetch("/api/claim-food", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        restaurant,
-        orphanage,
-        food
-      })
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Claim email failed");
-    }
-
-    console.log("✅ Claim email sent successfully");
-    alert("Claim successfull.");
-
-  } catch (error) {
-    console.error("❌ Claim Email Error:", error);
-    alert("Failed to send claim email. Please try again.");
-  }
-}
-         // Tab history stack
-  window.__tabHistory = [];
-
-  function switchTab(tab) {
-    // Push previous tab
-    if (window.currentTab && window.currentTab !== tab) {
-      window.__tabHistory.push(window.currentTab);
-    }
-
-    window.currentTab = tab;
-
-    // EXISTING TAB SWITCH LOGIC BELOW
-    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
-    document.getElementById('tab-' + tab).style.display = 'block';
-  }
-
-  function goBackTab() {
-    if (window.__tabHistory.length === 0) return false;
-    const prev = window.__tabHistory.pop();
-    switchTab(prev);
-    return true;
-  }
+        async function sendClaimEmail({ restaurant, orphanage, food }) {
+            try {
+                const response = await fetch("/api/claim-food", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ restaurant, orphanage, food })
+                });
+                if (!response.ok) throw new Error("Claim email failed");
+                console.log("✅ Claim email sent successfully");
+            } catch (error) { console.error("❌ Claim Email Error:", error); }
+        }
     </script>
 </body>
 </html>
