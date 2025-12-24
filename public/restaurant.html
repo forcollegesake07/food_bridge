@@ -416,8 +416,12 @@
 
             window.currentTab = tab;
 
-            // 5. Initialize Map if switching to Details
-            if (tab === 'details') { setTimeout(initMap, 200); }
+// 🔥 UPDATE SIDEBAR HIGHLIGHT
+updateSidebarActive(tab);
+
+// 5. Initialize Map if switching to Details
+if (tab === 'details') { setTimeout(initMap, 200); }
+
         }
 
         // Listen for Browser/Android Back Button
@@ -833,7 +837,41 @@ else if (type === 'success') {
         console.error("Reverse geocoding failed", err);
     }
 }
+function updateSidebarActive(tab) {
+    const tabs = ['overview', 'alerts', 'history', 'details'];
 
+    tabs.forEach(t => {
+        const btn = document.getElementById(`btn-${t}`);
+        if (!btn) return;
+
+        // Reset all buttons
+        btn.classList.remove(
+            'bg-brand-orange',
+            'text-white',
+            'shadow-md'
+        );
+        btn.classList.add(
+            'text-gray-500',
+            'hover:bg-gray-50',
+            'hover:text-gray-900'
+        );
+    });
+
+    // Activate current tab
+    const activeBtn = document.getElementById(`btn-${tab}`);
+    if (activeBtn) {
+        activeBtn.classList.remove(
+            'text-gray-500',
+            'hover:bg-gray-50',
+            'hover:text-gray-900'
+        );
+        activeBtn.classList.add(
+            'bg-brand-orange',
+            'text-white',
+            'shadow-md'
+        );
+    }
+}
     </script>
 </body>
 </html>
