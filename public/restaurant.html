@@ -740,21 +740,75 @@
             });
         }
 
-        async function saveProfile(e) { e.preventDefault(); const name = document.getElementById('detail-name').value; const phone = document.getElementById('detail-phone').value; const address = document.getElementById('detail-address').value; try { await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } }); userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng }; document.getElementById('nav-username').innerText = name; document.getElementById('sidebar-name').innerText = name; showToast("Profile Updated!"); } catch (err) { showToast("Error: " + err.message, 'error'); } }
-        function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('image-preview').src = e.target.result; document.getElementById('image-preview').classList.remove('hidden'); document.getElementById('upload-placeholder').classList.add('hidden'); base64Image = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
-        function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
-        function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/login'; }); }
-        let myChart; function updateChart(userTotal) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals', data: [avg, userTotal], backgroundColor: ['#D1D5DB', '#F97316'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, grid: { display: false } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } } }); }
-        
-        async function fetchAddressFromLatLng(lat, lng) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                const data = await res.json();
-                if (data && data.display_name) {
-                    document.getElementById("detail-address").value = data.display_name;
-                }
-            } catch (err) { console.error("Address fetch failed", err); }
-        }
+       function saveProfile(event) {
+    event.preventDefault();
+
+    pendingAction = async () => {
+        const name = document.getElementById('detail-name').value.trim();
+        const phone = document.getElementById('detail-phone').value.trim();
+        const address = document.getElementById('detail-address').value.trim();
+
+        await db.collection('users').doc(currentUser.uid).update({
+            name,
+            phone,
+            address,
+            location: { lat: currentLat, lng: currentLng }
+        });
+
+        userData.name = name;
+        userData.phone = phone;
+        userData.address = address;
+        userData.location = { lat: currentLat, lng: currentLng };
+
+        document.getElementById('sidebar-name').innerText = name;
+
+        showSuccessPopup(
+            "Profile Updated",
+            "Your profile details have been saved successfully."
+        );
+    };
+
+    // Show confirmation popup
+    document.getElementById('confirm-title').innerText = "Save Profile Changes";
+    document.getElementById('confirm-message').innerText =
+        "Are you sure you want to save these profile changes?";
+    document.getElementById('confirm-icon').className = "fa-solid fa-circle-check";
+
+    openConfirmModal();
+}
+        function showSuccessPopup(title, message) {
+    const modal = document.getElementById('confirm-modal');
+
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-message').innerText = message;
+    document.getElementById('confirm-icon').className = "fa-solid fa-circle-check";
+
+    // Hide Cancel button
+    const cancelBtn = modal.querySelector("button[onclick='closeConfirmModal()']");
+    cancelBtn.style.display = "none";
+
+    const confirmBtn = document.getElementById('confirm-yes-btn');
+    confirmBtn.innerText = "OK";
+    confirmBtn.onclick = () => {
+        closeConfirmModal();
+        resetConfirmModal();
+    };
+
+    openConfirmModal();
+}
+
+function resetConfirmModal() {
+    const modal = document.getElementById('confirm-modal');
+
+    const cancelBtn = modal.querySelector("button[onclick='closeConfirmModal()']");
+    cancelBtn.style.display = "block";
+
+    const confirmBtn = document.getElementById('confirm-yes-btn');
+    confirmBtn.innerText = "Confirm";
+    confirmBtn.onclick = executeAction;
+
+    pendingAction = null;
+}
 
         async function sendClaimEmail({ restaurant, orphanage, food }) {
             try {
