@@ -411,8 +411,31 @@
                 active.classList.remove('hidden');
             }
 
-            // 4. Update Button Styles (Optional but good for sidebar)
-            // (You can add your button styling logic here if needed)
+            // 4. Update Sidebar Button Styles (FIXED)
+            const buttons = ['overview', 'alerts', 'history', 'details'];
+            buttons.forEach(b => {
+                const btn = document.getElementById('btn-' + b);
+                if (!btn) return;
+                
+                // Reset to base state (remove active)
+                btn.classList.remove('bg-brand-orange', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-500');
+
+                // Add hover effects based on type
+                if (b === 'alerts') {
+                    btn.classList.add('hover:bg-red-50', 'hover:text-red-500');
+                    btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900');
+                } else {
+                    btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900');
+                    btn.classList.remove('hover:bg-red-50', 'hover:text-red-500');
+                }
+
+                // If this is the active tab, apply active styles and remove hovers
+                if (b === tab) {
+                    btn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-red-50', 'hover:text-red-500');
+                    btn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
+                }
+            });
 
             window.currentTab = tab;
 
