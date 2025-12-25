@@ -319,7 +319,7 @@
                     <h2 class="text-xl md:text-2xl font-bold text-gray-800">Orphanage Profile</h2>
                     <p class="text-gray-500 text-xs md:text-sm mt-1">Manage your public information & Location</p>
                 </div>
-                <form onsubmit="saveProfile(event)" class="px-6 md:px-8 pb-8 md:pb-10 space-y-5 md:space-y-6">
+                <form onsubmit="initiateSaveProfile(event)" class="px-6 md:px-8 pb-8 md:pb-10 space-y-5 md:space-y-6">
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Orphanage Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
@@ -443,30 +443,83 @@
             else { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); }
         }
 
-        function switchTab(tab) {
+        // ============================================================
+        //  FIXED TAB LOGIC (Consistent with Restaurant Dashboard)
+        // ============================================================
+        window.currentTab = "overview"; 
+
+        function switchTab(tab, fromPopState = false) {
+            // 1. Push history only when user clicks (not when pressing Back)
+            if (!fromPopState) {
+                history.pushState({ tab }, "", "#" + tab);
+            }
+
+            // 2. Hide all tabs
             ['overview', 'history', 'details', 'alerts'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                const btn = document.getElementById('btn-' + t);
-                btn.classList.remove('bg-brand-green', 'text-white', 'shadow-md', 'bg-brand-orange');
-                if (t === 'alerts') {
-                     btn.classList.remove('hover:bg-orange-50', 'hover:text-brand-orange');
-                     btn.classList.add('text-gray-500', 'hover:bg-orange-50', 'hover:text-brand-orange', 'border', 'border-transparent', 'hover:border-orange-100');
+                const el = document.getElementById('tab-' + t);
+                if(el) el.classList.add('hidden');
+            });
+
+            // 3. Update Sidebar Buttons (Fixed highlighting issue)
+            const buttons = ['overview', 'alerts', 'history', 'details'];
+            buttons.forEach(b => {
+                const btn = document.getElementById('btn-' + b);
+                if (!btn) return;
+                
+                // Reset to base state
+                btn.classList.remove('bg-brand-green', 'bg-brand-orange', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-500', 'border', 'border-transparent');
+
+                // Add specific hover effects
+                if (b === 'alerts') {
+                    btn.classList.add('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
+                    btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900');
                 } else {
-                    btn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900');
+                    btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900');
+                    btn.classList.remove('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
+                }
+
+                // Apply Active State
+                if (b === tab) {
+                    btn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
+                    
+                    if (b === 'alerts') {
+                        btn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
+                    } else {
+                        btn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
+                    }
                 }
             });
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            const activeBtn = document.getElementById('btn-' + tab);
-            activeBtn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-orange-50', 'hover:text-brand-orange', 'border', 'hover:border-orange-100');
-            
-            if(tab === 'alerts') activeBtn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
-            else activeBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
-            
-            if (window.innerWidth < 768) toggleSidebar();
 
-            // Init Map
+            // 4. Show selected tab
+            const activeContent = document.getElementById('tab-' + tab);
+            if(activeContent) activeContent.classList.remove('hidden');
+            
+            window.currentTab = tab;
+
+            if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+
+            // Init Map if switching to Details
             if (tab === 'details') { setTimeout(initMap, 200); }
         }
+
+        // Listen for Browser/Android Back Button
+        window.addEventListener("popstate", function (e) {
+            if (e.state && e.state.tab) {
+                switchTab(e.state.tab, true);
+            } else {
+                switchTab("overview", true);
+            }
+        });
+
+        // Default tab on first load
+        document.addEventListener("DOMContentLoaded", function () {
+            const initialTab = location.hash.replace("#", "") || "overview";
+            switchTab(initialTab, true);
+        });
+        // ============================================================
 
         // --- MAP ---
         function initMap() {
@@ -716,6 +769,17 @@
         function openReportModal(donationId) { reportDonationId = donationId; document.getElementById('report-reason-text').value = ''; const modal = document.getElementById('report-modal'); const content = document.getElementById('report-modal-content'); modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10); }
         function closeReportModal() { const modal = document.getElementById('report-modal'); const content = document.getElementById('report-modal-content'); modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); reportDonationId = null; }, 300); }
 
+        // NEW: Initiate Profile Save
+        function initiateSaveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('detail-name').value;
+            const phone = document.getElementById('detail-phone').value;
+            const address = document.getElementById('detail-address').value;
+            
+            pendingAction = { type: 'saveProfile', data: { name, phone, address } };
+            showConfirmModal("Save Changes", "Are you sure you want to update your profile details?", 'saveProfile');
+        }
+
         async function submitReport() {
             const reason = document.getElementById('report-reason-text').value;
             if (!reason) { showToast("Please enter a reason.", 'error'); return; }
@@ -782,6 +846,13 @@
                 else if (pendingAction.type === 'deleteRequest') {
                     const { reqId } = pendingAction.data; await db.collection('requests').doc(reqId).delete(); showToast("Request deleted.");
                 }
+                else if (pendingAction.type === 'saveProfile') {
+                    const { name, phone, address } = pendingAction.data;
+                    await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } }); 
+                    userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng }; 
+                    updateUIWithUserData(); 
+                    showToast("Profile Updated!");
+                }
             } catch (err) { console.error(err); showToast("Action failed. Please try again.", "error"); } finally { pendingAction = null; }
         }
 
@@ -789,9 +860,14 @@
             const modal = document.getElementById('confirm-modal');
             document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
             const btn = document.getElementById('confirm-yes-btn'); const icon = document.getElementById('confirm-icon'); const iconContainer = document.getElementById('confirm-icon-container');
-            if (type === 'receive' || type === 'request' || type === 'claim') {
+            
+            if (type === 'receive' || type === 'request' || type === 'claim' || type === 'saveProfile') {
                 btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
+                
+                if (type === 'saveProfile') icon.className = "fa-solid fa-floppy-disk";
+                else icon.className = "fa-solid fa-check";
+
             } else { // Delete
                 btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 icon.className = "fa-solid fa-trash"; iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
@@ -801,38 +877,23 @@
 
         function closeConfirmModal() { const modal = document.getElementById('confirm-modal'); modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300); }
 
-        async function saveProfile(e) { 
-            e.preventDefault(); 
-            const name = document.getElementById('detail-name').value; const phone = document.getElementById('detail-phone').value; const address = document.getElementById('detail-address').value; 
-            try { 
-                await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } }); 
-                userData.name = name; userData.phone = phone; userData.address = address; userData.location = { lat: currentLat, lng: currentLng }; updateUIWithUserData(); showToast("Profile Updated!"); 
-            } catch (err) { showToast("Error: " + err.message, 'error'); } 
-        }
-
         function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
         function logout() { 
-    auth.signOut().then(() => { 
-        window.location.href = 'https://foodbridge.qzz.io/login'; 
-    }); 
-}
+            auth.signOut().then(() => { 
+                window.location.href = 'https://foodbridge.qzz.io/login'; 
+            }); 
+        }
 
         let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
-        document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); });
+        
+        // document.addEventListener('DOMContentLoaded', () => { switchTab('overview'); }); // Handled by fixed tab logic
         async function fetchAddressFromLatLng(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-    );
-    const data = await res.json();
-
-    if (data && data.display_name) {
-      document.getElementById("detail-address").value = data.display_name;
-    }
-  } catch (err) {
-    console.error("Address fetch failed", err);
-  }
-}
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            if (data && data.display_name) { document.getElementById("detail-address").value = data.display_name; }
+          } catch (err) { console.error("Address fetch failed", err); }
+        }
     </script>
 </body>
 </html>
