@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimized Viewport: Disables user scaling for app-like feel -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Dashboard | FoodBridge</title>
-    <!-- Favicon: Blue Shield/Admin Icon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%233B82F6' d='M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-27.4 153.3-51.4 187.8c-23.7 34.1-53.7 60.5-89.6 86.8c-12.7 9.3-27.2 18-42.3 26.6c-7.2 4.1-15.7 6.1-24.2 5.3c-10.6-.9-20.9-5.1-29.3-12.2c-15.8-13.4-32.9-28-49.8-43.2C84.7 322.9 14.2 249.2 0 139.5c-1.3-26.4 15.3-48.5 37.7-57.5L242.6 2.9C246.8 1 251.4 0 256 0z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -23,13 +20,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: {
-                        brand: {
-                            blue: '#3B82F6', 
-                            dark: '#1E293B',
-                            light: '#EFF6FF' 
-                        }
-                    },
+                    colors: { brand: { blue: '#3B82F6', dark: '#1E293B', light: '#EFF6FF' } },
                     animation: { 'fade-in': 'fadeIn 0.3s ease-out' },
                     keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
                 }
@@ -37,423 +28,134 @@
         }
     </script>
     <style>
-        /* Mobile Performance Optimizations */
         * { -webkit-tap-highlight-color: transparent; }
-        
         .fixed-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background-image: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2032&auto=format&fit=crop');
-            background-size: cover; background-position: center;
-            will-change: transform;
+            background-size: cover; background-position: center; will-change: transform;
         }
-
-        /* Smooth scrolling for iOS */
         .smooth-scroll-touch { -webkit-overflow-scrolling: touch; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* Prevent elastic bounce on iOS */
         body { overscroll-behavior-y: none; }
-        
-        /* Prevent text resizing on orientation change */
-        html { -webkit-text-size-adjust: 100%; }
-
-        /* Fix mobile input zoom */
         input, select, textarea { font-size: 16px; }
-
-        /* Hardware acceleration */
         #sidebar, .transform-gpu { will-change: transform; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-brand-blue selection:text-white">
 
     <div class="fixed-bg-layer"></div>
-
-    <!-- MOBILE SIDEBAR BACKDROP -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
-    <!-- SIDEBAR -->
     <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-40 shadow-2xl h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center border-b border-gray-100">
-            <div class="bg-brand-blue/10 p-2.5 rounded-xl mr-3 shadow-sm">
-                <i class="fa-solid fa-shield-halved text-brand-blue text-2xl"></i>
-            </div>
-            <div>
-                <span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-blue-500">Bridge</span></span>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Admin Panel</span>
-            </div>
+            <div class="bg-brand-blue/10 p-2.5 rounded-xl mr-3 shadow-sm"><i class="fa-solid fa-shield-halved text-brand-blue text-2xl"></i></div>
+            <div><span class="font-bold text-xl text-brand-dark block leading-none tracking-tight">Food<span class="text-blue-500">Bridge</span></span><span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Admin Panel</span></div>
         </div>
 
         <nav class="flex-grow p-4 md:p-6 space-y-2 md:space-y-3 overflow-y-auto smooth-scroll-touch">
-            <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl bg-brand-blue text-white shadow-md transition-all active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-chart-line w-6 text-lg mr-3"></i> Overview
-            </button>
-            <button onclick="switchTab('users')" id="btn-users" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-users w-6 text-lg mr-3"></i> Users
-            </button>
-            <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-clock-rotate-left w-6 text-lg mr-3"></i> History Log
-            </button>
-            <button onclick="switchTab('reports')" id="btn-reports" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-triangle-exclamation w-6 text-lg mr-3"></i> Reports
-            </button>
-            <!-- NEW FEATURE: BROADCAST -->
-            <button onclick="switchTab('broadcast')" id="btn-broadcast" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-blue-50 hover:text-blue-500 rounded-xl transition-all active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-tower-broadcast w-6 text-lg mr-3"></i> Broadcast
+            <button onclick="switchTab('overview')" id="btn-overview" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl bg-brand-blue text-white shadow-md transition-all active:scale-95 touch-manipulation"><i class="fa-solid fa-chart-line w-6 text-lg mr-3"></i> Overview</button>
+            <button onclick="switchTab('users')" id="btn-users" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation"><i class="fa-solid fa-users w-6 text-lg mr-3"></i> Users</button>
+            <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation"><i class="fa-solid fa-clock-rotate-left w-6 text-lg mr-3"></i> History Log</button>
+            <button onclick="switchTab('reports')" id="btn-reports" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all active:scale-95 touch-manipulation"><i class="fa-solid fa-triangle-exclamation w-6 text-lg mr-3"></i> Reports</button>
+            <button onclick="switchTab('broadcast')" id="btn-broadcast" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-blue-50 hover:text-blue-500 rounded-xl transition-all active:scale-95 touch-manipulation"><i class="fa-solid fa-tower-broadcast w-6 text-lg mr-3"></i> Broadcast</button>
+            
+            <button onclick="switchTab('email')" id="btn-email" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-purple-50 hover:text-purple-500 rounded-xl transition-all active:scale-95 touch-manipulation">
+                <i class="fa-solid fa-envelope-open-text w-6 text-lg mr-3"></i> Emailer
             </button>
         </nav>
 
         <div class="p-6 border-t border-gray-100 bg-gray-50/50">
             <div class="flex items-center gap-3 mb-5 px-1">
                 <div class="w-10 h-10 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold shadow-md">A</div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-gray-800 truncate">Administrator</p>
-                    <p class="text-xs text-gray-500 truncate">System Control</p>
-                </div>
+                <div class="overflow-hidden"><p class="text-sm font-bold text-gray-800 truncate">Administrator</p><p class="text-xs text-gray-500 truncate">System Control</p></div>
             </div>
-            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-sm font-bold text-red-500 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:scale-95 touch-manipulation">
-                <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
-            </button>
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-sm font-bold text-red-500 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:scale-95 touch-manipulation"><i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out</button>
         </div>
     </aside>
 
-    <!-- MOBILE HEADER -->
     <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur shadow-md z-30 flex items-center justify-between px-4 transition-all">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-brand-blue text-xl"></i>
-            <span class="font-bold text-lg text-brand-dark">Food<span class="text-blue-500">Bridge</span></span>
-        </div>
-        <button onclick="toggleSidebar()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition active:bg-gray-200 touch-manipulation">
-            <i class="fa-solid fa-bars text-xl"></i>
-        </button>
+        <div class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-brand-blue text-xl"></i><span class="font-bold text-lg text-brand-dark">Food<span class="text-blue-500">Bridge</span></span></div>
+        <button onclick="toggleSidebar()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition active:bg-gray-200 touch-manipulation"><i class="fa-solid fa-bars text-xl"></i></button>
     </div>
 
-    <!-- MAIN CONTENT -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full smooth-scroll-touch" id="main-scroll-container">
         
-        <!-- TAB: OVERVIEW -->
         <div id="tab-overview" class="max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Dashboard Overview</h1>
-            
-            <!-- Quick Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Users</p>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-users">0</h3>
-                </div>
-                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-green-500">
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Meals Saved</p>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3>
-                </div>
-                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-orange-500">
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Pending Reports</p>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-reports">0</h3>
-                </div>
+                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-blue-500"><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Users</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-users">0</h3></div>
+                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-green-500"><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Meals Saved</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-meals">0</h3></div>
+                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-orange-500"><p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Pending Reports</p><h3 class="text-2xl md:text-3xl font-extrabold text-brand-dark" id="stat-reports">0</h3></div>
             </div>
-
-            <!-- Graphs Container -->
             <div class="space-y-6">
-                <!-- Daily -->
-                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md">
-                    <h3 class="font-bold text-gray-800 text-lg mb-4">Daily Activity (Last 7 Days)</h3>
-                    <div class="h-64 w-full relative"><canvas id="dailyChart"></canvas></div>
-                </div>
-                
+                <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md"><h3 class="font-bold text-gray-800 text-lg mb-4">Daily Activity (Last 7 Days)</h3><div class="h-64 w-full relative"><canvas id="dailyChart"></canvas></div></div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Monthly -->
-                    <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md">
-                        <h3 class="font-bold text-gray-800 text-lg mb-4">Monthly Trends (Last 12 Months)</h3>
-                        <div class="h-64 w-full relative"><canvas id="monthlyChart"></canvas></div>
-                    </div>
-                    <!-- Lifetime -->
-                    <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md">
-                        <h3 class="font-bold text-gray-800 text-lg mb-4">Lifetime Growth (Yearly)</h3>
-                        <div class="h-64 w-full relative"><canvas id="lifetimeChart"></canvas></div>
-                    </div>
+                    <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md"><h3 class="font-bold text-gray-800 text-lg mb-4">Monthly Trends (Last 12 Months)</h3><div class="h-64 w-full relative"><canvas id="monthlyChart"></canvas></div></div>
+                    <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md"><h3 class="font-bold text-gray-800 text-lg mb-4">Lifetime Growth (Yearly)</h3><div class="h-64 w-full relative"><canvas id="lifetimeChart"></canvas></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB: USERS -->
         <div id="tab-users" class="hidden max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">User Management</h1>
-                <!-- EXPORT BUTTON -->
-                <button onclick="exportToCSV('users-table')" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition flex items-center gap-2 active:scale-95">
-                    <i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export CSV
-                </button>
-            </div>
-            
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto smooth-scroll-touch">
-                    <table id="users-table" class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-4 font-bold tracking-wider">User Name</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Role</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Phone</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Address</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Status</th>
-                                <th class="px-6 py-4 font-bold tracking-wider text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body" class="divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
-            </div>
+             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"><h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">User Management</h1><button onclick="exportToCSV('users-table')" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg transition flex items-center gap-2 active:scale-95"><i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export CSV</button></div>
+             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"><div class="overflow-x-auto smooth-scroll-touch"><table id="users-table" class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200"><tr><th class="px-6 py-4 font-bold tracking-wider">User Name</th><th class="px-6 py-4 font-bold tracking-wider">Role</th><th class="px-6 py-4 font-bold tracking-wider">Phone</th><th class="px-6 py-4 font-bold tracking-wider">Address</th><th class="px-6 py-4 font-bold tracking-wider">Status</th><th class="px-6 py-4 font-bold tracking-wider text-center">Action</th></tr></thead><tbody id="users-table-body" class="divide-y divide-gray-100"></tbody></table></div></div>
         </div>
 
-        <!-- TAB: HISTORY LOG -->
         <div id="tab-history" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Activity Log</h1>
-                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
-                    <!-- Export Button -->
-                    <button onclick="exportActiveHistory()" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition flex items-center gap-2 active:scale-95 whitespace-nowrap h-10">
-                        <i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export
-                    </button>
-                    <!-- Search Input -->
-                    <div class="relative w-full sm:w-56">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </span>
-                        <input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Filter by User..." class="pl-10 pr-4 py-2 rounded-xl border-none focus:ring-2 focus:ring-blue-500 shadow-md w-full text-base font-medium focus:outline-none h-10">
-                    </div>
-                    <!-- Toggle Buttons -->
-                    <div class="flex bg-white/20 backdrop-blur-md rounded-xl p-1 shadow-inner self-start sm:self-auto">
-                        <button onclick="switchHistoryMode('donations')" id="btn-hist-donations" class="px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue active:scale-95 touch-manipulation">Donations</button>
-                        <button onclick="switchHistoryMode('requests')" id="btn-hist-requests" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10 active:scale-95 touch-manipulation">Requests</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- DONATIONS TABLE -->
-            <div id="block-hist-donations" class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto smooth-scroll-touch">
-                    <table id="donations-table" class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-3 font-bold">Date</th>
-                                <th class="px-4 py-3 font-bold">Time</th>
-                                <th class="px-4 py-3 font-bold">Restaurant</th>
-                                <th class="px-4 py-3 font-bold">Accepted By</th>
-                                <th class="px-4 py-3 font-bold">Item (Qty)</th>
-                                <th class="px-4 py-3 font-bold">Status</th>
-                                <th class="px-4 py-3 font-bold text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="donation-history-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="7" class="text-center py-4 text-gray-400">Loading donations...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- REQUESTS TABLE -->
-            <div id="block-hist-requests" class="hidden bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto smooth-scroll-touch">
-                    <table id="requests-table" class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-3 font-bold">Date</th>
-                                <th class="px-4 py-3 font-bold">Time</th>
-                                <th class="px-4 py-3 font-bold">Orphanage</th>
-                                <th class="px-4 py-3 font-bold">Accepted By</th>
-                                <th class="px-4 py-3 font-bold">Item (Qty)</th>
-                                <th class="px-4 py-3 font-bold">Status</th>
-                                <th class="px-4 py-3 font-bold text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="request-history-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="7" class="text-center py-4 text-gray-400">Loading requests...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"><h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Activity Log</h1><div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center"><button onclick="exportActiveHistory()" class="bg-white/90 backdrop-blur text-brand-dark hover:bg-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition flex items-center gap-2 active:scale-95 whitespace-nowrap h-10"><i class="fa-solid fa-file-csv text-green-600 text-lg"></i> Export</button><div class="relative w-full sm:w-56"><span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span><input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Filter by User..." class="pl-10 pr-4 py-2 rounded-xl border-none focus:ring-2 focus:ring-blue-500 shadow-md w-full text-base font-medium focus:outline-none h-10"></div><div class="flex bg-white/20 backdrop-blur-md rounded-xl p-1 shadow-inner self-start sm:self-auto"><button onclick="switchHistoryMode('donations')" id="btn-hist-donations" class="px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue active:scale-95 touch-manipulation">Donations</button><button onclick="switchHistoryMode('requests')" id="btn-hist-requests" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10 active:scale-95 touch-manipulation">Requests</button></div></div></div>
+             <div id="block-hist-donations" class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"><div class="overflow-x-auto smooth-scroll-touch"><table id="donations-table" class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200"><tr><th class="px-4 py-3 font-bold">Date</th><th class="px-4 py-3 font-bold">Time</th><th class="px-4 py-3 font-bold">Restaurant</th><th class="px-4 py-3 font-bold">Accepted By</th><th class="px-4 py-3 font-bold">Item (Qty)</th><th class="px-4 py-3 font-bold">Status</th><th class="px-4 py-3 font-bold text-center">Action</th></tr></thead><tbody id="donation-history-body" class="divide-y divide-gray-100"><tr><td colspan="7" class="text-center py-4 text-gray-400">Loading donations...</td></tr></tbody></table></div></div>
+             <div id="block-hist-requests" class="hidden bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"><div class="overflow-x-auto smooth-scroll-touch"><table id="requests-table" class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200"><tr><th class="px-4 py-3 font-bold">Date</th><th class="px-4 py-3 font-bold">Time</th><th class="px-4 py-3 font-bold">Orphanage</th><th class="px-4 py-3 font-bold">Accepted By</th><th class="px-4 py-3 font-bold">Item (Qty)</th><th class="px-4 py-3 font-bold">Status</th><th class="px-4 py-3 font-bold text-center">Action</th></tr></thead><tbody id="request-history-body" class="divide-y divide-gray-100"><tr><td colspan="7" class="text-center py-4 text-gray-400">Loading requests...</td></tr></tbody></table></div></div>
         </div>
 
-        <!-- TAB: REPORTS -->
         <div id="tab-reports" class="hidden max-w-7xl mx-auto space-y-8 animate-fade-in">
-            
-            <!-- Pending Reports Block -->
-            <div>
-                <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md mb-4">Active Reports</h1>
-                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
-                    <div class="overflow-x-auto smooth-scroll-touch">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reporter (Orphanage)</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Against (Restaurant)</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reason</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reports-table-body" class="divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Resolved History Block -->
-            <div>
-                <h1 class="text-2xl font-bold text-white drop-shadow-md mb-4 opacity-90">Resolved History</h1>
-                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 opacity-95">
-                    <div class="overflow-x-auto smooth-scroll-touch">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date Resolved</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Parties</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Original Issue</th>
-                                    <th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action Taken</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resolved-reports-body" class="divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+             <div><h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md mb-4">Active Reports</h1><div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"><div class="overflow-x-auto smooth-scroll-touch"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200"><tr><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reporter (Orphanage)</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Against (Restaurant)</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Reason</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action</th></tr></thead><tbody id="reports-table-body" class="divide-y divide-gray-100"></tbody></table></div></div></div>
+             <div><h1 class="text-2xl font-bold text-white drop-shadow-md mb-4 opacity-90">Resolved History</h1><div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 opacity-95"><div class="overflow-x-auto smooth-scroll-touch"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200"><tr><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Date Resolved</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Parties</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Original Issue</th><th class="px-4 py-4 md:px-6 md:py-5 font-bold tracking-wider">Action Taken</th></tr></thead><tbody id="resolved-reports-body" class="divide-y divide-gray-100"></tbody></table></div></div></div>
         </div>
 
-        <!-- NEW TAB: BROADCAST -->
         <div id="tab-broadcast" class="hidden max-w-4xl mx-auto space-y-6 animate-fade-in">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">System Broadcast</h1>
-            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-200">
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Send Notification</h3>
-                    <p class="text-gray-500 text-sm">This message will appear on the dashboard of all selected users.</p>
-                </div>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Title</label>
-                        <input type="text" id="bc-title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. System Maintenance">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Message</label>
-                        <textarea id="bc-message" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Enter your announcement here..."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Target Audience</label>
-                        <select id="bc-target" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
-                            <option value="all">All Users</option>
-                            <option value="restaurant">Restaurants Only</option>
-                            <option value="orphanage">Orphanages Only</option>
-                        </select>
-                    </div>
-                    <button onclick="sendBroadcast()" id="btn-send-bc" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> Send Broadcast
-                    </button>
-                </div>
-            </div>
+             <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">System Broadcast</h1>
+             <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-200"><div class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-2">Send Notification</h3><p class="text-gray-500 text-sm">This message will appear on the dashboard of all selected users.</p></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Title</label><input type="text" id="bc-title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="e.g. System Maintenance"></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Message</label><textarea id="bc-message" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Enter your announcement here..."></textarea></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Target Audience</label><select id="bc-target" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"><option value="all">All Users</option><option value="restaurant">Restaurants Only</option><option value="orphanage">Orphanages Only</option></select></div><button onclick="sendBroadcast()" id="btn-send-bc" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i> Send Broadcast</button></div></div>
+             <div class="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md mt-6"><h4 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wide">Recent Broadcasts</h4><div id="broadcast-history" class="space-y-3"><div class="text-gray-400 text-center text-sm italic py-2">No recent broadcasts sent in this session.</div></div></div>
+        </div>
 
-            <!-- Previous Broadcasts (Mockup for now, or could link to DB) -->
-            <div class="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md">
-                <h4 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wide">Recent Broadcasts</h4>
-                <div id="broadcast-history" class="space-y-3">
-                    <div class="text-gray-400 text-center text-sm italic py-2">No recent broadcasts sent in this session.</div>
+        <div id="tab-email" class="hidden max-w-4xl mx-auto space-y-6 animate-fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Custom Emailer</h1>
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+                <div class="bg-purple-600 p-6">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Compose Message
+                    </h2>
+                    <p class="text-purple-100 text-sm mt-1">Send manual emails with attachments to anyone.</p>
+                </div>
+                <div class="p-8 space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To</label>
+                        <input type="email" id="email-recipient" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" placeholder="recipient@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <input type="text" id="email-subject" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Subject...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea id="email-body" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none resize-none" placeholder="Type your message..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
+                        <input id="email-files" type="file" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
+                    </div>
+                    <button onclick="sendCustomEmail()" id="btn-send-email" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2">
+                        Send Email <i class="fa-solid fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- INVESTIGATE MODAL -->
-    <div id="investigate-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 transform-gpu" id="investigate-modal-content">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Investigate Report</h3>
-                <p class="text-gray-500 mb-6 text-sm">Review the issue and document your action.</p>
-                
-                <div class="text-left space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Reason of Issue</label>
-                        <input type="text" id="inv-reason" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base text-gray-700" placeholder="Reported reason..." readonly>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Action Taken</label>
-                        <textarea id="inv-action" rows="3" class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="e.g. User warned via email..."></textarea>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 mt-6">
-                    <button onclick="closeInvestigateModal()" class="flex-1 py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base active:bg-gray-100 touch-manipulation">Cancel</button>
-                    <button onclick="submitInvestigation()" class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg transition-all text-base active:scale-95 touch-manipulation">Resolve</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONFIRM DELETE MODAL -->
-    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300 transform-gpu" id="confirm-modal-content">
-            <div class="text-center">
-                <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
-                    <i class="fa-solid fa-trash-can"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Delete Record?</h3>
-                <p class="text-gray-500 mb-6 text-sm">This action cannot be undone.</p>
-                <div class="flex gap-4">
-                    <button onclick="closeConfirmModal()" class="flex-1 py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base active:bg-gray-100 touch-manipulation">Cancel</button>
-                    <button onclick="executeDelete()" class="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all text-base active:scale-95 touch-manipulation">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- USER DETAILS MODAL -->
-    <div id="user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 relative transform-gpu" id="user-modal-content">
-            <button onclick="closeUserModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition touch-manipulation">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            
-            <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-brand-light rounded-full mx-auto flex items-center justify-center text-3xl text-brand-blue mb-3 shadow-inner relative">
-                    <i class="fa-solid fa-user" id="modal-user-icon"></i>
-                    <!-- Verified Badge in Modal -->
-                    <div id="modal-verify-badge" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hidden">
-                        <i class="fa-solid fa-circle-check text-blue-500 text-xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-900" id="modal-user-name">Loading...</h3>
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-100 text-gray-600" id="modal-user-role">User</span>
-            </div>
-
-            <div class="space-y-4 mb-6 bg-gray-50 p-5 rounded-xl border border-gray-100 text-sm">
-                <div class="flex justify-between border-b border-gray-200 pb-2">
-                    <span class="text-gray-500 font-medium">Email</span>
-                    <span class="font-bold text-gray-800" id="modal-user-email">...</span>
-                </div>
-                <div class="flex justify-between border-b border-gray-200 pb-2">
-                    <span class="text-gray-500 font-medium">Phone</span>
-                    <span class="font-bold text-gray-800" id="modal-user-phone">...</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500 font-medium">Address</span>
-                    <span class="font-bold text-gray-800 text-right w-1/2 truncate" id="modal-user-address">...</span>
-                </div>
-                <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
-                    <span class="text-gray-500 font-medium">Status</span>
-                    <span class="font-bold" id="modal-user-status">Active</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-verify-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation border-2">
-                    <!-- Dynamic Text -->
-                </button>
-                <button id="btn-disable-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation">
-                    <!-- Dynamic Text -->
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="investigate-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4"><div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 transform-gpu" id="investigate-modal-content"><div class="text-center"><div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm"><i class="fa-solid fa-magnifying-glass"></i></div><h3 class="text-xl font-bold text-gray-900 mb-2">Investigate Report</h3><p class="text-gray-500 mb-6 text-sm">Review the issue and document your action.</p><div class="text-left space-y-4"><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Reason of Issue</label><input type="text" id="inv-reason" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base text-gray-700" placeholder="Reported reason..." readonly></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Action Taken</label><textarea id="inv-action" rows="3" class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="e.g. User warned via email..."></textarea></div></div><div class="flex gap-4 mt-6"><button onclick="closeInvestigateModal()" class="flex-1 py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base active:bg-gray-100 touch-manipulation">Cancel</button><button onclick="submitInvestigation()" class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg transition-all text-base active:scale-95 touch-manipulation">Resolve</button></div></div></div></div>
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4"><div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300 transform-gpu" id="confirm-modal-content"><div class="text-center"><div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm"><i class="fa-solid fa-trash-can"></i></div><h3 class="text-lg font-bold text-gray-900 mb-2">Delete Record?</h3><p class="text-gray-500 mb-6 text-sm">This action cannot be undone.</p><div class="flex gap-4"><button onclick="closeConfirmModal()" class="flex-1 py-3.5 text-gray-600 font-bold hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors text-base active:bg-gray-100 touch-manipulation">Cancel</button><button onclick="executeDelete()" class="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all text-base active:scale-95 touch-manipulation">Delete</button></div></div></div></div>
+    <div id="user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4"><div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 relative transform-gpu" id="user-modal-content"><button onclick="closeUserModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition touch-manipulation"><i class="fa-solid fa-xmark text-xl"></i></button><div class="text-center mb-6"><div class="w-20 h-20 bg-brand-light rounded-full mx-auto flex items-center justify-center text-3xl text-brand-blue mb-3 shadow-inner relative"><i class="fa-solid fa-user" id="modal-user-icon"></i><div id="modal-verify-badge" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hidden"><i class="fa-solid fa-circle-check text-blue-500 text-xl"></i></div></div><h3 class="text-2xl font-bold text-gray-900" id="modal-user-name">Loading...</h3><span class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-100 text-gray-600" id="modal-user-role">User</span></div><div class="space-y-4 mb-6 bg-gray-50 p-5 rounded-xl border border-gray-100 text-sm"><div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-gray-500 font-medium">Email</span><span class="font-bold text-gray-800" id="modal-user-email">...</span></div><div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-gray-500 font-medium">Phone</span><span class="font-bold text-gray-800" id="modal-user-phone">...</span></div><div class="flex justify-between"><span class="text-gray-500 font-medium">Address</span><span class="font-bold text-gray-800 text-right w-1/2 truncate" id="modal-user-address">...</span></div><div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200"><span class="text-gray-500 font-medium">Status</span><span class="font-bold" id="modal-user-status">Active</span></div></div><div class="grid grid-cols-2 gap-3"><button id="btn-verify-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation border-2"></button><button id="btn-disable-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 touch-manipulation"></button></div></div></div>
 
     <script>
         // --- KEEPING EXISTING CONFIG ---
@@ -479,31 +181,25 @@
                             window.location.href = 'login';
                             return;
                         }
-
                         const userData = doc.data();
-
-                        // Security Check
                         if (userData.isDisable) {
                             alert("Your account has been disabled.");
                             await auth.signOut();
                             window.location.href = 'login';
                             return;
                         }
-
                         if (userData.role !== 'admin') {
                             if (userData.role === 'restaurant') window.location.href = 'restaurant';
                             else if (userData.role === 'orphanage') window.location.href = 'orphanages';
                             else window.location.href = 'index';
                             return;
                         }
-
                         // Authorized
                         switchTab('overview');
                         loadOverview();
                         loadUsers();
                         loadHistory();
                         loadReports();
-
                     } catch (error) {
                         console.error("Auth Verification Error:", error);
                         window.location.href = 'login';
@@ -526,11 +222,11 @@
             }
         }
 
+        // [UPDATED] switchTab logic to handle 'email'
         function switchTab(tab) {
-            ['overview', 'users', 'history', 'reports', 'broadcast'].forEach(t => {
+            ['overview', 'users', 'history', 'reports', 'broadcast', 'email'].forEach(t => {
                 const tabEl = document.getElementById('tab-' + t);
                 if(tabEl) tabEl.classList.add('hidden');
-                
                 const btn = document.getElementById('btn-' + t);
                 if(btn) btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all active:scale-95 touch-manipulation";
             });
@@ -540,37 +236,73 @@
             if (window.innerWidth < 768) toggleSidebar();
         }
 
-        // --- EXPORT TO CSV FUNCTIONALITY ---
+        // [NEW] Custom Email Sender Logic
+        async function sendCustomEmail() {
+            const btn = document.getElementById('btn-send-email');
+            const recipient = document.getElementById('email-recipient').value;
+            const subject = document.getElementById('email-subject').value;
+            const body = document.getElementById('email-body').value;
+            const files = document.getElementById('email-files').files;
+
+            if(!recipient || !subject || !body) { alert("Please fill in all fields."); return; }
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...';
+
+            const formData = new FormData();
+            formData.append('to', recipient);
+            formData.append('subject', subject);
+            formData.append('text', body);
+            for (let i = 0; i < files.length; i++) {
+                formData.append('attachments', files[i]);
+            }
+
+            try {
+                const response = await fetch('/api/send-custom-mail', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if(result.success) {
+                    alert("Email Sent!");
+                    document.getElementById('email-recipient').value = '';
+                    document.getElementById('email-subject').value = '';
+                    document.getElementById('email-body').value = '';
+                    document.getElementById('email-files').value = '';
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Network Error.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        // --- EXPORT & BROADCAST UTILITIES ---
         function exportToCSV(tableId) {
             const table = document.getElementById(tableId);
             const rows = table.querySelectorAll("tr");
             let csv = [];
-
             for (let i = 0; i < rows.length; i++) {
                 const row = [], cols = rows[i].querySelectorAll("td, th");
-                
-                // Skip rows that are hidden (filtered out)
                 if(rows[i].style.display === 'none') continue;
-
                 for (let j = 0; j < cols.length; j++) {
-                    // Get clean text, remove standard HTML garbage
                     let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s)/gm, " ");
-                    // Escape double quotes
-                    data = data.replace(/"/g, '""');
-                    // Push escaped data
-                    row.push('"' + data + '"');
+                    data = data.replace(/"/g, '""'); row.push('"' + data + '"');
                 }
                 csv.push(row.join(","));
             }
-
             const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
             const downloadLink = document.createElement("a");
             downloadLink.download = "foodbridge_data_" + new Date().toISOString().slice(0,10) + ".csv";
             downloadLink.href = window.URL.createObjectURL(csvFile);
             downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+            document.body.appendChild(downloadLink); downloadLink.click(); document.body.removeChild(downloadLink);
         }
 
         function exportActiveHistory() {
@@ -578,65 +310,39 @@
             exportToCSV(isDonations ? 'donations-table' : 'requests-table');
         }
 
-        // --- BROADCAST FUNCTIONALITY ---
         async function sendBroadcast() {
             const title = document.getElementById('bc-title').value;
             const message = document.getElementById('bc-message').value;
             const target = document.getElementById('bc-target').value;
             const btn = document.getElementById('btn-send-bc');
-
             if(!title || !message) { alert("Please fill in all fields."); return; }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
             try {
-                // We create a new collection 'notifications'
                 await db.collection('notifications').add({
-                    title: title,
-                    message: message,
-                    targetAudience: target, // 'all', 'restaurant', 'orphanage'
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    isRead: false
+                    title: title, message: message, targetAudience: target,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), isRead: false
                 });
-
-                // Update UI log
                 const history = document.getElementById('broadcast-history');
                 const newItem = `<div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-sm animate-fade-in"><span class="font-bold block text-gray-800">${title}</span><span class="text-gray-600">${new Date().toLocaleTimeString()} - Target: ${target}</span></div>`;
-                if(history.innerHTML.includes("No recent")) history.innerHTML = newItem;
-                else history.innerHTML = newItem + history.innerHTML;
-
-                // Clear form
-                document.getElementById('bc-title').value = '';
-                document.getElementById('bc-message').value = '';
+                if(history.innerHTML.includes("No recent")) history.innerHTML = newItem; else history.innerHTML = newItem + history.innerHTML;
+                document.getElementById('bc-title').value = ''; document.getElementById('bc-message').value = '';
                 alert("Broadcast sent successfully!");
-
-            } catch(e) {
-                console.error("Broadcast Error:", e);
-                alert("Failed to send broadcast.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Broadcast';
-            }
+            } catch(e) { console.error("Broadcast Error:", e); alert("Failed to send broadcast."); } 
+            finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Broadcast'; }
         }
 
-        // --- HISTORY TOGGLE LOGIC ---
+        // --- HISTORY TOGGLE & SEARCH ---
         function switchHistoryMode(mode) {
             const donBlock = document.getElementById('block-hist-donations');
             const reqBlock = document.getElementById('block-hist-requests');
             const btnDon = document.getElementById('btn-hist-donations');
             const btnReq = document.getElementById('btn-hist-requests');
-
             if (mode === 'donations') {
-                donBlock.classList.remove('hidden');
-                reqBlock.classList.add('hidden');
-                
+                donBlock.classList.remove('hidden'); reqBlock.classList.add('hidden');
                 btnDon.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue active:scale-95 touch-manipulation";
                 btnReq.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10 active:scale-95 touch-manipulation";
             } else {
-                donBlock.classList.add('hidden');
-                reqBlock.classList.remove('hidden');
-
+                donBlock.classList.add('hidden'); reqBlock.classList.remove('hidden');
                 btnReq.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white text-brand-blue active:scale-95 touch-manipulation";
                 btnDon.className = "px-6 py-2 rounded-lg font-bold text-sm transition-all text-white hover:bg-white/10 active:scale-95 touch-manipulation";
             }
@@ -650,37 +356,27 @@
             const tbodyId = isDonations ? 'donation-history-body' : 'request-history-body';
             const tbody = document.getElementById(tbodyId);
             const tr = tbody.getElementsByTagName('tr');
-
             for (let i = 0; i < tr.length; i++) {
                 const tds = tr[i].getElementsByTagName('td');
                 if (tds.length < 4) continue;
                 const user1 = tds[2].textContent || tds[2].innerText;
                 const user2 = tds[3].textContent || tds[3].innerText;
-                if (user1.toUpperCase().indexOf(filter) > -1 || user2.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
+                if (user1.toUpperCase().indexOf(filter) > -1 || user2.toUpperCase().indexOf(filter) > -1) { tr[i].style.display = ""; } 
+                else { tr[i].style.display = "none"; }
             }
         }
 
-        // --- OVERVIEW ---
+        // --- OVERVIEW STATS & CHARTS ---
         async function loadOverview() {
             const donationsSnap = await db.collection('donations').get();
             const usersSnap = await db.collection('users').get();
             const reportsSnap = await db.collection('donations').where('status', '==', 'Issue').get();
-
             let totalMeals = 0;
-            const dailyData = Array(7).fill(0);
-            const monthlyData = Array(12).fill(0);
-            const yearlyData = {}; 
-            const today = new Date();
-            
+            const dailyData = Array(7).fill(0); const monthlyData = Array(12).fill(0); const yearlyData = {}; const today = new Date();
             donationsSnap.forEach(doc => {
                 const data = doc.data();
                 const meals = parseInt(data.servings || 0);
                 if(data.status !== 'Completed' && data.status !== 'Claimed') return; 
-
                 totalMeals += meals;
                 if (data.createdAt) {
                     const date = new Date(data.createdAt.seconds * 1000);
@@ -688,381 +384,180 @@
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     if (diffDays <= 7) { dailyData[7 - diffDays] += meals; }
                     if (date.getFullYear() === today.getFullYear()) { monthlyData[date.getMonth()] += meals; }
-                    const year = date.getFullYear();
-                    yearlyData[year] = (yearlyData[year] || 0) + meals;
+                    const year = date.getFullYear(); yearlyData[year] = (yearlyData[year] || 0) + meals;
                 }
             });
-
             document.getElementById('stat-users').innerText = usersSnap.size;
             document.getElementById('stat-meals').innerText = totalMeals.toLocaleString();
             document.getElementById('stat-reports').innerText = reportsSnap.size;
-
             renderCharts(dailyData, monthlyData, yearlyData);
         }
 
         function renderCharts(daily, monthly, yearlyObj) {
             const commonOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } };
-
             if(dailyChart) dailyChart.destroy();
             const last7Days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6-i)); return d.toLocaleDateString('en-US', {weekday:'short'}); });
             dailyChart = new Chart(document.getElementById('dailyChart'), { type: 'bar', data: { labels: last7Days, datasets: [{ label: 'Meals', data: daily, backgroundColor: '#3B82F6', borderRadius: 6 }] }, options: commonOptions });
-
             if(monthlyChart) monthlyChart.destroy();
             monthlyChart = new Chart(document.getElementById('monthlyChart'), { type: 'line', data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets: [{ label: 'Meals', data: monthly, borderColor: '#10B981', tension: 0.4, fill: true, backgroundColor: 'rgba(16, 185, 129, 0.1)' }] }, options: commonOptions });
-
             if(lifetimeChart) lifetimeChart.destroy();
-            const years = Object.keys(yearlyObj).sort();
-            const yearData = years.map(y => yearlyObj[y]);
+            const years = Object.keys(yearlyObj).sort(); const yearData = years.map(y => yearlyObj[y]);
             lifetimeChart = new Chart(document.getElementById('lifetimeChart'), { type: 'bar', data: { labels: years, datasets: [{ label: 'Total Meals', data: yearData, backgroundColor: '#F97316', borderRadius: 6, barThickness: 40 }] }, options: commonOptions });
         }
 
-        // --- USERS ---
+        // --- USERS, HISTORY, REPORTS, MODALS (Standard Logic) ---
         function loadUsers() {
             db.collection('users').onSnapshot(snap => {
-                const tbody = document.getElementById('users-table-body');
-                tbody.innerHTML = '';
+                const tbody = document.getElementById('users-table-body'); tbody.innerHTML = '';
                 snap.forEach(doc => {
-                    const data = doc.data();
-                    const isDisabled = !!data.isDisable;
-                    const isVerified = !!data.isVerified;
-
-                    // Badges
-                    const statusBadge = isDisabled 
-                        ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` 
-                        : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
-                    
+                    const data = doc.data(); const isDisabled = !!data.isDisable; const isVerified = !!data.isVerified;
+                    const statusBadge = isDisabled ? `<span class="px-2 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 border border-red-200">Disabled</span>` : `<span class="px-2 py-1 rounded-lg text-xs font-bold text-green-600 bg-green-50 border border-green-200">Active</span>`;
                     const verifyIcon = isVerified ? `<i class="fa-solid fa-circle-check text-blue-500 ml-1" title="Verified"></i>` : '';
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 font-bold text-gray-800">
-                                ${data.name || 'Unknown'} ${verifyIcon}
-                            </td>
-                             <td class="px-6 py-4 text-gray-500 capitalize">${data.role || 'User'}</td>
-                            <td class="px-6 py-4 text-gray-500">${data.phone || 'N/A'}</td>
-                            <td class="px-6 py-4 text-gray-500 truncate max-w-xs">${data.address || 'N/A'}</td>
-                            <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-center">
-                                <button onclick="openUserModal('${doc.id}')" class="text-xs text-brand-blue bg-blue-50 border-blue-200 border px-3 py-1.5 rounded-lg transition font-bold active:scale-95 touch-manipulation hover:bg-blue-100">
-                                    <i class="fa-solid fa-gear mr-1"></i> Manage
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-6 py-4 font-bold text-gray-800">${data.name || 'Unknown'} ${verifyIcon}</td><td class="px-6 py-4 text-gray-500 capitalize">${data.role || 'User'}</td><td class="px-6 py-4 text-gray-500">${data.phone || 'N/A'}</td><td class="px-6 py-4 text-gray-500 truncate max-w-xs">${data.address || 'N/A'}</td><td class="px-6 py-4">${statusBadge}</td><td class="px-6 py-4 text-center"><button onclick="openUserModal('${doc.id}')" class="text-xs text-brand-blue bg-blue-50 border-blue-200 border px-3 py-1.5 rounded-lg transition font-bold active:scale-95 touch-manipulation hover:bg-blue-100"><i class="fa-solid fa-gear mr-1"></i> Manage</button></td></tr>`;
                 });
             });
         }
 
-        // --- HISTORY ---
         function loadHistory() {
             db.collection('donations').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
-                const tbody = document.getElementById('donation-history-body');
-                tbody.innerHTML = '';
-                if(snap.empty) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No donations yet.</td></tr>`;
-                } else {
+                const tbody = document.getElementById('donation-history-body'); tbody.innerHTML = '';
+                if(snap.empty) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No donations yet.</td></tr>`; } 
+                else {
                     snap.forEach(doc => {
-                        const data = doc.data();
-                        const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
-                        const dateStr = dateObj.toLocaleDateString();
-                        const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
+                        const data = doc.data(); const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                        const dateStr = dateObj.toLocaleDateString(); const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         let statusColor = 'text-gray-500 bg-gray-100';
                         if(data.status === 'Completed') statusColor = 'text-green-600 bg-green-50 border border-green-200';
                         if(data.status === 'Claimed') statusColor = 'text-blue-600 bg-blue-50 border border-blue-200';
                         if(data.status === 'Issue' || data.status === 'Resolved') statusColor = 'text-red-600 bg-red-50 border border-red-200';
-
                         const restHtml = `<span onclick="openUserModal('${data.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Unknown'}</span>`;
                         const acceptorHtml = data.claimedBy ? `<span onclick="openUserModal('${data.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Pending...'}</span>` : `<span class="text-gray-400 italic">Not claimed</span>`;
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
-                                <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
-                                <td class="px-4 py-3 text-sm">${restHtml}</td>
-                                <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
-                                <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td>
-                                <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
-                                <td class="px-4 py-3 text-center">
-                                    <button onclick="confirmDeleteHistory('${doc.id}', 'donations')" class="text-gray-400 hover:text-red-500 transition-colors active:scale-95 touch-manipulation">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                        tbody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td><td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td><td class="px-4 py-3 text-sm">${restHtml}</td><td class="px-4 py-3 text-sm">${acceptorHtml}</td><td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.foodName} <span class="text-gray-400 font-normal">(${data.servings})</span></td><td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td><td class="px-4 py-3 text-center"><button onclick="confirmDeleteHistory('${doc.id}', 'donations')" class="text-gray-400 hover:text-red-500 transition-colors active:scale-95 touch-manipulation"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
                     });
                     filterHistory();
                 }
             });
-
             db.collection('requests').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
-                const tbody = document.getElementById('request-history-body');
-                tbody.innerHTML = '';
-                if(snap.empty) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No requests yet.</td></tr>`;
-                } else {
+                const tbody = document.getElementById('request-history-body'); tbody.innerHTML = '';
+                if(snap.empty) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">No requests yet.</td></tr>`; } 
+                else {
                     snap.forEach(doc => {
-                        const data = doc.data();
-                        const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
-                        const dateStr = dateObj.toLocaleDateString();
-                        const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
+                        const data = doc.data(); const dateObj = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                        const dateStr = dateObj.toLocaleDateString(); const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         let statusColor = 'text-gray-500 bg-gray-100';
                         if(data.status === 'Fulfilled') statusColor = 'text-green-600 bg-green-50 border border-green-200';
                         if(data.status === 'Pending') statusColor = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
-
                         const orphHtml = `<span onclick="openUserModal('${data.orphanageId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.orphanageName || 'Unknown'}</span>`;
                         const acceptorHtml = data.fulfilledBy ? `<span onclick="openUserModal('${data.fulfilledBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${data.restaurantName || 'Pending...'}</span>` : `<span class="text-gray-400 italic">Not fulfilled</span>`;
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td>
-                                <td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td>
-                                <td class="px-4 py-3 text-sm">${orphHtml}</td>
-                                <td class="px-4 py-3 text-sm">${acceptorHtml}</td>
-                                <td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.itemNeeded} <span class="text-gray-400 font-normal">(${data.quantity})</span></td>
-                                <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td>
-                                <td class="px-4 py-3 text-center">
-                                    <button onclick="confirmDeleteHistory('${doc.id}', 'requests')" class="text-gray-400 hover:text-red-500 transition-colors active:scale-95 touch-manipulation">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                        tbody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 text-gray-500 text-sm">${dateStr}</td><td class="px-4 py-3 text-gray-500 text-sm">${timeStr}</td><td class="px-4 py-3 text-sm">${orphHtml}</td><td class="px-4 py-3 text-sm">${acceptorHtml}</td><td class="px-4 py-3 font-medium text-gray-700 text-sm">${data.itemNeeded} <span class="text-gray-400 font-normal">(${data.quantity})</span></td><td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColor}">${data.status}</span></td><td class="px-4 py-3 text-center"><button onclick="confirmDeleteHistory('${doc.id}', 'requests')" class="text-gray-400 hover:text-red-500 transition-colors active:scale-95 touch-manipulation"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
                     });
                     filterHistory();
                 }
             });
         }
 
-        // --- REPORTS ---
         function loadReports() {
             db.collection('donations').onSnapshot(snap => {
                 const pendingTbody = document.getElementById('reports-table-body');
                 const resolvedTbody = document.getElementById('resolved-reports-body');
-                
-                pendingTbody.innerHTML = '';
-                resolvedTbody.innerHTML = '';
-                const pending = [];
-                const resolved = [];
-
+                pendingTbody.innerHTML = ''; resolvedTbody.innerHTML = '';
+                const pending = []; const resolved = [];
                 snap.forEach(doc => {
                     const data = doc.data();
-                    if (data.status === 'Issue') {
-                        pending.push({ id: doc.id, ...data });
-                    } else if (data.status === 'Resolved') {
-                        resolved.push({ id: doc.id, ...data });
-                    }
+                    if (data.status === 'Issue') { pending.push({ id: doc.id, ...data }); } 
+                    else if (data.status === 'Resolved') { resolved.push({ id: doc.id, ...data }); }
                 });
-
                 pending.sort((a, b) => (b.reportedAt?.seconds || 0) - (a.reportedAt?.seconds || 0));
                 resolved.sort((a, b) => (b.resolvedAt?.seconds || 0) - (a.resolvedAt?.seconds || 0));
-
                 if (pending.length === 0) pendingTbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No active issues.</td></tr>`;
                 if (resolved.length === 0) resolvedTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No resolved history.</td></tr>`;
-
                 pending.forEach(item => {
                     const date = item.reportedAt ? new Date(item.reportedAt.seconds * 1000).toLocaleDateString() : '-';
                     const reporterHtml = `<span onclick="openUserModal('${item.claimedBy}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${item.orphanageName}</span>`;
                     const againstHtml = `<span onclick="openUserModal('${item.restaurantId}')" class="font-bold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition">${item.restaurantName}</span>`;
-
-                    pendingTbody.innerHTML += `
-                        <tr class="hover:bg-red-50/30 transition-colors">
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${reporterHtml}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">${againstHtml}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-red-600 font-medium text-xs max-w-xs break-words">${item.reportReason || 'No reason provided'}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5">
-                                <button onclick="openInvestigateModal('${item.id}', '${item.reportReason}')" class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-200 transition font-bold active:scale-95 touch-manipulation">Investigate</button>
-                            </td>
-                        </tr>
-                    `;
+                    pendingTbody.innerHTML += `<tr class="hover:bg-red-50/30 transition-colors"><td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td><td class="px-4 py-4 md:px-6 md:py-5 text-sm">${reporterHtml}</td><td class="px-4 py-4 md:px-6 md:py-5 text-sm">${againstHtml}</td><td class="px-4 py-4 md:px-6 md:py-5 text-red-600 font-medium text-xs max-w-xs break-words">${item.reportReason || 'No reason provided'}</td><td class="px-4 py-4 md:px-6 md:py-5"><button onclick="openInvestigateModal('${item.id}', '${item.reportReason}')" class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-200 transition font-bold active:scale-95 touch-manipulation">Investigate</button></td></tr>`;
                 });
-
                 resolved.forEach(item => {
                     const date = item.resolvedAt ? new Date(item.resolvedAt.seconds * 1000).toLocaleDateString() : '-';
-                    resolvedTbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm">
-                                <span class="block font-bold text-gray-700">${item.orphanageName}</span>
-                                <span class="text-xs text-gray-400">vs</span>
-                                <span class="block font-bold text-gray-700">${item.restaurantName}</span>
-                            </td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm text-gray-600">${item.reportReason || '-'}</td>
-                            <td class="px-4 py-4 md:px-6 md:py-5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg p-2 max-w-xs break-words">${item.adminAction || '-'}</td>
-                        </tr>
-                    `;
+                    resolvedTbody.innerHTML += `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-4 md:px-6 md:py-5 text-gray-500 text-sm">${date}</td><td class="px-4 py-4 md:px-6 md:py-5 text-sm"><span class="block font-bold text-gray-700">${item.orphanageName}</span><span class="text-xs text-gray-400">vs</span><span class="block font-bold text-gray-700">${item.restaurantName}</span></td><td class="px-4 py-4 md:px-6 md:py-5 text-sm text-gray-600">${item.reportReason || '-'}</td><td class="px-4 py-4 md:px-6 md:py-5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg p-2 max-w-xs break-words">${item.adminAction || '-'}</td></tr>`;
                 });
             });
         }
 
-        // --- ACTIONS & MODALS ---
+        // --- MODAL FUNCTIONS ---
         function openInvestigateModal(id, reason) {
-            currentInvestigateId = id;
-            document.getElementById('inv-reason').value = reason;
-            document.getElementById('inv-action').value = '';
-            
-            const modal = document.getElementById('investigate-modal');
-            const content = document.getElementById('investigate-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+            currentInvestigateId = id; document.getElementById('inv-reason').value = reason; document.getElementById('inv-action').value = '';
+            const modal = document.getElementById('investigate-modal'); const content = document.getElementById('investigate-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
         }
-
         function closeInvestigateModal() {
-            const modal = document.getElementById('investigate-modal');
-            const content = document.getElementById('investigate-modal-content');
-            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); currentInvestigateId = null; }, 300);
+            const modal = document.getElementById('investigate-modal'); const content = document.getElementById('investigate-modal-content');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); currentInvestigateId = null; }, 300);
         }
-
         async function submitInvestigation() {
-            const action = document.getElementById('inv-action').value;
-            if(!action) { alert("Please enter the action taken."); return; }
-            try {
-                await db.collection('donations').doc(currentInvestigateId).update({
-                    status: 'Resolved',
-                    adminAction: action,
-                    resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                closeInvestigateModal();
-            } catch(e) { console.error(e); alert("Error resolving issue."); }
+            const action = document.getElementById('inv-action').value; if(!action) { alert("Please enter the action taken."); return; }
+            try { await db.collection('donations').doc(currentInvestigateId).update({ status: 'Resolved', adminAction: action, resolvedAt: firebase.firestore.FieldValue.serverTimestamp() }); closeInvestigateModal(); } catch(e) { console.error(e); alert("Error resolving issue."); }
         }
-
         function confirmDeleteHistory(id, collection) {
-            currentDeleteId = id;
-            currentDeleteCollection = collection;
-            const modal = document.getElementById('confirm-modal');
-            const content = document.getElementById('confirm-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+            currentDeleteId = id; currentDeleteCollection = collection;
+            const modal = document.getElementById('confirm-modal'); const content = document.getElementById('confirm-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
         }
-
         function closeConfirmModal() {
-            const modal = document.getElementById('confirm-modal');
-            const content = document.getElementById('confirm-modal-content');
-            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); currentDeleteId = null; currentDeleteCollection = null; }, 300);
+            const modal = document.getElementById('confirm-modal'); const content = document.getElementById('confirm-modal-content');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); currentDeleteId = null; currentDeleteCollection = null; }, 300);
         }
-
         async function executeDelete() {
             if(!currentDeleteCollection) return;
-            try {
-                await db.collection(currentDeleteCollection).doc(currentDeleteId).delete();
-                closeConfirmModal();
-            } catch(e) { console.error(e); alert("Error deleting record."); }
+            try { await db.collection(currentDeleteCollection).doc(currentDeleteId).delete(); closeConfirmModal(); } catch(e) { console.error(e); alert("Error deleting record."); }
         }
-
         async function openUserModal(userId) {
-            if(!userId) return;
-            currentModalUserId = userId;
-            const modal = document.getElementById('user-modal');
-            const content = document.getElementById('user-modal-content');
-            document.getElementById('modal-user-name').innerText = 'Loading...';
-            document.getElementById('btn-disable-user').className = 'hidden'; 
-            document.getElementById('btn-verify-user').className = 'hidden';
-
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
-
+            if(!userId) return; currentModalUserId = userId;
+            const modal = document.getElementById('user-modal'); const content = document.getElementById('user-modal-content');
+            document.getElementById('modal-user-name').innerText = 'Loading...'; document.getElementById('btn-disable-user').className = 'hidden'; document.getElementById('btn-verify-user').className = 'hidden';
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
             try {
                 const doc = await db.collection('users').doc(userId).get();
                 if(doc.exists) {
-                    const data = doc.data();
-                    const isDisabled = !!data.isDisable;
-                    const isVerified = !!data.isVerified;
-
-                    document.getElementById('modal-user-name').innerText = data.name || 'Unknown User';
-                    document.getElementById('modal-user-email').innerText = data.email || 'No Email'; 
-                    document.getElementById('modal-user-phone').innerText = data.phone || 'N/A';
-                    document.getElementById('modal-user-address').innerText = data.address || 'N/A';
-                    
-                    const roleEl = document.getElementById('modal-user-role');
-                    roleEl.innerText = data.role ? data.role.charAt(0).toUpperCase() + data.role.slice(1) : 'User';
-                    
-                    const statusEl = document.getElementById('modal-user-status');
-                    statusEl.innerText = isDisabled ? 'Disabled' : 'Active';
-                    statusEl.className = isDisabled ? 'font-bold text-red-500' : 'font-bold text-green-500';
-
-                    // Verify Badge in Modal
-                    const badge = document.getElementById('modal-verify-badge');
-                    if(isVerified) badge.classList.remove('hidden');
-                    else badge.classList.add('hidden');
-
-                    // Setup Disable/Enable Button
-                    const btnDisable = document.getElementById('btn-disable-user');
-                    btnDisable.classList.remove('hidden');
+                    const data = doc.data(); const isDisabled = !!data.isDisable; const isVerified = !!data.isVerified;
+                    document.getElementById('modal-user-name').innerText = data.name || 'Unknown User'; document.getElementById('modal-user-email').innerText = data.email || 'No Email'; document.getElementById('modal-user-phone').innerText = data.phone || 'N/A'; document.getElementById('modal-user-address').innerText = data.address || 'N/A';
+                    const roleEl = document.getElementById('modal-user-role'); roleEl.innerText = data.role ? data.role.charAt(0).toUpperCase() + data.role.slice(1) : 'User';
+                    const statusEl = document.getElementById('modal-user-status'); statusEl.innerText = isDisabled ? 'Disabled' : 'Active'; statusEl.className = isDisabled ? 'font-bold text-red-500' : 'font-bold text-green-500';
+                    const badge = document.getElementById('modal-verify-badge'); if(isVerified) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+                    const btnDisable = document.getElementById('btn-disable-user'); btnDisable.classList.remove('hidden');
                     if (isDisabled) {
-                        btnDisable.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable';
-                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation w-full';
+                        btnDisable.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable'; btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation w-full';
                         btnDisable.onclick = function() { toggleUserStatus(userId, false); };
                     } else {
-                        btnDisable.innerHTML = '<i class="fa-solid fa-ban"></i> Disable';
-                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation w-full';
+                        btnDisable.innerHTML = '<i class="fa-solid fa-ban"></i> Disable'; btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation w-full';
                         btnDisable.onclick = function() { toggleUserStatus(userId, true); };
                     }
-
-                    // Setup Verify Button
-                    const btnVerify = document.getElementById('btn-verify-user');
-                    btnVerify.classList.remove('hidden');
+                    const btnVerify = document.getElementById('btn-verify-user'); btnVerify.classList.remove('hidden');
                     if (isVerified) {
-                        btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Un-Verify';
-                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 border w-full';
+                        btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Un-Verify'; btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 border w-full';
                         btnVerify.onclick = function() { toggleVerification(userId, false); };
                     } else {
-                        btnVerify.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
-                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border w-full';
+                        btnVerify.innerHTML = '<i class="fa-solid fa-check"></i> Verify'; btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border w-full';
                         btnVerify.onclick = function() { toggleVerification(userId, true); };
                     }
-
                 } else { document.getElementById('modal-user-name').innerText = 'User not found'; }
             } catch(e) { console.error(e); alert("Error fetching user details"); }
         }
-
         async function toggleUserStatus(userId, disable) {
-            const btn = document.getElementById('btn-disable-user');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-
-            try {
-                await db.collection('users').doc(userId).update({ isDisable: disable });
-                await openUserModal(userId);
-                loadUsers(); 
-            } catch(e) {
-                console.error("Firebase Error:", e);
-                alert("Error updating status.");
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            const btn = document.getElementById('btn-disable-user'); const originalText = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+            try { await db.collection('users').doc(userId).update({ isDisable: disable }); await openUserModal(userId); loadUsers(); } catch(e) { console.error("Firebase Error:", e); alert("Error updating status."); btn.disabled = false; btn.innerHTML = originalText; }
         }
-
         async function toggleVerification(userId, verify) {
-            const btn = document.getElementById('btn-verify-user');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-
-            try {
-                await db.collection('users').doc(userId).update({ isVerified: verify });
-                await openUserModal(userId);
-                loadUsers();
-            } catch(e) {
-                console.error("Firebase Error:", e);
-                alert("Error updating verification.");
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            const btn = document.getElementById('btn-verify-user'); const originalText = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+            try { await db.collection('users').doc(userId).update({ isVerified: verify }); await openUserModal(userId); loadUsers(); } catch(e) { console.error("Firebase Error:", e); alert("Error updating verification."); btn.disabled = false; btn.innerHTML = originalText; }
         }
-
         function closeUserModal() {
-            const modal = document.getElementById('user-modal');
-            const content = document.getElementById('user-modal-content');
-            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); currentModalUserId = null; }, 300);
+            const modal = document.getElementById('user-modal'); const content = document.getElementById('user-modal-content');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); currentModalUserId = null; }, 300);
         }
-
-        function logout() { auth.signOut().then(() => window.location.href = 'https://foodbridge.qzz.io/index'); }
+        function logout() { auth.signOut().then(() => window.location.href = 'index'); }
     </script>
 </body>
 </html>
