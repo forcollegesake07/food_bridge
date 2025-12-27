@@ -231,6 +231,12 @@
                     const doc = await db.collection('users').doc(user.uid).get();
                     if (doc.exists) {
                         const userData = doc.data();
+                        
+                        // [NEW] SELF-HEALING: Add userId if missing
+                        if (!userData.userId) {
+                            await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                        }
+
                         if (userData.isDisable) {
                             auth.signOut();
                             showMessage("Account disabled by Admin.", "error");
@@ -330,6 +336,11 @@
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
+                    // [NEW] SELF-HEALING: Add userId if missing
+                    if (!userData.userId) {
+                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    }
+
                     if (userData.isDisable === true) { 
                         showMessage("Your account has been disabled by Admin.", "error"); 
                         await firebase.auth().signOut(); 
@@ -455,6 +466,11 @@
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
+                    // [NEW] SELF-HEALING: Add userId if missing
+                    if (!userData.userId) {
+                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    }
+
                     if (userData.isDisable === true) { 
                         showMessage("Your account has been disabled by Admin.", "error"); 
                         await firebase.auth().signOut(); 
