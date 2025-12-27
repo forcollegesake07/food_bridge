@@ -360,7 +360,9 @@
             const orgName = document.getElementById('google-org-name').value.trim(); 
             if (!orgName) { alert("Please enter your Organization Name."); return; } 
             try { 
+                // ADDED userId field here explicitly
                 await db.collection('users').doc(pendingGoogleUser.uid).set({ 
+                    userId: pendingGoogleUser.uid, // Explicitly save ID
                     name: orgName, 
                     email: pendingGoogleUser.email, 
                     role: role, 
@@ -398,7 +400,9 @@
                 const user = userCredential.user; 
 
                 // 1. Save User Data (Critical: Must happen before we sign out)
+                // ADDED userId field here explicitly
                 await firebase.firestore().collection('users').doc(user.uid).set({ 
+                    userId: user.uid, // Explicitly save ID
                     name: name, 
                     email: email, 
                     role: role, 
@@ -513,5 +517,3 @@
     </script>
 </body>
 </html>
-
-
