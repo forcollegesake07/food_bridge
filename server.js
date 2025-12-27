@@ -51,7 +51,7 @@ console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
 /* ============================
    HELPER: PUSH NOTIFICATIONS
 ============================ */
-// 1. Send to a specific user (e.g., Restaurant)
+// 1. Send to a specific user (e.g., Restaurant or Orphanage)
 async function sendPushNotification(userId, title, body) {
   if (!db) { console.log("⚠️ DB not connected, skipping notification."); return; }
 
@@ -72,12 +72,19 @@ async function sendPushNotification(userId, title, body) {
   }
 }
 
-// 2. Broadcast to all Orphanages
-async function broadcastToOrphanages(title, body) {
+// 2. Broadcast to specific Role (Orphanages, Restaurants, or All)
+async function broadcastToRole(role, title, body) {
   if (!db) { console.log("⚠️ DB not connected, skipping broadcast."); return; }
 
   try {
-    const snapshot = await db.collection("users").where("role", "==", "orphanage").get();
+    let query = db.collection("users");
+    
+    // If role is 'all', we don't filter by role
+    if (role !== 'all') {
+        query = query.where("role", "==", role);
+    }
+
+    const snapshot = await query.get();
     const tokens = [];
     
     snapshot.forEach(doc => {
@@ -86,18 +93,65 @@ async function broadcastToOrphanages(title, body) {
     });
 
     if (tokens.length > 0) {
-      await admin.messaging().sendEachForMulticast({
-        tokens: tokens,
-        notification: { title, body }
-      });
-      console.log(`📢 Broadcast sent to ${tokens.length} orphanages`);
+      // Send in batches of 500 (Firebase limit)
+      const batchSize = 500;
+      for (let i = 0; i < tokens.length; i += batchSize) {
+        const batchTokens = tokens.slice(i, i + batchSize);
+        await admin.messaging().sendEachForMulticast({
+          tokens: batchTokens,
+          notification: { title, body }
+        });
+      }
+      console.log(`📢 Broadcast sent to ${tokens.length} users (Role: ${role})`);
     } else {
-      console.log("⚠️ No orphanages with registered tokens found.");
+      console.log(`⚠️ No users with registered tokens found for role: ${role}`);
     }
   } catch (error) {
     console.error("❌ Broadcast Error:", error.message);
   }
 }
+
+/* ============================
+   NOTIFICATION LISTENER (NEW)
+   Watches Firestore for Admin Broadcasts
+============================ */
+function startNotificationListener() {
+    if (!db) return;
+    
+    console.log("👀 Watching for new Admin Broadcasts...");
+
+    // Only listen for new notifications created AFTER the server starts
+    const startTime = admin.firestore.Timestamp.now();
+
+    db.collection('notifications')
+      .where('createdAt', '>', startTime)
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach(async (change) => {
+          if (change.type === 'added') {
+            const data = change.doc.data();
+            const { title, message, targetAudience, targetUserId } = data;
+
+            console.log(`🔔 New Admin Broadcast Detected: "${title}" -> Target: ${targetAudience}`);
+
+            if (targetAudience === 'specific' && targetUserId) {
+                // Send to SINGLE user
+                await sendPushNotification(targetUserId, title, message);
+            } else if (targetAudience === 'all') {
+                // Send to EVERYONE
+                await broadcastToRole('all', title, message);
+            } else if (targetAudience === 'restaurant' || targetAudience === 'orphanage') {
+                // Send to ROLE
+                await broadcastToRole(targetAudience, title, message);
+            }
+          }
+        });
+      }, (error) => {
+          console.error("❌ Notification Listener Error:", error);
+      });
+}
+
+// Start the listener
+startNotificationListener();
 
 /* ============================
    BREVO EMAIL SENDER
@@ -126,7 +180,8 @@ app.post("/api/notify-donation", async (req, res) => {
   try {
     const { foodName, restaurantName } = req.body;
     
-    await broadcastToOrphanages(
+    // Uses the new generalized helper
+    await broadcastToRole('orphanage', 
       "Food Available 🍲", 
       `${restaurantName} just donated ${foodName}. Tap to claim!`
     );
