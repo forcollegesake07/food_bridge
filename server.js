@@ -5,12 +5,6 @@ const admin = require("firebase-admin");
 const path = require("path");
 const fs = require("fs"); // Used to check file existence
 
-// [NEW] Imports for Custom Emailer
-const nodemailer = require("nodemailer");
-const multer = require("multer");
-// Configure Multer to store files in RAM (not on disk) for the emailer
-const upload = multer({ storage: multer.memoryStorage() });
-
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -53,48 +47,6 @@ app.use(
   })
 );
 console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
-
-/* ============================
-   [NEW] CUSTOM EMAIL API (SMTP)
-   This handles the "Emailer" tab in your Admin Panel
-============================ */
-const transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com",
-    port: 587,
-    auth: {
-        // Render will read these from your Environment Variables
-        user: process.env.SMTP_USER, 
-        pass: process.env.SMTP_PASS  
-    }
-});
-
-app.post('/api/send-custom-mail', upload.array('attachments'), async (req, res) => {
-    const { to, subject, text } = req.body;
-    const files = req.files || [];
-
-    try {
-        // Convert Multer files to Nodemailer attachment format
-        const attachments = files.map(file => ({
-            filename: file.originalname,
-            content: file.buffer
-        }));
-
-        await transporter.sendMail({
-            // Uses your verified sender email from env vars, or defaults to the hardcoded one
-            from: process.env.SENDER_EMAIL || "admin@foodbridge.qzz.io", 
-            to: to,
-            subject: subject,
-            text: text,
-            attachments: attachments
-        });
-
-        console.log(`📧 Custom email sent to ${to}`);
-        res.json({ success: true, message: "Email sent successfully!" });
-    } catch (error) {
-        console.error("❌ Custom Email Error:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 /* ============================
    HELPER: PUSH NOTIFICATIONS
