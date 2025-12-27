@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script> <!-- Added Messaging SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
     <script>
         tailwind.config = {
@@ -215,7 +215,7 @@
         }
         
         let pendingGoogleUser = null;
-        let isSigningUp = false; // CRITICAL FIX: Flag to prevent auto-logout race condition during signup
+        let isSigningUp = false; 
 
         window.addEventListener('DOMContentLoaded', () => { 
             const urlParams = new URLSearchParams(window.location.search); 
@@ -231,24 +231,30 @@
                 if (permission === 'granted') {
                     console.log('Notification permission granted.');
                     
-                    // Get Token - IMPORTANT: You likely need a VAPID key here if you encounter errors
-                    // const token = await messaging.getToken({ vapidKey: "YOUR_PUBLIC_VAPID_KEY_HERE" }); 
-                    
-                    // Attempting without VAPID key first as sometimes it works if configured in firebase console
-                    let token = await messaging.getToken().catch(async (err) => {
-                        console.warn("GetToken failed without VAPID key, trying with placeholder (replace this!)", err);
-                        // REPLACE THIS STRING WITH YOUR ACTUAL VAPID KEY FROM FIREBASE CONSOLE
-                        // Project Settings -> Cloud Messaging -> Web Configuration -> Web Push Certificates
-                        return await messaging.getToken({ vapidKey: "BCLuyfeZnnTiJe0Zc9YPVcD-CPfvzHfUK3hB02PadKAVN0H8IHcsY-XZ_PN3hG4HaDlVasljcEzgSQ6J3pSrYJ0" }); 
-                    });
+                    // Attempt to get token - Try VAPID key first if available, else standard
+                    let token = null;
+                    try {
+                        // REPLACE "YOUR_PUBLIC_VAPID_KEY_HERE" WITH YOUR ACTUAL KEY IF YOU HAVE ONE
+                        // If you don't have one, keep it as empty string or null, and it might fail if your project settings aren't default
+                        const vapidKey = ""; 
+                        
+                        if(vapidKey && vapidKey !== "BCLuyfeZnnTiJe0Zc9YPVcD-CPfvzHfUK3hB02PadKAVN0H8IHcsY-XZ_PN3hG4HaDlVasljcEzgSQ6J3pSrYJ0") {
+                             token = await messaging.getToken({ vapidKey: vapidKey });
+                        } else {
+                             // Try getting token without specific VAPID key (uses default from config)
+                             token = await messaging.getToken();
+                        }
+                    } catch(err) {
+                        console.error("Error fetching token:", err);
+                    }
 
                     if (token) {
                         console.log("FCM Token:", token);
                         // Save Token to User Profile
-                        await db.collection('users').doc(userId).update({ fcmToken: token });
+                        await db.collection('users').doc(userId).update({ fcmToken: token }, { merge: true });
                         console.log("Token saved to database.");
                     } else {
-                        console.warn("No registration token available. Request permission to generate one.");
+                        console.warn("No registration token available. Check your VAPID key configuration in the code.");
                     }
                 } else {
                     console.warn('Unable to get permission to notify.');
@@ -260,17 +266,13 @@
 
         // --- AUTO LOGIN LOGIC ---
         auth.onAuthStateChanged(async (user) => {
-            // FIX: If we are in the middle of a manual signup, DO NOT interfere.
-            // Let handleSignup() manage the flow.
             if (isSigningUp) return; 
 
             if (user) {
-                // If the modal for selecting role is currently open, do not auto-redirect yet
                 if (!document.getElementById('google-role-modal').classList.contains('hidden')) {
                     return;
                 }
 
-                // CHECK EMAIL VERIFICATION 
                 if (!user.emailVerified) {
                     console.log("Email not verified. Signing out to enforce verification.");
                     await auth.signOut();
@@ -282,12 +284,12 @@
                     if (doc.exists) {
                         const userData = doc.data();
                         
-                        // [NEW] SELF-HEALING: Add userId if missing
+                        // SELF-HEALING: Add userId if missing
                         if (!userData.userId) {
                             await db.collection('users').doc(user.uid).update({ userId: user.uid });
                         }
 
-                        // [NEW] Register for Notifications on Login
+                        // Register for Notifications on Login
                         requestNotificationPermission(user.uid);
 
                         if (userData.isDisable) {
@@ -296,7 +298,6 @@
                             return;
                         }
                         
-                        // Update UI to show we are resuming session
                         const btnLogin = document.getElementById('btn-login');
                         if (btnLogin) {
                             btnLogin.innerText = "Resuming Session...";
@@ -306,7 +307,6 @@
                         showMessage(`Welcome back, ${userData.name}! Redirecting...`, "success");
                         performRedirect(userData.role);
                     } else {
-                        // User is authenticated but has no profile document. 
                         if (!pendingGoogleUser) {
                              pendingGoogleUser = user;
                              document.getElementById('google-role-modal').classList.remove('hidden');
@@ -329,12 +329,10 @@
             
             document.getElementById('auth-message').classList.add('hidden');
 
-            // Hide all forms initially
             loginForm.classList.add('hidden'); 
             signupForm.classList.add('hidden'); 
             forgotForm.classList.add('hidden');
 
-            // Reset tabs style
             tabLogin.className = "w-1/2 py-3 md:py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50"; 
             tabSignup.className = "w-1/2 py-3 md:py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50"; 
 
@@ -389,12 +387,10 @@
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
-                    // [NEW] SELF-HEALING: Add userId if missing
                     if (!userData.userId) {
                         await db.collection('users').doc(user.uid).update({ userId: user.uid });
                     }
 
-                    // [NEW] Register for Notifications on Login
                     requestNotificationPermission(user.uid);
 
                     if (userData.isDisable === true) { 
@@ -438,7 +434,6 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
-                // [NEW] Register for Notifications
                 requestNotificationPermission(pendingGoogleUser.uid);
 
                 document.getElementById('google-role-modal').classList.add('hidden'); 
@@ -457,7 +452,6 @@
             btn.innerText = "Creating Account..."; 
             btn.disabled = true; 
             
-            // FIX: Enable flag so onAuthStateChanged doesn't kick us out while we save data
             isSigningUp = true;
 
             const name = document.getElementById('signup-name').value; 
@@ -469,7 +463,6 @@
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password); 
                 const user = userCredential.user; 
 
-                // 1. Save User Data (Critical: Must happen before we sign out)
                 await firebase.firestore().collection('users').doc(user.uid).set({ 
                     userId: user.uid,
                     name: name, 
@@ -480,13 +473,9 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 }); 
 
-                // 2. Send Verification Email
                 await user.sendEmailVerification();
-                
-                // 3. NOW we sign out manually
                 await auth.signOut();
 
-                // 4. UI Feedback
                 showMessage(`Verification link sent to ${email}. Please check your inbox before logging in.`, "success"); 
                 toggleView('login'); 
 
@@ -496,7 +485,6 @@
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false; 
-                // Reset flag
                 isSigningUp = false;
             }
         }
@@ -514,24 +502,20 @@
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password); 
                 const user = userCredential.user; 
                 
-                // 1. Check Email Verification
                 if (!user.emailVerified) {
                     await auth.signOut();
                     throw new Error("Email not verified. Please check your inbox for the verification link.");
                 }
 
-                // 2. Retrieve User Data
                 const doc = await db.collection('users').doc(user.uid).get(); 
                 
                 if (doc.exists) { 
                     const userData = doc.data(); 
                     
-                    // [NEW] SELF-HEALING: Add userId if missing
                     if (!userData.userId) {
                         await db.collection('users').doc(user.uid).update({ userId: user.uid });
                     }
 
-                    // [NEW] Register for Notifications on Login
                     requestNotificationPermission(user.uid);
 
                     if (userData.isDisable === true) { 
