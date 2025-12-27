@@ -426,6 +426,12 @@
             </div>
 
             <div class="space-y-4 mb-6 bg-gray-50 p-5 rounded-xl border border-gray-100 text-sm">
+                <!-- ADDED USER ID FIELD -->
+                <div class="flex justify-between border-b border-gray-200 pb-2">
+                    <span class="text-gray-500 font-medium">User ID</span>
+                    <span class="font-bold text-gray-800 font-mono text-xs select-all" id="modal-user-id">...</span>
+                </div>
+                
                 <div class="flex justify-between border-b border-gray-200 pb-2">
                     <span class="text-gray-500 font-medium">Email</span>
                     <span class="font-bold text-gray-800" id="modal-user-email">...</span>
@@ -958,6 +964,10 @@
             currentModalUserId = userId;
             const modal = document.getElementById('user-modal');
             const content = document.getElementById('user-modal-content');
+            
+            // --- FIX 1: Populate ID here (defaults to userId for now) ---
+            document.getElementById('modal-user-id').innerText = userId;
+            
             document.getElementById('modal-user-name').innerText = 'Loading...';
             document.getElementById('btn-disable-user').className = 'hidden'; 
             document.getElementById('btn-verify-user').className = 'hidden';
@@ -992,6 +1002,10 @@
                     // Setup Disable/Enable Button
                     const btnDisable = document.getElementById('btn-disable-user');
                     btnDisable.classList.remove('hidden');
+                    
+                    // --- FIX 2: Ensure buttons are re-enabled ---
+                    btnDisable.disabled = false; 
+
                     if (isDisabled) {
                         btnDisable.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable';
                         btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation w-full';
@@ -1005,6 +1019,10 @@
                     // Setup Verify Button
                     const btnVerify = document.getElementById('btn-verify-user');
                     btnVerify.classList.remove('hidden');
+                    
+                    // --- FIX 2: Ensure buttons are re-enabled ---
+                    btnVerify.disabled = false;
+
                     if (isVerified) {
                         btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Un-Verify';
                         btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 border w-full';
