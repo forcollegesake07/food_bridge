@@ -625,7 +625,7 @@
                     if(n.type === 'fulfilled') { iconClass = 'fa-circle-check'; iconColor = 'text-green-500'; }
                     list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.title || 'Notification'}</p><p class="text-xs text-gray-600 line-clamp-2">${n.message}</p><p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p></div></div></div>`;
                 });
-                badge.classList.remove('hidden');
+                badge.classList.remove('hidden'); // UPDATED: Ensure badge is shown when notifications exist
             }
         }
 
