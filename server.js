@@ -52,20 +52,40 @@ console.log("BREVO KEY EXISTS:", !!process.env.BREVO_API_KEY);
    HELPER: PUSH NOTIFICATIONS
 ============================ */
 // 1. Send to a specific user (e.g., Restaurant or Orphanage)
-async function sendPushNotification(userId, title, body) {
+async function sendPushNotification(targetUserId, title, body) {
   if (!db) { console.log("⚠️ DB not connected, skipping notification."); return; }
 
   try {
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (userDoc.exists && userDoc.data().fcmToken) {
-      const message = {
-        token: userDoc.data().fcmToken,
-        notification: { title, body }
-      };
-      await admin.messaging().send(message);
-      console.log(`📲 Notification sent to user: ${userId}`);
+    // UPDATED QUERY: Query by the 'userId' field instead of document ID directly
+    const userQuery = await db.collection("users").where("userId", "==", targetUserId).limit(1).get();
+    
+    if (!userQuery.empty) {
+      const userDoc = userQuery.docs[0];
+      const userData = userDoc.data();
+
+      if (userData.fcmToken) {
+        const message = {
+          token: userData.fcmToken,
+          notification: { title, body }
+        };
+        await admin.messaging().send(message);
+        console.log(`📲 Notification sent to user: ${targetUserId}`);
+      } else {
+        console.log(`⚠️ No FCM Token found for user: ${targetUserId}`);
+      }
     } else {
-      console.log(`⚠️ No FCM Token found for user: ${userId}`);
+      // Fallback: Try checking if the targetUserId is actually the document ID itself
+      const docRef = await db.collection("users").doc(targetUserId).get();
+      if(docRef.exists && docRef.data().fcmToken) {
+          const message = {
+            token: docRef.data().fcmToken,
+            notification: { title, body }
+          };
+          await admin.messaging().send(message);
+          console.log(`📲 Notification sent to user (via Doc ID): ${targetUserId}`);
+      } else {
+          console.log(`⚠️ User not found by userId field OR Doc ID: ${targetUserId}`);
+      }
     }
   } catch (error) {
     console.error("❌ Notification Error:", error.message);
