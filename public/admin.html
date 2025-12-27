@@ -5,25 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - FoodBridge</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .sidebar-link { transition: all 0.2s ease; }
-        .sidebar-link:hover, .sidebar-link.active { background-color: #eff6ff; color: #3b82f6; transform: translateX(4px); }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Modern Sidebar Styles */
+        .sidebar-link { 
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: #3b82f6;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+            border-radius: 0 4px 4px 0;
+        }
+        .sidebar-link:hover::before { transform: scaleY(1); }
+        .sidebar-link.active { 
+            background: linear-gradient(90deg, #1e40af 0%, #1e3a8a 100%);
+            color: white !important;
+            box-shadow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+        .sidebar-link.active i { color: #60a5fa !important; }
+        
+        /* Glass & Card Effects */
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .stat-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.1); }
+        
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
     <script>
@@ -31,146 +59,194 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { blue: '#3b82f6', dark: '#1e40af', light: '#eff6ff' }
+                        slate: { 850: '#1e293b', 900: '#0f172a' }
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased overflow-hidden h-screen flex">
+<body class="bg-slate-50 text-slate-800 antialiased overflow-hidden h-screen flex selection:bg-blue-100 selection:text-blue-900">
 
     <!-- Loading Overlay -->
     <div id="auth-loading" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center transition-opacity duration-300">
-        <div class="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-        <h2 class="text-xl font-bold text-slate-700 animate-pulse">Verifying Access...</h2>
+        <div class="relative">
+            <div class="w-16 h-16 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="fa-solid fa-bridge text-blue-600 text-xs"></i>
+            </div>
+        </div>
+        <h2 class="text-sm font-bold text-slate-500 mt-4 tracking-wider uppercase animate-pulse">Initializing Dashboard</h2>
     </div>
 
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-white border-r border-slate-200 h-full flex-col hidden md:flex z-20 shadow-xl">
-        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+    <!-- MODERN DARK SIDEBAR -->
+    <aside class="w-72 bg-slate-900 h-full flex-col hidden md:flex z-20 shadow-2xl relative overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+        
+        <div class="p-8 pb-6 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-900/50">
                 <i class="fa-solid fa-bridge"></i>
             </div>
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">FoodBridge</h1>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-tight">FoodBridge</h1>
+                <p class="text-xs text-slate-400 font-medium">Admin Workspace</p>
+            </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-            <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Main Menu</p>
-            <a href="#" onclick="showSection('overview')" id="nav-overview" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 font-medium">
-                <i class="fa-solid fa-chart-pie w-5"></i> Overview
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">
+            <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">Analytics</p>
+            
+            <a href="#" onclick="showSection('overview')" id="nav-overview" class="sidebar-link active flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 font-medium hover:bg-slate-800 hover:text-white group">
+                <i class="fa-solid fa-chart-pie fa-fw group-hover:scale-110 transition-transform"></i> <span>Overview</span>
             </a>
-            <a href="#" onclick="showSection('users')" id="nav-users" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 font-medium">
-                <i class="fa-solid fa-users w-5"></i> Users
+            <a href="#" onclick="showSection('activity')" id="nav-activity" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 font-medium hover:bg-slate-800 hover:text-white group">
+                <i class="fa-solid fa-clock-rotate-left fa-fw group-hover:scale-110 transition-transform"></i> <span>Activity Logs</span>
             </a>
-            <a href="#" onclick="showSection('activity')" id="nav-activity" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 font-medium">
-                <i class="fa-solid fa-clock-rotate-left w-5"></i> Activity History
-            </a>
-            <a href="#" onclick="showSection('reports')" id="nav-reports" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 font-medium">
-                <i class="fa-solid fa-triangle-exclamation w-5"></i> Reports & Issues
-            </a>
+            
+            <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-6">Management</p>
 
-            <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-6">Management</p>
-            <a href="#" onclick="showSection('broadcast')" id="nav-broadcast" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 font-medium">
-                <i class="fa-solid fa-bullhorn w-5"></i> Broadcast
+            <a href="#" onclick="showSection('users')" id="nav-users" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 font-medium hover:bg-slate-800 hover:text-white group">
+                <i class="fa-solid fa-users fa-fw group-hover:scale-110 transition-transform"></i> <span>User Database</span>
+            </a>
+            <a href="#" onclick="showSection('reports')" id="nav-reports" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 font-medium hover:bg-slate-800 hover:text-white group">
+                <div class="relative">
+                    <i class="fa-solid fa-circle-exclamation fa-fw group-hover:scale-110 transition-transform"></i>
+                    <span id="sidebar-badge-issues" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                </div>
+                <span>Issues & Reports</span>
+            </a>
+            <a href="#" onclick="showSection('broadcast')" id="nav-broadcast" class="sidebar-link flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 font-medium hover:bg-slate-800 hover:text-white group">
+                <i class="fa-solid fa-bullhorn fa-fw group-hover:scale-110 transition-transform"></i> <span>Broadcast</span>
             </a>
         </nav>
 
-        <div class="p-4 border-t border-slate-100">
-            <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-600 font-medium hover:bg-red-50 transition-colors">
-                <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 font-medium hover:bg-red-500/10 hover:text-red-300 transition-colors group">
+                <i class="fa-solid fa-right-from-bracket fa-fw group-hover:-translate-x-1 transition-transform"></i> Logout
             </button>
         </div>
     </aside>
 
     <!-- MOBILE HEADER -->
-    <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white z-30 flex items-center justify-between px-4 border-b shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+    <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md z-30 flex items-center justify-between px-4 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg">
                 <i class="fa-solid fa-bridge"></i>
             </div>
             <span class="font-bold text-lg text-slate-800">FoodBridge</span>
         </div>
-        <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('h-full');" class="text-slate-600 p-2">
+        <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('h-full');" class="text-slate-600 p-2 rounded-lg hover:bg-slate-100">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-y-auto h-full w-full bg-slate-50 pt-16 md:pt-0 relative">
+    <main class="flex-1 overflow-y-auto h-full w-full bg-slate-50/50 pt-16 md:pt-0 relative">
         <!-- Header -->
-        <header class="bg-white/80 backdrop-blur-md sticky top-0 z-10 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+        <header class="bg-white/80 backdrop-blur-md sticky top-0 z-10 px-8 py-5 border-b border-slate-200/60 flex justify-between items-center">
             <div>
-                <h2 class="text-xl font-bold text-slate-800" id="page-title">Dashboard Overview</h2>
-                <p class="text-sm text-slate-500">Welcome back, Admin</p>
+                <h2 class="text-2xl font-bold text-slate-800 tracking-tight" id="page-title">Dashboard Overview</h2>
+                <p class="text-sm text-slate-500 font-medium">Welcome back, Administrator</p>
             </div>
             <div class="flex items-center gap-4">
-                <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">A</div>
+                <button class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 flex items-center justify-center transition shadow-sm">
+                    <i class="fa-regular fa-bell"></i>
+                </button>
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 flex items-center justify-center font-bold border border-blue-200 shadow-inner">A</div>
             </div>
         </header>
 
-        <div class="p-6 max-w-7xl mx-auto space-y-6">
+        <div class="p-8 max-w-[1600px] mx-auto space-y-8">
 
             <!-- SECTIONS -->
             
             <!-- 1. OVERVIEW SECTION -->
-            <section id="overview" class="space-y-6 animate-fade-in">
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Users</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="stat-users">0</h3>
+            <section id="overview" class="space-y-8 animate-fade-in">
+                <!-- Stats Grid - Improved Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    <!-- Total Users -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 stat-card relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="p-3 bg-blue-100 rounded-xl text-blue-600"><i class="fa-solid fa-users text-lg"></i></div>
+                                <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full">+12%</span>
                             </div>
-                            <div class="p-3 bg-blue-50 rounded-xl text-blue-600"><i class="fa-solid fa-users text-xl"></i></div>
+                            <h3 class="text-3xl font-bold text-slate-800 mt-2" id="stat-users">0</h3>
+                            <p class="text-slate-500 text-sm font-medium">Total Users</p>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 70%"></div></div>
                     </div>
                     
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Meals Saved</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="stat-meals">0</h3>
+                    <!-- Meals Saved -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 stat-card relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="p-3 bg-green-100 rounded-xl text-green-600"><i class="fa-solid fa-bowl-food text-lg"></i></div>
                             </div>
-                            <div class="p-3 bg-green-50 rounded-xl text-green-600"><i class="fa-solid fa-bowl-food text-xl"></i></div>
+                            <h3 class="text-3xl font-bold text-slate-800 mt-2" id="stat-meals">0</h3>
+                            <p class="text-slate-500 text-sm font-medium">Meals Saved</p>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-green-500 h-1.5 rounded-full" style="width: 60%"></div></div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Active Issues</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="stat-issues">0</h3>
+                    <!-- Total Donations -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 stat-card relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="p-3 bg-purple-100 rounded-xl text-purple-600"><i class="fa-solid fa-hand-holding-heart text-lg"></i></div>
                             </div>
-                            <div class="p-3 bg-red-50 rounded-xl text-red-600"><i class="fa-solid fa-circle-exclamation text-xl"></i></div>
+                            <h3 class="text-3xl font-bold text-slate-800 mt-2" id="stat-donations">0</h3>
+                            <p class="text-slate-500 text-sm font-medium">Total Donations</p>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-red-500 h-1.5 rounded-full" style="width: 10%"></div></div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Donations</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="stat-donations">0</h3>
+                    <!-- CO2 Impact (NEW) -->
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-2xl shadow-lg shadow-emerald-200 stat-card text-white relative overflow-hidden">
+                        <div class="absolute right-0 bottom-0 text-white/10 text-6xl -mb-2 -mr-2"><i class="fa-solid fa-leaf"></i></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="p-3 bg-white/20 backdrop-blur-sm rounded-xl text-white"><i class="fa-solid fa-leaf text-lg"></i></div>
                             </div>
-                            <div class="p-3 bg-purple-50 rounded-xl text-purple-600"><i class="fa-solid fa-hand-holding-heart text-xl"></i></div>
+                            <h3 class="text-3xl font-bold mt-2" id="stat-co2">0 <span class="text-lg font-medium opacity-80">kg</span></h3>
+                            <p class="text-emerald-100 text-sm font-medium">Est. CO2 Saved</p>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-purple-500 h-1.5 rounded-full" style="width: 45%"></div></div>
+                    </div>
+
+                    <!-- Active Issues -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 stat-card relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="p-3 bg-red-100 rounded-xl text-red-600"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-800 mt-2" id="stat-issues">0</h3>
+                            <p class="text-slate-500 text-sm font-medium">Active Issues</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Charts Area -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-                        <h3 class="font-bold text-lg mb-4 text-slate-700">Donation Activity</h3>
-                        <div class="h-64 relative w-full"><canvas id="activityChart"></canvas></div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-lg text-slate-800">Donation Trends</h3>
+                            <select class="text-sm border border-slate-200 rounded-lg px-3 py-1 text-slate-600 focus:outline-none">
+                                <option>Last 7 Days</option>
+                                <option>Last Month</option>
+                            </select>
+                        </div>
+                        <div class="h-72 relative w-full"><canvas id="activityChart"></canvas></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 class="font-bold text-lg mb-4 text-slate-700">User Distribution</h3>
+                        <h3 class="font-bold text-lg mb-6 text-slate-800">User Demographics</h3>
                         <div class="h-64 relative w-full flex items-center justify-center"><canvas id="userChart"></canvas></div>
+                        <div class="mt-4 flex justify-center gap-4 text-xs text-slate-500">
+                            <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Restaurants</div>
+                            <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Orphanages</div>
+                            <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Volunteers</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -178,18 +254,18 @@
             <!-- 2. USERS SECTION -->
             <section id="users" class="hidden animate-fade-in space-y-6">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between gap-4">
-                        <h3 class="font-bold text-lg text-slate-700">User Management</h3>
-                        <div class="relative">
+                    <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between gap-4 items-center bg-slate-50/50">
+                        <h3 class="font-bold text-lg text-slate-800">User Database</h3>
+                        <div class="relative w-full md:w-auto">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <input type="text" id="user-search" onkeyup="filterUsers()" placeholder="Search users..." class="pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-64 text-sm">
+                            <input type="text" id="user-search" onkeyup="filterUsers()" placeholder="Search by name, email..." class="pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full md:w-80 text-sm shadow-sm transition-all focus:border-blue-500">
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-slate-600">
-                            <thead class="bg-slate-50 text-slate-700 font-semibold uppercase text-xs">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs tracking-wider">
                                 <tr>
-                                    <th class="px-6 py-4">User</th>
+                                    <th class="px-6 py-4">User Details</th>
                                     <th class="px-6 py-4">Role</th>
                                     <th class="px-6 py-4">Status</th>
                                     <th class="px-6 py-4">Verified</th>
@@ -201,8 +277,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="p-4 border-t border-slate-100 flex justify-center">
-                        <button onclick="loadUsers()" class="text-blue-600 text-sm font-medium hover:underline">Refresh List</button>
+                    <div class="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+                        <button onclick="loadUsers()" class="flex items-center gap-2 text-blue-600 text-sm font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh List
+                        </button>
                     </div>
                 </div>
             </section>
@@ -210,20 +288,19 @@
             <!-- 3. ACTIVITY HISTORY -->
             <section id="activity" class="hidden animate-fade-in space-y-6">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-bold text-lg text-slate-700">Global Activity Log</h3>
-                        <button onclick="exportCSV()" class="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="font-bold text-lg text-slate-800">Transaction History</h3>
+                        <button onclick="exportCSV()" class="flex items-center gap-2 text-sm bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg transition shadow-sm font-medium">
                             <i class="fa-solid fa-download"></i> Export CSV
                         </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-slate-600">
-                            <thead class="bg-slate-50 text-slate-700 font-semibold uppercase text-xs">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs tracking-wider">
                                 <tr>
-                                    <th class="px-6 py-4">Date</th>
-                                    <th class="px-6 py-4">Time</th>
-                                    <th class="px-6 py-4">Type</th>
-                                    <th class="px-6 py-4">Details</th>
+                                    <th class="px-6 py-4">Date & Time</th>
+                                    <th class="px-6 py-4">Transaction Details</th>
+                                    <th class="px-6 py-4">Item</th>
                                     <th class="px-6 py-4">Status</th>
                                 </tr>
                             </thead>
@@ -235,137 +312,158 @@
 
             <!-- 4. REPORTS SECTION -->
             <section id="reports" class="hidden animate-fade-in space-y-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-6">
-                    <h3 class="font-bold text-lg text-slate-700 mb-4">Reported Issues</h3>
-                    <div id="reports-list" class="space-y-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-lg text-slate-800">Issue Tracker</h3>
+                        <span class="text-xs font-medium bg-slate-100 px-3 py-1 rounded-full text-slate-500">Live Feed</span>
+                    </div>
+                    <div id="reports-list" class="space-y-4 grid grid-cols-1 gap-4">
                         <!-- JS populated -->
-                        <div class="text-center py-10 text-slate-400">Loading reports...</div>
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                <i class="fa-solid fa-clipboard-check text-2xl"></i>
+                            </div>
+                            <p class="text-slate-500">No active issues found.</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- 5. BROADCAST SECTION -->
             <section id="broadcast" class="hidden animate-fade-in space-y-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-2xl mx-auto">
-                    <div class="text-center mb-6">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl mx-auto mb-3">
-                            <i class="fa-solid fa-bullhorn"></i>
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-2xl shadow-sm">
+                                <i class="fa-solid fa-tower-broadcast"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl text-slate-800">System Broadcast</h3>
+                                <p class="text-slate-500 text-sm">Send urgent notifications to platform users.</p>
+                            </div>
                         </div>
-                        <h3 class="font-bold text-lg text-slate-700">System Broadcast</h3>
-                        <p class="text-slate-500 text-sm">Send a notification to all users on the platform.</p>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
-                            <select id="broadcast-target" onchange="toggleBroadcastInput()" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="all">All Users</option>
-                                <option value="restaurant">Restaurants Only</option>
-                                <option value="orphanage">Orphanages Only</option>
-                                <option value="specific">Specific User ID</option>
-                            </select>
-                        </div>
+                        
+                        <div class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Audience</label>
+                                    <div class="relative">
+                                        <select id="broadcast-target" onchange="toggleBroadcastInput()" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none appearance-none bg-slate-50">
+                                            <option value="all">Everyone</option>
+                                            <option value="restaurant">Restaurants Only</option>
+                                            <option value="orphanage">Orphanages Only</option>
+                                            <option value="specific">Specific User ID</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <div id="broadcast-userid-container" class="hidden">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target User ID</label>
+                                    <input type="text" id="broadcast-userid" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none bg-slate-50" placeholder="Paste User UID">
+                                </div>
+                            </div>
 
-                        <div id="broadcast-userid-container" class="hidden">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">User ID</label>
-                            <input type="text" id="broadcast-userid" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter specific User ID">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subject</label>
+                                <input type="text" id="broadcast-title" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none font-medium" placeholder="e.g., Scheduled Maintenance">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Message Content</label>
+                                <textarea id="broadcast-msg" rows="5" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none resize-none" placeholder="Type your announcement here..."></textarea>
+                            </div>
+                            
+                            <div class="pt-2">
+                                <button onclick="sendBroadcast()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transform active:scale-[0.99]">
+                                    <i class="fa-regular fa-paper-plane"></i> Send Broadcast
+                                </button>
+                            </div>
                         </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Message Title</label>
-                            <input type="text" id="broadcast-title" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g., System Maintenance">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Message Body</label>
-                            <textarea id="broadcast-msg" rows="4" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Type your message here..."></textarea>
-                        </div>
-                        <button onclick="sendBroadcast()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-200">
-                            Send Broadcast
-                        </button>
                     </div>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- CONFIRMATION MODAL -->
-    <div id="confirm-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform scale-95 transition-all duration-300">
+    <!-- CONFIRMATION MODAL (Clean Design) -->
+    <div id="confirm-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full transform scale-95 transition-all duration-300 border border-white/20">
             <div class="text-center">
-                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4 text-blue-600 text-xl">
-                    <i class="fa-solid fa-circle-question"></i>
+                <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl shadow-sm">
+                    <i class="fa-solid fa-question"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2" id="confirm-title">Confirm Action</h3>
-                <p class="text-sm text-gray-500 mb-6" id="confirm-message">Are you sure you want to proceed?</p>
-                <div class="flex gap-3">
-                    <button onclick="closeConfirmModal()" class="flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50">Cancel</button>
-                    <button id="confirm-btn-action" class="flex-1 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-md shadow-blue-200">Confirm</button>
+                <h3 class="text-xl font-bold text-slate-800 mb-2" id="confirm-title">Confirm</h3>
+                <p class="text-slate-500 mb-8 leading-relaxed" id="confirm-message">Are you sure?</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeConfirmModal()" class="py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Cancel</button>
+                    <button id="confirm-btn-action" class="py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">Confirm</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- USER DETAILS MODAL -->
-    <div id="user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 relative transform-gpu" id="user-modal-content">
-            <button onclick="closeUserModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition touch-manipulation">
-                <i class="fa-solid fa-xmark text-xl"></i>
+    <div id="user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full transform scale-95 transition-all duration-300 relative" id="user-modal-content">
+            <button onclick="closeUserModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
             
-            <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-brand-light rounded-full mx-auto flex items-center justify-center text-3xl text-brand-blue mb-3 shadow-inner relative">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 mb-4 shadow-inner relative border-4 border-white shadow-lg">
                     <i class="fa-solid fa-user" id="modal-user-icon"></i>
-                    <div id="modal-verify-badge" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hidden">
+                    <div id="modal-verify-badge" class="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hidden">
                         <i class="fa-solid fa-circle-check text-blue-500 text-xl"></i>
                     </div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900" id="modal-user-name">Loading...</h3>
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-100 text-gray-600" id="modal-user-role">User</span>
-                <p class="text-xs text-gray-400 mt-2 font-mono select-all" id="modal-user-id">ID: ...</p>
+                <h3 class="text-2xl font-bold text-slate-800" id="modal-user-name">Loading...</h3>
+                <div class="flex items-center justify-center gap-2 mt-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 capitalize" id="modal-user-role">User</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-3 font-mono bg-slate-50 inline-block px-2 py-1 rounded select-all cursor-pointer hover:bg-slate-100" id="modal-user-id" title="Click to copy">ID: ...</p>
             </div>
 
             <div class="space-y-4 mb-8">
-                <div class="flex items-center p-3 rounded-xl bg-gray-50">
-                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-500 shadow-sm mr-4">
+                <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-slate-400 shadow-sm mr-4 border border-slate-100">
                         <i class="fa-solid fa-envelope"></i>
                     </div>
-                    <div>
-                        <p class="text-xs text-gray-500 font-bold uppercase">Email</p>
-                        <p class="text-sm font-medium text-gray-900 break-all" id="modal-user-email">...</p>
+                    <div class="overflow-hidden">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</p>
+                        <p class="text-sm font-medium text-slate-700 truncate" id="modal-user-email">...</p>
                     </div>
                 </div>
 
-                <div class="flex items-center p-3 rounded-xl bg-gray-50">
-                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-500 shadow-sm mr-4">
+                <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-slate-400 shadow-sm mr-4 border border-slate-100">
                         <i class="fa-solid fa-phone"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 font-bold uppercase">Phone</p>
-                        <p class="text-sm font-medium text-gray-900" id="modal-user-phone">...</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Phone</p>
+                        <p class="text-sm font-medium text-slate-700" id="modal-user-phone">...</p>
                     </div>
                 </div>
 
-                <div class="flex items-center p-3 rounded-xl bg-gray-50">
-                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-500 shadow-sm mr-4">
+                <div class="flex items-center p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-slate-400 shadow-sm mr-4 border border-slate-100">
                         <i class="fa-solid fa-location-dot"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 font-bold uppercase">Address</p>
-                        <p class="text-sm font-medium text-gray-900" id="modal-user-address">...</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Address</p>
+                        <p class="text-sm font-medium text-slate-700" id="modal-user-address">...</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center justify-between px-2">
-                    <span class="text-sm text-gray-500 font-medium">Account Status</span>
-                    <span class="font-bold text-green-500" id="modal-user-status">Active</span>
+                <div class="flex items-center justify-between px-1 pt-2 border-t border-slate-100">
+                    <span class="text-xs text-slate-500 font-bold uppercase tracking-wide">Status</span>
+                    <span class="font-bold text-green-500 flex items-center gap-1" id="modal-user-status"><span class="w-2 h-2 rounded-full bg-green-500"></span> Active</span>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <button id="btn-verify-user" class="py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border">
+                <button id="btn-verify-user" class="py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-slate-600 bg-white hover:bg-slate-50 border-slate-200 border">
                    Loading...
                 </button>
-                <button id="btn-disable-user" class="py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation">
+                <button id="btn-disable-user" class="py-3.5 font-bold rounded-xl shadow-lg shadow-red-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600">
                    Loading...
                 </button>
             </div>
@@ -375,14 +473,7 @@
 
     <script>
         // FIREBASE CONFIG
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "foodbridge-83163.firebaseapp.com",
-            projectId: "foodbridge-83163",
-            storageBucket: "foodbridge-83163.appspot.com",
-            messagingSenderId: "148332194600",
-            appId: "1:148332194600:web:d259c909677353f46f88ec"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -399,13 +490,11 @@
                         initDashboard();
                     } else {
                         await auth.signOut();
-                        alert("Access Denied: You do not have administrator privileges or your account is disabled.");
+                        alert("Access Denied: You do not have administrator privileges.");
                         window.location.href = 'index.html';
                     }
                 } catch (error) {
                     console.error("Auth Error:", error);
-                    alert("An error occurred while verifying your credentials.");
-                    await auth.signOut();
                     window.location.href = 'login.html';
                 }
             } else {
@@ -422,14 +511,14 @@
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             
-            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'translate-x-1'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
             document.getElementById('nav-' + id).classList.add('active');
 
             const titles = {
                 'overview': 'Dashboard Overview',
-                'users': 'User Management',
-                'activity': 'Activity Logs',
-                'reports': 'Issues & Reports',
+                'users': 'User Database',
+                'activity': 'Transaction Logs',
+                'reports': 'Issue Tracker',
                 'broadcast': 'System Broadcast'
             };
             document.getElementById('page-title').innerText = titles[id];
@@ -455,7 +544,6 @@
                 // FIX: Better number parsing for Quantity
                 let qty = 0;
                 if (data.quantity) {
-                    // Extract number from string like "50 meals" or use direct number
                     const match = String(data.quantity).match(/\d+/);
                     if (match) qty = parseInt(match[0]);
                 }
@@ -463,10 +551,22 @@
                 if(data.status === 'Issue') issuesCount++;
             });
 
+            // Calculate Estimated CO2 Saved (0.3kg per meal)
+            const co2Saved = Math.round(mealsCount * 0.3);
+
             animateValue("stat-users", 0, users.size, 1000);
             animateValue("stat-meals", 0, mealsCount, 1500);
             animateValue("stat-issues", 0, issuesCount, 800);
             animateValue("stat-donations", 0, donations.size, 1000);
+            animateValue("stat-co2", 0, co2Saved, 2000); // New Animation
+            
+            // Sidebar Badge for Issues
+            const badge = document.getElementById('sidebar-badge-issues');
+            if(issuesCount > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
         function animateValue(id, start, end, duration) {
@@ -475,7 +575,11 @@
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                const val = Math.floor(progress * (end - start) + start);
+                // Preserve the unit if it exists in the inner HTML (hacky but works for CO2)
+                if(id === 'stat-co2') obj.innerHTML = `${val} <span class="text-lg font-medium opacity-80">kg</span>`;
+                else obj.innerHTML = val;
+                
                 if (progress < 1) window.requestAnimationFrame(step);
             };
             window.requestAnimationFrame(step);
@@ -505,12 +609,27 @@
                         label: 'Donations',
                         data: [statusData.Pending, statusData.Accepted, statusData.Completed, statusData.Issue, statusData.Resolved],
                         borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: (ctx) => {
+                            const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+                            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                            return gradient;
+                        },
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#3b82f6',
+                        pointBorderWidth: 2
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#f1f5f9' } }, x: { grid: { display: false } } }
+                }
             });
 
             new Chart(document.getElementById('userChart'), {
@@ -520,10 +639,11 @@
                     datasets: [{
                         data: [roleData.restaurant, roleData.orphanage, roleData.volunteer],
                         backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                        borderWidth: 0
+                        borderWidth: 0,
+                        hoverOffset: 10
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
             });
         }
 
@@ -541,18 +661,23 @@
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '';
             users.forEach(u => {
-                const isVerified = u.isVerified ? '<span class="text-blue-500"><i class="fa-solid fa-circle-check"></i></span>' : '';
-                const statusClass = u.isDisable ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                const isVerified = u.isVerified ? '<i class="fa-solid fa-circle-check text-blue-500 ml-1"></i>' : '';
+                const statusClass = u.isDisable ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100';
                 const statusText = u.isDisable ? 'Disabled' : 'Active';
                 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-4 font-medium text-slate-800">${u.name || 'Unknown'}</td>
-                        <td class="px-6 py-4 capitalize">${u.role || 'user'}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
-                        <td class="px-6 py-4">${u.isVerified ? 'Yes' : 'No'} ${isVerified}</td>
+                    <tr class="hover:bg-blue-50/30 transition border-b border-slate-50 last:border-0 group">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">${u.name || 'Unknown'} ${isVerified}</div>
+                            <div class="text-xs text-slate-400 font-mono">${u.email || 'No Email'}</div>
+                        </td>
+                        <td class="px-6 py-4"><span class="capitalize px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">${u.role || 'user'}</span></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
+                        <td class="px-6 py-4 text-slate-500 text-sm">${u.isVerified ? 'Yes' : 'No'}</td>
                         <td class="px-6 py-4 text-right">
-                            <button onclick="openUserModal('${u.id}')" class="text-slate-400 hover:text-blue-600 transition"><i class="fa-solid fa-gear"></i> Manage</button>
+                            <button onclick="openUserModal('${u.id}')" class="text-slate-400 hover:text-blue-600 transition bg-white border border-slate-200 hover:border-blue-200 hover:bg-blue-50 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ml-auto">
+                                <i class="fa-solid fa-gear"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -625,47 +750,47 @@
                     document.getElementById('modal-user-address').innerText = data.address || 'N/A';
                     
                     const roleEl = document.getElementById('modal-user-role');
-                    roleEl.innerText = data.role ? data.role.charAt(0).toUpperCase() + data.role.slice(1) : 'User';
+                    roleEl.innerText = data.role ? data.role : 'User';
                     
                     const statusEl = document.getElementById('modal-user-status');
-                    statusEl.innerText = isDisabled ? 'Disabled' : 'Active';
-                    statusEl.className = isDisabled ? 'font-bold text-red-500' : 'font-bold text-green-500';
+                    statusEl.innerHTML = isDisabled ? '<span class="w-2 h-2 rounded-full bg-red-500"></span> Disabled' : '<span class="w-2 h-2 rounded-full bg-green-500"></span> Active';
+                    statusEl.className = isDisabled ? 'font-bold text-red-500 flex items-center gap-1' : 'font-bold text-green-500 flex items-center gap-1';
 
                     const badge = document.getElementById('modal-verify-badge');
                     if(isVerified) badge.classList.remove('hidden');
                     else badge.classList.add('hidden');
 
-                    // Setup Disable Button with Custom Modal
+                    // Setup Disable Button
                     btnDisable.classList.remove('hidden');
                     btnDisable.disabled = false;
                     if (isDisabled) {
                         btnDisable.innerHTML = '<i class="fa-solid fa-lock-open"></i> Enable';
-                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 touch-manipulation w-full';
+                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-lg shadow-green-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 w-full';
                         btnDisable.onclick = function() { 
-                            openConfirmModal("Enable Account", "Are you sure you want to re-enable this user account?", () => toggleUserStatus(userId, false)); 
+                            openConfirmModal("Enable Account", "Restore access for this user?", () => toggleUserStatus(userId, false)); 
                         };
                     } else {
                         btnDisable.innerHTML = '<i class="fa-solid fa-ban"></i> Disable';
-                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 touch-manipulation w-full';
+                        btnDisable.className = 'py-3.5 font-bold rounded-xl shadow-lg shadow-red-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600 w-full';
                         btnDisable.onclick = function() { 
-                            openConfirmModal("Disable Account", "This user will lose access to the platform. Are you sure?", () => toggleUserStatus(userId, true)); 
+                            openConfirmModal("Disable Account", "User will lose access to the platform.", () => toggleUserStatus(userId, true)); 
                         };
                     }
 
-                    // Setup Verify Button with Custom Modal
+                    // Setup Verify Button
                     btnVerify.classList.remove('hidden');
                     btnVerify.disabled = false;
                     if (isVerified) {
-                        btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Un-Verify';
-                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 border w-full';
+                        btnVerify.innerHTML = '<i class="fa-solid fa-xmark"></i> Revoke';
+                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-slate-600 bg-white hover:bg-slate-50 border-slate-200 border w-full';
                         btnVerify.onclick = function() { 
-                            openConfirmModal("Remove Verification", "Are you sure you want to remove the verified badge?", () => toggleVerification(userId, false)); 
+                            openConfirmModal("Revoke Verification", "Remove the verified badge?", () => toggleVerification(userId, false)); 
                         };
                     } else {
                         btnVerify.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
-                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border w-full';
+                        btnVerify.className = 'py-3.5 font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200 border w-full';
                         btnVerify.onclick = function() { 
-                            openConfirmModal("Verify User", "This will grant the user a verified badge. Confirm?", () => toggleVerification(userId, true)); 
+                            openConfirmModal("Verify User", "Grant verified status to this user?", () => toggleVerification(userId, true)); 
                         };
                     }
 
@@ -716,7 +841,6 @@
 
         // 3. ACTIVITY LOG
         async function loadActivity() {
-            // Updated to fetch expanded details
             const donations = await db.collection('donations').orderBy('createdAt', 'desc').limit(20).get();
             const tbody = document.getElementById('activity-table-body');
             tbody.innerHTML = '';
@@ -724,19 +848,16 @@
             for (const doc of donations.docs) {
                 const data = doc.data();
                 
-                // Format Date & Time
-                let dateStr = 'N/A', timeStr = 'N/A';
+                let dateStr = 'N/A';
                 if (data.createdAt) {
                     const d = new Date(data.createdAt.seconds * 1000);
-                    dateStr = d.toLocaleDateString();
-                    timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    dateStr = `<div class="font-bold text-slate-700">${d.toLocaleDateString()}</div><div class="text-xs text-slate-400">${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
                 }
 
                 // Donor Link (FROM)
                 let donorHtml = '<span class="text-slate-400 text-xs italic">Unknown</span>';
                 if (data.donorId) {
                     const name = data.donorName || 'Donor';
-                    // Directly call openUserModal with the ID
                     donorHtml = `<button onclick="openUserModal('${data.donorId}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-left transition text-sm">${name}</button>`;
                 }
 
@@ -751,27 +872,24 @@
                 }
 
                 tbody.innerHTML += `
-                     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                        <td class="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">${dateStr}</td>
-                        <td class="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">${timeStr}</td>
-                        <td class="px-6 py-4 font-medium text-slate-800">Donation</td>
+                     <tr class="hover:bg-slate-50 transition border-b border-slate-50 group">
+                        <td class="px-6 py-4 whitespace-nowrap">${dateStr}</td>
                         <td class="px-6 py-4">
-                            <div class="flex flex-col gap-1.5">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">From:</span>
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="font-bold text-slate-400 w-8">FROM</span>
                                     ${donorHtml}
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">To:</span>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="font-bold text-slate-400 w-8">TO</span>
                                     ${receiverHtml}
-                                </div>
-                                <div class="flex items-center gap-2 mt-1 pt-1 border-t border-slate-100">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">Item:</span>
-                                    <span class="text-slate-700 font-medium text-sm">${data.foodItem || 'Food Packet'}</span>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">${data.status || 'Pending'}</span></td>
+                        <td class="px-6 py-4">
+                             <span class="text-slate-700 font-medium text-sm bg-slate-100 px-2 py-1 rounded border border-slate-200">${data.foodItem || 'Food Packet'}</span>
+                        </td>
+                        <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">${data.status || 'Pending'}</span></td>
                     </tr>
                 `;
             }
@@ -779,13 +897,7 @@
 
         // 4. REPORTS
         async function loadReports() {
-            // Changed logic to show Active Issues AND History (Resolved)
-            // Note: Requires an index in Firestore if data is large, but for 'in' query on small dataset it works.
-            // If 'in' query fails without index, fallback to just 'Issue' or client-side filtering.
-            
             try {
-                // Fetch all docs that are either Issues or Resolved issues
-                // We assume 'Resolved' is the status for closed issues.
                 const snapshot = await db.collection('donations')
                                        .where('status', 'in', ['Issue', 'Resolved'])
                                        .get();
@@ -793,13 +905,11 @@
                 const container = document.getElementById('reports-list');
                 
                 if(snapshot.empty) {
-                    container.innerHTML = '<div class="text-center py-10 text-slate-400">No reported issues found.</div>';
+                    container.innerHTML = '<div class="text-center py-12"><div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><i class="fa-solid fa-clipboard-check text-2xl"></i></div><p class="text-slate-500">No active issues found.</p></div>';
                     return;
                 }
 
                 container.innerHTML = '';
-                
-                // Sort client side (Issues first)
                 const docs = snapshot.docs.sort((a, b) => {
                     const sa = a.data().status;
                     const sb = b.data().status;
@@ -812,21 +922,21 @@
                     const data = doc.data();
                     const isResolved = data.status === 'Resolved';
                     
-                    const bgClass = isResolved ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100';
-                    const textClass = isResolved ? 'text-green-800' : 'text-red-800';
+                    const bgClass = isResolved ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100 shadow-sm';
+                    const iconClass = isResolved ? 'text-green-500' : 'text-red-500';
                     const btnHtml = isResolved 
-                        ? `<span class="px-3 py-1 bg-white text-green-600 rounded-lg text-sm font-bold border border-green-200"><i class="fa-solid fa-check"></i> Resolved</span>`
-                        : `<button onclick="resolveIssue('${doc.id}')" class="bg-white text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-50">Resolve Issue</button>`;
+                        ? `<span class="px-3 py-1 bg-white text-green-600 rounded-lg text-xs font-bold border border-green-200 shadow-sm"><i class="fa-solid fa-check"></i> Resolved</span>`
+                        : `<button onclick="resolveIssue('${doc.id}')" class="bg-white text-red-600 border border-red-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm transition">Resolve Issue</button>`;
 
                     container.innerHTML += `
-                        <div class="${bgClass} border rounded-xl p-4 flex justify-between items-center transition-all hover:shadow-sm">
-                            <div>
-                                <h4 class="font-bold ${textClass} flex items-center gap-2">
-                                    ${isResolved ? '' : '<i class="fa-solid fa-triangle-exclamation"></i>'}
-                                    Issue in Donation #${doc.id.slice(0,5)}
-                                </h4>
-                                <p class="text-sm opacity-80 mt-1">Reported by ${data.donorName || 'Unknown'}</p>
-                                <p class="text-xs opacity-60 mt-1">Status: ${data.status}</p>
+                        <div class="${bgClass} border rounded-2xl p-5 flex flex-col md:flex-row justify-between items-center transition-all hover:shadow-md gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="mt-1 ${iconClass} text-xl"><i class="fa-solid fa-circle-exclamation"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Issue in Donation #${doc.id.slice(0,5)}</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Reported by <span class="font-medium text-slate-700">${data.donorName || 'Unknown'}</span></p>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-bold">Status: ${data.status}</p>
+                                </div>
                             </div>
                             <div>${btnHtml}</div>
                         </div>
@@ -834,14 +944,12 @@
                 });
             } catch(e) {
                 console.error("Error loading reports", e);
-                document.getElementById('reports-list').innerHTML = '<div class="text-center text-red-400">Error loading reports. Check console.</div>';
             }
         }
 
         async function resolveIssue(id) {
             openConfirmModal("Resolve Issue", "Mark this issue as successfully resolved?", async () => {
                 try {
-                    // Update status to 'Resolved' instead of 'Completed' to keep it in history
                     await db.collection('donations').doc(id).update({ status: 'Resolved' });
                     loadReports();
                     loadStats();
@@ -875,7 +983,7 @@
                     message: msg,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     type: 'broadcast',
-                    targetAudience: targetType, // 'all', 'restaurant', 'orphanage', 'specific'
+                    targetAudience: targetType, 
                     targetUserId: targetType === 'specific' ? targetId : null
                 });
                 
@@ -896,10 +1004,9 @@
              const rows = document.querySelectorAll("#activity-table-body tr");
              rows.forEach(row => {
                  let rowData = [];
-                 // Basic text extraction, removing newlines
                  row.querySelectorAll("td").forEach(cell => {
                      let text = cell.innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
-                     rowData.push(`"${text}"`); // Quote to handle commas
+                     rowData.push(`"${text}"`);
                  });
                  csvContent += rowData.join(",") + "\n";
              });
