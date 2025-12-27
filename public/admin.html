@@ -375,7 +375,14 @@
 
     <script>
         // FIREBASE CONFIG
-        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "foodbridge-83163.firebaseapp.com",
+            projectId: "foodbridge-83163",
+            storageBucket: "foodbridge-83163.appspot.com",
+            messagingSenderId: "148332194600",
+            appId: "1:148332194600:web:d259c909677353f46f88ec"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -725,45 +732,45 @@
                     timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
 
-                // Get Donor Details (Address/Phone/Email)
-                let donorDetails = '<span class="text-xs text-gray-400">Loading...</span>';
-                let detailsHtml = '';
-
-                // Try to fetch donor info if donorId exists
+                // Donor Link (FROM)
+                let donorHtml = '<span class="text-slate-400 text-xs italic">Unknown</span>';
                 if (data.donorId) {
-                    // Note: In a production app, we might want to cache these or duplicate data to avoid N+1 queries.
-                    // For admin dashboard with limit(20), this is acceptable.
-                    try {
-                        const userDoc = await db.collection('users').doc(data.donorId).get();
-                        if (userDoc.exists) {
-                            const u = userDoc.data();
-                            detailsHtml = `
-                                <div class="text-xs">
-                                    <div class="font-bold text-slate-700">${data.foodItem || 'Donation'}</div>
-                                    <div class="text-slate-500"><i class="fa-solid fa-envelope w-4"></i> ${u.email || 'N/A'}</div>
-                                    <div class="text-slate-500"><i class="fa-solid fa-phone w-4"></i> ${u.phone || 'N/A'}</div>
-                                    <div class="text-slate-500 truncate w-32" title="${u.address || ''}"><i class="fa-solid fa-location-dot w-4"></i> ${u.address || 'N/A'}</div>
-                                </div>
-                            `;
-                        }
-                    } catch(err) { console.error("Error fetching donor", err); }
+                    const name = data.donorName || 'Donor';
+                    // Directly call openUserModal with the ID
+                    donorHtml = `<button onclick="openUserModal('${data.donorId}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-left transition text-sm">${name}</button>`;
                 }
 
-                if (!detailsHtml) {
-                    detailsHtml = `
-                        <div class="text-xs">
-                             <div class="font-bold text-slate-700">${data.foodItem || 'Donation'}</div>
-                             <div class="text-slate-500">Donor info unavailable</div>
-                        </div>
-                    `;
+                // Receiver Link (TO)
+                let receiverHtml = '<span class="text-slate-400 text-xs">-</span>';
+                const recId = data.receiverId || data.claimedBy;
+                const recName = data.receiverName || data.claimedByName;
+                
+                if (recId) {
+                     const rName = recName || 'Receiver';
+                     receiverHtml = `<button onclick="openUserModal('${recId}')" class="font-bold text-green-600 hover:text-green-800 hover:underline text-left transition text-sm">${rName}</button>`;
                 }
 
                 tbody.innerHTML += `
-                     <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                         <td class="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">${dateStr}</td>
                         <td class="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">${timeStr}</td>
                         <td class="px-6 py-4 font-medium text-slate-800">Donation</td>
-                        <td class="px-6 py-4">${detailsHtml}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">From:</span>
+                                    ${donorHtml}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">To:</span>
+                                    ${receiverHtml}
+                                </div>
+                                <div class="flex items-center gap-2 mt-1 pt-1 border-t border-slate-100">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">Item:</span>
+                                    <span class="text-slate-700 font-medium text-sm">${data.foodItem || 'Food Packet'}</span>
+                                </div>
+                            </div>
+                        </td>
                         <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">${data.status || 'Pending'}</span></td>
                     </tr>
                 `;
