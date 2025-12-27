@@ -337,12 +337,19 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Target Audience</label>
-                        <select id="bc-target" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <select id="bc-target" onchange="toggleBroadcastTarget()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
                             <option value="all">All Users</option>
                             <option value="restaurant">Restaurants Only</option>
                             <option value="orphanage">Orphanages Only</option>
+                            <option value="specific">Specific User (ID)</option>
                         </select>
                     </div>
+                    <!-- New hidden field for specific user ID -->
+                    <div id="bc-specific-container" class="hidden animate-fade-in">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">User ID</label>
+                        <input type="text" id="bc-user-id" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition font-mono" placeholder="Paste User ID here...">
+                    </div>
+
                     <button onclick="sendBroadcast()" id="btn-send-bc" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i> Send Broadcast
                     </button>
@@ -585,36 +592,69 @@
         }
 
         // --- BROADCAST FUNCTIONALITY ---
+        
+        // NEW Helper to toggle the ID input
+        function toggleBroadcastTarget() {
+            const target = document.getElementById('bc-target').value;
+            const container = document.getElementById('bc-specific-container');
+            if (target === 'specific') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
         async function sendBroadcast() {
             const title = document.getElementById('bc-title').value;
             const message = document.getElementById('bc-message').value;
             const target = document.getElementById('bc-target').value;
+            const specificUserId = document.getElementById('bc-user-id').value.trim(); // Get specific ID
             const btn = document.getElementById('btn-send-bc');
 
-            if(!title || !message) { alert("Please fill in all fields."); return; }
+            if(!title || !message) { alert("Please fill in title and message."); return; }
+
+            // Validate specific user ID
+            if (target === 'specific' && !specificUserId) {
+                alert("Please enter a User ID for specific broadcast.");
+                return;
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
 
             try {
-                // We create a new collection 'notifications'
-                await db.collection('notifications').add({
+                // Construct the payload
+                const payload = {
                     title: title,
                     message: message,
-                    targetAudience: target, // 'all', 'restaurant', 'orphanage'
+                    targetAudience: target, // 'all', 'restaurant', 'orphanage', 'specific'
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     isRead: false
-                });
+                };
+
+                // Add specific ID if applicable
+                if (target === 'specific') {
+                    payload.targetUserId = specificUserId;
+                }
+
+                await db.collection('notifications').add(payload);
 
                 // Update UI log
                 const history = document.getElementById('broadcast-history');
-                const newItem = `<div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-sm animate-fade-in"><span class="font-bold block text-gray-800">${title}</span><span class="text-gray-600">${new Date().toLocaleTimeString()} - Target: ${target}</span></div>`;
+                let targetDisplay = target;
+                if(target === 'specific') targetDisplay = `User: ${specificUserId}`; // Show ID in log
+
+                const newItem = `<div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-sm animate-fade-in"><span class="font-bold block text-gray-800">${title}</span><span class="text-gray-600">${new Date().toLocaleTimeString()} - Target: ${targetDisplay}</span></div>`;
                 if(history.innerHTML.includes("No recent")) history.innerHTML = newItem;
                 else history.innerHTML = newItem + history.innerHTML;
 
                 // Clear form
                 document.getElementById('bc-title').value = '';
                 document.getElementById('bc-message').value = '';
+                document.getElementById('bc-user-id').value = ''; // Clear ID field
+                document.getElementById('bc-target').value = 'all'; // Reset dropdown
+                toggleBroadcastTarget(); // Reset UI state
+
                 alert("Broadcast sent successfully!");
 
             } catch(e) {
