@@ -17,16 +17,6 @@
     <meta name="theme-color" content="#F97316">
 <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7541/7541900.png">
 
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(reg => console.log('SW registered: ', reg.scope))
-                .catch(err => console.log('SW registration failed: ', err));
-        });
-    }
-</script>
-
     <script>
         tailwind.config = {
             theme: {
@@ -527,5 +517,49 @@
             }
         }
     </script>
+    <button id="install-btn" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-brand-dark text-white px-6 py-3 rounded-full shadow-2xl z-50 font-bold text-sm flex items-center gap-2 animate-bounce hover:bg-gray-800 transition">
+    <i class="fa-solid fa-download"></i> Install App
+</button>
+    <script>
+    // 1. Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed', err));
+        });
+    }
+
+    // 2. Handle "Install App" Button
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Show our custom install button
+        installBtn.classList.remove('hidden');
+    });
+
+    installBtn.addEventListener('click', async () => {
+        // Hide the button
+        installBtn.classList.add('hidden');
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        // We've used the prompt, and can't use it again, discard it
+        deferredPrompt = null;
+    });
+
+    // 3. Hide button if app is already installed
+    window.addEventListener('appinstalled', () => {
+        installBtn.classList.add('hidden');
+        console.log('PWA was installed');
+    });
+</script>
 </body>
 </html>
