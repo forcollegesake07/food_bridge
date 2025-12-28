@@ -12,8 +12,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -35,12 +33,8 @@
             background-size: cover; background-position: center;
         }
         /* Map containers */
-        #route-map-container, #location-map-container { height: 350px; width: 100%; border-radius: 1rem; z-index: 1; }
-        
-        /* QR Scanner Styles */
-        #qr-video-container { position: relative; width: 100%; height: 300px; overflow: hidden; background: #000; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; }
-        #reader { width: 100%; height: 100%; border: none !important; }
-        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        #route-map-container { height: 350px; z-index: 1; border-radius: 1rem; }
+        #location-map-container { height: 300px; z-index: 1; border-radius: 1rem; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
@@ -99,9 +93,13 @@
             <div class="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold text-white drop-shadow-md">Available Deliveries</h1>
-                    <p class="text-gray-100 text-sm mt-1">Accept jobs within 10km of your location.</p>
+                    <p class="text-gray-100 text-sm mt-1">Help transport food from Restaurant to Orphanage.</p>
+                </div>
+                <div class="bg-blue-600 px-4 py-2 rounded-full text-white text-xs font-bold shadow-lg animate-pulse">
+                    <i class="fa-solid fa-satellite-dish mr-2"></i> Live Feed (10km Radius)
                 </div>
             </div>
+
             <div id="jobs-container" class="space-y-4">
                 <p class="text-white text-center py-10">Searching for donations near you...</p>
             </div>
@@ -111,25 +109,40 @@
             <h1 class="text-3xl font-extrabold text-white drop-shadow-md">Current Job</h1>
             
             <div id="active-job-card" class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 min-h-[400px] flex items-center justify-center">
-                </div>
+                <p class="text-gray-400">No active delivery. Accept a job first!</p>
+            </div>
         </div>
 
         <div id="tab-history" class="max-w-4xl mx-auto space-y-6 hidden animate-fade-in">
             <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl font-extrabold text-white drop-shadow-md">My Impact</h1>
+                
                 <div class="relative">
-                    <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-blue transition relative z-20 active:bg-gray-100">
+                    <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-blue transition relative z-20 active:bg-gray-100 touch-manipulation">
                         <i class="fa-solid fa-bell text-xl"></i>
+                        <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                     </button>
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100">
-                        <div id="notif-list" class="max-h-64 overflow-y-auto p-2"></div>
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
+                        <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
+                            <span>Notifications</span>
+                            <span class="text-[10px] text-gray-400 font-normal">Recent Updates</span>
+                        </div>
+                        <div id="notif-list" class="max-h-64 overflow-y-auto smooth-scroll-touch">
+                            <p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase">
-                        <tr><th class="px-6 py-4">Date</th><th class="px-6 py-4">Restaurant</th><th class="px-6 py-4">Orphanage</th><th class="px-6 py-4">Status</th></tr>
+                        <tr>
+                            <th class="px-6 py-4">Date</th>
+                            <th class="px-6 py-4">Restaurant</th>
+                            <th class="px-6 py-4">Orphanage</th>
+                            <th class="px-6 py-4">Status</th>
+                        </tr>
                     </thead>
                     <tbody id="history-list" class="divide-y divide-gray-100"></tbody>
                 </table>
@@ -138,40 +151,43 @@
 
         <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-6">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
-                <div class="pt-10 pb-6 px-6 text-center">
+                <div class="h-24 md:h-32 bg-gradient-to-r from-blue-700 to-blue-900 relative">
+                    <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
+                        <div class="w-20 h-20 bg-white p-1.5 rounded-full shadow-lg">
+                            <div class="w-full h-full bg-brand-blue text-white rounded-full flex items-center justify-center text-2xl font-bold"><i class="fa-solid fa-user-gear"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-14 pb-6 px-6 text-center">
                     <h2 class="text-xl font-bold text-gray-800">Volunteer Profile</h2>
                     <p class="text-gray-500 text-xs mt-1">Set your location to find nearby jobs.</p>
                 </div>
                 <form onsubmit="saveProfile(event)" class="px-6 pb-8 space-y-5">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Full Name</label><input type="text" id="detail-name" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl"></div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Current Location (Leaflet Map)</label>
-                        <textarea id="detail-address" rows="2" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl mb-3" placeholder="Drag marker to set location..."></textarea>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Full Name</label>
+                        <input type="text" id="detail-name" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label>
+                        <input type="tel" id="detail-phone" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Current Location (For 10km Radius)</label>
+                        <textarea id="detail-address" rows="2" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800 mb-3" placeholder="Drag marker to set location..."></textarea>
                         <div id="location-map-container" class="w-full rounded-xl border border-gray-300 overflow-hidden relative"></div>
                         <p class="text-xs text-gray-400 mt-1 italic"><i class="fa-solid fa-circle-info"></i> Drag the blue marker to your waiting spot.</p>
                     </div>
-                    <button type="submit" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-blue-600 shadow-lg">Save & Update Feed</button>
+
+                    <button type="submit" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-blue-600 transition-all shadow-lg transform active:scale-[0.99]">Save & Update Feed</button>
                 </form>
             </div>
         </div>
 
     </main>
 
-    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative transform scale-95 transition-all duration-300 flex flex-col">
-            <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10">
-                <div><h3 class="text-xl font-bold text-gray-800">Scan QR</h3><p class="text-xs text-gray-400">Scan code at Restaurant</p></div>
-                <button onclick="closeScannerModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="relative w-full bg-black" id="qr-video-container">
-                <div id="reader"></div>
-            </div>
-        </div>
-    </div>
-
     <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50">
-        <i class="fa-solid fa-circle-check text-green-400 text-lg"></i><p class="text-sm" id="toast-message">Success</p>
+        <i class="fa-solid fa-circle-check text-green-400 text-lg"></i>
+        <p class="text-sm" id="toast-message">Success</p>
     </div>
 
     <div id="notification-container" class="fixed top-4 right-4 z-[100] space-y-3 w-full max-w-sm px-4 md:px-0 pointer-events-none"></div>
@@ -184,59 +200,236 @@
         let currentUser = null;
         let userData = {};
         
-        let routeMap = null, locationMap = null, locationMarker = null;
+        let broadcastNotifs = [];
+        
+        // Maps
+        let routeMap = null;
+        let locationMap = null, locationMarker = null;
         let currentLat = 0, currentLng = 0;
-        let html5QrCode = null;
-        let pendingScanDocId = null;
 
+        // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists && doc.data().role === 'volunteer') {
                     userData = doc.data();
+                    
+                    // UI Updates
                     document.getElementById('sidebar-name').innerText = userData.name || "Volunteer";
                     document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
                     document.getElementById('detail-name').value = userData.name || "";
                     document.getElementById('detail-phone').value = userData.phone || "";
                     document.getElementById('detail-address').value = userData.address || "";
                     
-                    if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
-                    if(!userData.userId) await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    if(userData.location) {
+                        currentLat = userData.location.lat;
+                        currentLng = userData.location.lng;
+                    }
 
-                    loadAvailableJobs(); loadActiveJob(); loadHistory();
-                } else { window.location.href = 'login.html'; }
-            } else { window.location.href = 'login.html'; }
+                    // Ensure userId exists
+                    if(!userData.userId) {
+                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    }
+
+                    // Start Listeners
+                    listenForBroadcasts(user.uid, userData.role);
+                    loadBroadcasts();
+                    loadAvailableJobs();
+                    loadActiveJob();
+                    loadHistory();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
         });
 
-        // 1. LOAD AVAILABLE JOBS
-        function loadAvailableJobs() {
-            db.collection('donations').where('status', '==', 'Claimed').onSnapshot(snap => {
-                const container = document.getElementById('jobs-container'); container.innerHTML = '';
-                if (!currentLat || !currentLng) { container.innerHTML = `<div class="bg-red-500/10 p-8 text-center text-white rounded-2xl"><p>Set location in Details tab first.</p></div>`; return; }
-                
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    if (d.deliveryStatus) return; // Skip if already assigned
-                    
-                    const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
-                    if (dist <= 10) { 
-                        container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative">
-                            <div class="absolute top-4 right-4 bg-gray-100 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-location-arrow"></i> ${(dist).toFixed(1)} km</div>
-                            <h3 class="text-lg font-bold text-gray-800 mb-2">${d.foodName}</h3>
-                            <div class="flex gap-4 text-sm text-gray-600 mb-4">
-                                <div><span class="font-bold">From:</span> ${d.restaurantName}</div>
-                                <div><span class="font-bold">To:</span> ${d.orphanageName}</div>
-                            </div>
-                            <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow hover:bg-blue-600 transition">Accept Delivery</button>
-                        </div>`;
-                    }
+        // --- NOTIFICATION LOGIC ---
+        
+        function listenForBroadcasts(userId, role) {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); 
+            
+            db.collection('notifications')
+                .where('createdAt', '>', oneHourAgo)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const note = change.doc.data();
+                            const isForAll = note.targetAudience === 'all';
+                            const isForRole = note.targetAudience === role; // role is 'volunteer'
+                            const isForMe = note.targetAudience === 'specific' && note.targetUserId === userId;
+
+                            if (isForAll || isForRole || isForMe) {
+                                showInAppNotification(note.title, note.message);
+                            }
+                        }
+                    });
                 });
-            });
         }
 
-        // 2. LOAD ACTIVE JOB & SETUP BUTTONS
+        function loadBroadcasts() {
+            db.collection('notifications')
+              .where('targetAudience', 'in', ['all', 'volunteer', 'specific'])
+              .orderBy('createdAt', 'desc')
+              .limit(10)
+              .onSnapshot(snap => {
+                  broadcastNotifs = [];
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      // Double check specific user ID match for 'specific' type
+                      if(d.targetAudience === 'all' || d.targetAudience === 'volunteer' || (d.targetAudience === 'specific' && d.targetUserId === currentUser.uid)) {
+                          broadcastNotifs.push({
+                              type: 'broadcast',
+                              title: d.title || 'System Broadcast',
+                              message: d.message,
+                              time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
+                          });
+                      }
+                  });
+                  renderAllNotifs();
+              });
+        }
+
+        function showInAppNotification(title, message) {
+            const container = document.getElementById('notification-container');
+            if(!container) return;
+            const el = document.createElement('div');
+            el.className = "bg-white border-l-4 border-blue-500 rounded-lg p-4 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto flex items-start gap-3 w-full";
+            el.innerHTML = `
+                <div class="text-blue-500 mt-1 flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
+                <div class="flex-grow">
+                    <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
+                    <p class="text-gray-600 text-xs mt-1 leading-relaxed">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(el);
+            
+            requestAnimationFrame(() => el.classList.remove('translate-x-full'));
+            setTimeout(() => {
+                el.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => el.remove(), 300);
+            }, 6000); 
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function renderAllNotifs() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
+            // For now, only broadcasts are in the list for drivers. 
+            // You can add delivery updates here later if needed.
+            const all = [...broadcastNotifs].sort((a,b) => b.time - a.time);
+            
+            if (all.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
+                list.innerHTML = '';
+                all.forEach(n => {
+                    let iconClass = 'fa-tower-broadcast';
+                    let iconColor = 'text-brand-orange';
+                    
+                    list.innerHTML += `
+                        <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">${n.title}</p>
+                                    <p class="text-xs text-gray-600 line-clamp-2">${n.message}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                badge.classList.remove('hidden');
+            }
+        }
+
+        // --- EXISTING LOGIC ---
+
+        // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
+        // 1. LOAD AVAILABLE JOBS (Fixed: Finds jobs with missing deliveryStatus)
+        function loadAvailableJobs() {
+            db.collection('donations')
+                .where('status', '==', 'Claimed')
+                // REMOVED .where('deliveryStatus', '==', null) because it filters out missing fields
+                .onSnapshot(snap => {
+                    const container = document.getElementById('jobs-container');
+                    container.innerHTML = '';
+                    
+                    if (!currentLat || !currentLng) {
+                        container.innerHTML = `<div class="bg-red-500/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-red-500/20"><i class="fa-solid fa-location-dot text-4xl mb-3 opacity-80"></i><p class="font-bold">Location Required</p><p class="text-sm opacity-80">Please go to 'Details' tab and set your location to find nearby jobs.</p></div>`;
+                        return;
+                    }
+                    
+                    let count = 0;
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        
+                        // Manual Filter: Skip if delivery is already assigned, picked up, or self-pickup
+                        if (d.deliveryStatus) return; 
+
+                        // Distance Filter
+                        const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
+                        
+                        if (dist <= 10) { // 10km Filter
+                            count++;
+                            const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
+                            const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
+
+                            container.innerHTML += `
+                            <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                                <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10">
+                                    <i class="fa-solid fa-location-arrow mr-1"></i>${distDisplay}
+                                </div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
+                                        <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
+                                    <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">From (Restaurant)</p>
+                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-store text-brand-orange mr-1"></i> ${d.restaurantName}</p>
+                                        <p class="text-xs text-gray-500 truncate">${d.restaurantAddress || 'Address N/A'}</p>
+                                    </div>
+                                    <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">To (Orphanage)</p>
+                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-hands-holding-child text-brand-green mr-1"></i> ${d.orphanageName}</p>
+                                        <p class="text-xs text-gray-500 truncate">${d.orphanageAddress || 'Address N/A'}</p>
+                                    </div>
+                                </div>
+
+                                <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition flex items-center justify-center gap-2">
+                                    <span>Accept Delivery</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>`;
+                        }
+                    });
+                    
+                    if (count === 0) {
+                         container.innerHTML = `<div class="bg-white/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-white/20"><i class="fa-solid fa-check-circle text-4xl mb-3 opacity-50"></i><p>No jobs found within 10km.</p></div>`;
+                    }
+                });
+        }
+
+        // 2. LOAD ACTIVE JOB
         function loadActiveJob() {
             db.collection('donations')
                 .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
@@ -244,195 +437,220 @@
                 .limit(1)
                 .onSnapshot(snap => {
                     const container = document.getElementById('active-job-card');
-                    if (snap.empty) { container.innerHTML = `<div class="text-center p-10"><p class="text-gray-500">No active delivery.</p></div>`; return; }
+                    if (snap.empty) {
+                        container.innerHTML = `<div class="text-center p-10"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fa-solid fa-route"></i></div><p class="text-gray-500 font-medium">You have no active deliveries.</p><button onclick="switchTab('jobs')" class="mt-4 text-brand-blue font-bold text-sm hover:underline">Find a Job</button></div>`;
+                        return;
+                    }
 
                     const doc = snap.docs[0];
                     const d = doc.data();
                     const isPickedUp = d.deliveryStatus === 'PickedUp';
-                    
-                    // Coordinates
                     const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
                     const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 };
 
-                    // Navigation Logic (Google Maps Links)
-                    let navUrl = "";
-                    let navLabel = "";
-                    
-                    if (!isPickedUp) {
-                        navUrl = `https://www.google.com/maps/dir/?api=1&destination=${restLoc.lat},${restLoc.lng}`;
-                        navLabel = "Navigate to Restaurant";
-                    } else {
-                        // Use Orphanage Address or Coords
-                        const destQuery = d.orphanageAddress ? encodeURIComponent(d.orphanageAddress) : `${orphLoc.lat},${orphLoc.lng}`;
-                        navUrl = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
-                        navLabel = "Navigate to Orphanage";
-                    }
-
                     container.innerHTML = `
                         <div class="w-full h-full flex flex-col">
-                            <div id="route-map-container" class="w-full h-64 bg-gray-200 relative"></div>
-                            <div class="p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h2 class="text-xl font-bold text-gray-800">Current Route</h2>
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${isPickedUp ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}">
-                                        ${isPickedUp ? 'Heading to Dropoff' : 'Heading to Pickup'}
-                                    </span>
-                                </div>
-                                
-                                <div class="flex gap-3 mb-4">
-                                    <a href="${navUrl}" target="_blank" class="flex-1 py-3 bg-white border-2 border-blue-500 text-blue-600 font-bold rounded-xl shadow-sm hover:bg-blue-50 flex items-center justify-center gap-2 text-sm transition">
-                                        <i class="fa-solid fa-location-arrow"></i> ${navLabel}
-                                    </a>
-
-                                    ${!isPickedUp ? 
-                                        `<button onclick="openScanner('${doc.id}')" class="flex-1 py-3 bg-brand-orange text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition text-sm flex items-center justify-center gap-2">
-                                            <i class="fa-solid fa-qrcode"></i> Scan Pickup
-                                        </button>` : 
-                                        `<button onclick="updateStatus('${doc.id}', 'Completed')" class="flex-1 py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition text-sm flex items-center justify-center gap-2">
-                                            <i class="fa-solid fa-check"></i> Mark Delivered
-                                        </button>`
-                                    }
-                                </div>
-
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex gap-2"><i class="fa-solid fa-store text-brand-orange"></i> <span>${d.restaurantName}</span></div>
-                                    <div class="flex gap-2"><i class="fa-solid fa-house text-brand-green"></i> <span>${d.orphanageName}</span></div>
+                            <div id="route-map-container" class="w-full h-64 bg-gray-200"></div>
+                            <div class="p-6 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h2 class="text-xl font-bold text-gray-800">Current Route</h2>
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${isPickedUp ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}">
+                                            ${isPickedUp ? 'On the way to Dropoff' : 'On the way to Pickup'}
+                                        </span>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex flex-col items-center">
+                                                <div class="w-3 h-3 rounded-full bg-brand-orange"></div>
+                                                <div class="w-0.5 h-full bg-gray-200 min-h-[30px]"></div>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-gray-400 uppercase font-bold">Pickup</p>
+                                                <p class="font-bold text-gray-800">${d.restaurantName}</p>
+                                                <p class="text-xs text-gray-500">${d.restaurantAddress}</p>
+                                                ${!isPickedUp ? `<button onclick="updateStatus('${doc.id}', 'PickedUp')" class="mt-2 px-4 py-2 bg-brand-orange text-white text-xs font-bold rounded-lg shadow-md hover:bg-orange-600">Mark Picked Up</button>` : '<p class="text-green-500 text-xs font-bold mt-1"><i class="fa-solid fa-check"></i> Completed</p>'}
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex flex-col items-center">
+                                                <div class="w-3 h-3 rounded-full bg-brand-green"></div>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-gray-400 uppercase font-bold">Dropoff</p>
+                                                <p class="font-bold text-gray-800">${d.orphanageName}</p>
+                                                <p class="text-xs text-gray-500">${d.orphanageAddress}</p>
+                                                ${isPickedUp ? `<button onclick="updateStatus('${doc.id}', 'Completed')" class="mt-2 px-4 py-2 bg-brand-green text-white text-xs font-bold rounded-lg shadow-md hover:bg-green-600">Mark Delivered</button>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
 
-                    // Initialize Map
                     setTimeout(() => {
                         if(routeMap) { routeMap.remove(); }
                         routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
-                        L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Pickup");
-                        L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Dropoff");
+                        L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Restaurant").openPopup();
+                        L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Orphanage");
                         L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
-                        // FIX: Invalidate size so map renders fully
-                        routeMap.invalidateSize();
-                    }, 200);
+                    }, 100);
                 });
         }
 
-        // 3. SCANNER LOGIC
-        function openScanner(docId) {
-            pendingScanDocId = docId;
-            document.getElementById('scanner-modal').classList.remove('hidden');
-            document.getElementById('scanner-modal').classList.remove('opacity-0');
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-                .catch(err => { console.error(err); showToast("Camera Error", "error"); closeScannerModal(); });
-            }
-        }
-
-        function closeScannerModal() {
-            document.getElementById('scanner-modal').classList.add('hidden');
-            if(html5QrCode) { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }); }
-        }
-
-        function onScanSuccess(decodedText) {
-            if (decodedText === pendingScanDocId) {
-                if(html5QrCode) {
-                    html5QrCode.stop().then(() => {
-                        html5QrCode.clear(); html5QrCode = null;
-                        document.getElementById('scanner-modal').classList.add('hidden');
-                        updateStatus(pendingScanDocId, 'PickedUp');
+        // 3. LOAD HISTORY
+        function loadHistory() {
+            db.collection('donations')
+                .where('deliveredBy', '==', currentUser.uid)
+                .where('deliveryStatus', '==', 'Completed')
+                .orderBy('completedAt', 'desc')
+                .onSnapshot(snap => {
+                    const list = document.getElementById('history-list');
+                    list.innerHTML = '';
+                    if (snap.empty) {
+                        list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No completed deliveries yet.</td></tr>';
+                        return;
+                    }
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const date = d.completedAt ? new Date(d.completedAt.seconds * 1000).toLocaleDateString() : '-';
+                        list.innerHTML += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">${date}</td>
+                                <td class="px-6 py-4 text-gray-500">${d.restaurantName}</td>
+                                <td class="px-6 py-4 text-gray-500">${d.orphanageName}</td>
+                                <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Delivered</span></td>
+                            </tr>
+                        `;
                     });
-                }
-            } else {
-                showToast("Invalid QR Code!", "error");
-            }
+                });
         }
 
-        // 4. MAP FOR LOCATION SETTING
-        function initLocationMap() {
-            if (locationMap) { locationMap.invalidateSize(); return; }
-            const lat = currentLat || 20.5937; const lng = currentLng || 78.9629;
-            locationMap = L.map('location-map-container').setView([lat, lng], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locationMap);
-            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
-            locationMarker.on('dragend', function () {
-                const pos = locationMarker.getLatLng();
-                currentLat = pos.lat; currentLng = pos.lng;
-                fetchAddress(currentLat, currentLng);
-            });
-            // FIX: Invalidate size
-            setTimeout(() => locationMap.invalidateSize(), 100);
-        }
-
-        // 5. HELPERS
-        async function fetchAddress(lat, lng) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                const data = await res.json();
-                if (data.display_name) document.getElementById("detail-address").value = data.display_name;
-            } catch(e) {}
-        }
-
-        async function acceptDelivery(docId) {
-            await db.collection('donations').doc(docId).update({
-                deliveryStatus: 'Assigned',
-                deliveredBy: currentUser.uid,
-                driverName: userData.name || 'Volunteer',
-                driverPhone: userData.phone || ''
-            });
-            showToast("Delivery Accepted!");
-            switchTab('active');
-        }
-
-        async function updateStatus(docId, status) {
-            const updates = { deliveryStatus: status };
-            if (status === 'Completed') { updates.status = 'Completed'; updates.completedAt = firebase.firestore.FieldValue.serverTimestamp(); }
-            await db.collection('donations').doc(docId).update(updates);
-            showToast(status === 'PickedUp' ? "Pickup Verified!" : "Delivery Completed!");
-            if (status === 'Completed') switchTab('history');
-        }
-
+        // 4. SAVE PROFILE
         async function saveProfile(e) {
             e.preventDefault();
             const name = document.getElementById('detail-name').value;
             const phone = document.getElementById('detail-phone').value;
             const address = document.getElementById('detail-address').value;
-            await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } });
-            userData.name = name; userData.location = { lat: currentLat, lng: currentLng };
-            document.getElementById('sidebar-name').innerText = name;
-            showToast("Profile Updated!");
-            loadAvailableJobs();
+
+            try {
+                await db.collection('users').doc(currentUser.uid).update({
+                    name, phone, address,
+                    location: { lat: currentLat, lng: currentLng }
+                });
+                userData.name = name; 
+                userData.location = { lat: currentLat, lng: currentLng };
+                
+                document.getElementById('sidebar-name').innerText = name;
+                showToast("Profile & Location Updated!");
+                loadAvailableJobs();
+            } catch (err) {
+                console.error(err);
+                showToast("Error updating profile", "error");
+            }
+        }
+
+        // MAP LOGIC
+        function initLocationMap() {
+            if (locationMap) { locationMap.invalidateSize(); return; }
+            
+            const lat = currentLat || 20.5937;
+            const lng = currentLng || 78.9629;
+            const zoom = currentLat ? 13 : 5;
+
+            locationMap = L.map('location-map-container').setView([lat, lng], zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locationMap);
+            
+            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+
+            locationMarker.on('dragend', function () {
+                const position = locationMarker.getLatLng();
+                currentLat = position.lat;
+                currentLng = position.lng;
+                fetchAddressFromLatLng(currentLat, currentLng);
+            });
+            
+            if (!currentLat) {
+                locationMap.locate({setView: true, maxZoom: 16});
+                locationMap.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat;
+                    currentLng = e.latlng.lng;
+                    locationMarker.setLatLng(e.latlng);
+                    fetchAddressFromLatLng(currentLat, currentLng);
+                });
+            }
+        }
+
+        async function fetchAddressFromLatLng(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                if (data && data.display_name) {
+                    document.getElementById("detail-address").value = data.display_name;
+                }
+            } catch (err) { console.error("Address fetch failed", err); }
+        }
+
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1); 
+            var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c;
+        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        async function acceptDelivery(docId) {
+            try {
+                await db.collection('donations').doc(docId).update({
+                    deliveryStatus: 'Assigned',
+                    deliveredBy: currentUser.uid,
+                    driverName: userData.name || 'Volunteer',
+                    driverPhone: userData.phone || ''
+                });
+                showToast("Delivery Accepted!");
+                switchTab('active');
+            } catch (err) { console.error(err); showToast("Error", "error"); }
+        }
+
+        async function updateStatus(docId, status) {
+            try {
+                const updates = { deliveryStatus: status };
+                if (status === 'Completed') {
+                    updates.status = 'Completed';
+                    updates.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+                }
+                await db.collection('donations').doc(docId).update(updates);
+                showToast("Status Updated");
+                if (status === 'Completed') switchTab('history');
+            } catch (err) { console.error(err); showToast("Error", "error"); }
         }
 
         function switchTab(tab) {
             ['jobs', 'active', 'history', 'details'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 document.getElementById('btn-' + t).classList.remove('bg-brand-blue', 'text-white', 'shadow-md');
-                document.getElementById('btn-' + t).classList.add('text-gray-500');
+                document.getElementById('btn-' + t).classList.add('text-gray-500', 'hover:bg-gray-50');
             });
             
             document.getElementById('tab-' + tab).classList.remove('hidden');
             document.getElementById('btn-' + tab).classList.add('bg-brand-blue', 'text-white', 'shadow-md');
-            document.getElementById('btn-' + tab).classList.remove('text-gray-500');
+            document.getElementById('btn-' + tab).classList.remove('text-gray-500', 'hover:bg-gray-50');
 
-            if (tab === 'details') setTimeout(initLocationMap, 200);
-            // Fix map resize issues when switching tabs
-            if (tab === 'active' && routeMap) setTimeout(() => routeMap.invalidateSize(), 200);
+            if (tab === 'details') { setTimeout(initLocationMap, 200); }
         }
 
         function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
         function showToast(msg, type='success') {
-            const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg;
-            t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            t.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
         }
-        function loadHistory() { /* ...kept simple... */ }
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { if(!lat1) return 999; var R=6371; var dLat=(lat2-lat1)*(Math.PI/180); var dLon=(lon2-lon1)*(Math.PI/180); var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2); var c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); return R*c; }
-        
-        // Notifications Stubs
-        function toggleNotifications() {} 
-        function listenForBroadcasts() {}
-        function loadBroadcasts() {}
     </script>
 </body>
 </html>
