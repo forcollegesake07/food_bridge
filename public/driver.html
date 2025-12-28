@@ -114,7 +114,26 @@
         </div>
 
         <div id="tab-history" class="max-w-4xl mx-auto space-y-6 hidden animate-fade-in">
-            <h1 class="text-3xl font-extrabold text-white drop-shadow-md">My Impact</h1>
+            <div class="flex items-center justify-between relative">
+                <h1 class="text-3xl font-extrabold text-white drop-shadow-md">My Impact</h1>
+                
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-blue transition relative z-20 active:bg-gray-100 touch-manipulation">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
+                    </button>
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
+                        <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
+                            <span>Notifications</span>
+                            <span class="text-[10px] text-gray-400 font-normal">Recent Updates</span>
+                        </div>
+                        <div id="notif-list" class="max-h-64 overflow-y-auto smooth-scroll-touch">
+                            <p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase">
@@ -171,6 +190,8 @@
         <p class="text-sm" id="toast-message">Success</p>
     </div>
 
+    <div id="notification-container" class="fixed top-4 right-4 z-[100] space-y-3 w-full max-w-sm px-4 md:px-0 pointer-events-none"></div>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
@@ -178,6 +199,8 @@
         const db = firebase.firestore();
         let currentUser = null;
         let userData = {};
+        
+        let broadcastNotifs = [];
         
         // Maps
         let routeMap = null;
@@ -204,6 +227,14 @@
                         currentLng = userData.location.lng;
                     }
 
+                    // Ensure userId exists
+                    if(!userData.userId) {
+                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    }
+
+                    // Start Listeners
+                    listenForBroadcasts(user.uid, userData.role);
+                    loadBroadcasts();
                     loadAvailableJobs();
                     loadActiveJob();
                     loadHistory();
@@ -214,6 +245,120 @@
                 window.location.href = 'login.html';
             }
         });
+
+        // --- NOTIFICATION LOGIC ---
+        
+        function listenForBroadcasts(userId, role) {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); 
+            
+            db.collection('notifications')
+                .where('createdAt', '>', oneHourAgo)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const note = change.doc.data();
+                            const isForAll = note.targetAudience === 'all';
+                            const isForRole = note.targetAudience === role; // role is 'volunteer'
+                            const isForMe = note.targetAudience === 'specific' && note.targetUserId === userId;
+
+                            if (isForAll || isForRole || isForMe) {
+                                showInAppNotification(note.title, note.message);
+                            }
+                        }
+                    });
+                });
+        }
+
+        function loadBroadcasts() {
+            db.collection('notifications')
+              .where('targetAudience', 'in', ['all', 'volunteer', 'specific'])
+              .orderBy('createdAt', 'desc')
+              .limit(10)
+              .onSnapshot(snap => {
+                  broadcastNotifs = [];
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      // Double check specific user ID match for 'specific' type
+                      if(d.targetAudience === 'all' || d.targetAudience === 'volunteer' || (d.targetAudience === 'specific' && d.targetUserId === currentUser.uid)) {
+                          broadcastNotifs.push({
+                              type: 'broadcast',
+                              title: d.title || 'System Broadcast',
+                              message: d.message,
+                              time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
+                          });
+                      }
+                  });
+                  renderAllNotifs();
+              });
+        }
+
+        function showInAppNotification(title, message) {
+            const container = document.getElementById('notification-container');
+            if(!container) return;
+            const el = document.createElement('div');
+            el.className = "bg-white border-l-4 border-blue-500 rounded-lg p-4 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto flex items-start gap-3 w-full";
+            el.innerHTML = `
+                <div class="text-blue-500 mt-1 flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
+                <div class="flex-grow">
+                    <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
+                    <p class="text-gray-600 text-xs mt-1 leading-relaxed">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(el);
+            
+            requestAnimationFrame(() => el.classList.remove('translate-x-full'));
+            setTimeout(() => {
+                el.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => el.remove(), 300);
+            }, 6000); 
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function renderAllNotifs() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
+            // For now, only broadcasts are in the list for drivers. 
+            // You can add delivery updates here later if needed.
+            const all = [...broadcastNotifs].sort((a,b) => b.time - a.time);
+            
+            if (all.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
+                list.innerHTML = '';
+                all.forEach(n => {
+                    let iconClass = 'fa-tower-broadcast';
+                    let iconColor = 'text-brand-orange';
+                    
+                    list.innerHTML += `
+                        <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">${n.title}</p>
+                                    <p class="text-xs text-gray-600 line-clamp-2">${n.message}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                badge.classList.remove('hidden');
+            }
+        }
+
+        // --- EXISTING LOGIC ---
 
         // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
         function loadAvailableJobs() {
@@ -232,11 +377,9 @@
                     let count = 0;
                     snap.forEach(doc => {
                         const d = doc.data();
-                        
-                        // Distance Filter
                         const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
                         
-                        if (dist <= 10) { // 10km Filter
+                        if (dist <= 10) { 
                             count++;
                             const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
                             const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
@@ -297,7 +440,7 @@
                     const d = doc.data();
                     const isPickedUp = d.deliveryStatus === 'PickedUp';
                     const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
-                    const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 }; // Simulating dest if missing
+                    const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 };
 
                     container.innerHTML = `
                         <div class="w-full h-full flex flex-col">
@@ -396,14 +539,14 @@
                 
                 document.getElementById('sidebar-name').innerText = name;
                 showToast("Profile & Location Updated!");
-                loadAvailableJobs(); // Refresh feed with new location
+                loadAvailableJobs();
             } catch (err) {
                 console.error(err);
                 showToast("Error updating profile", "error");
             }
         }
 
-        // MAP LOGIC (LOCATION SETTING)
+        // MAP LOGIC
         function initLocationMap() {
             if (locationMap) { locationMap.invalidateSize(); return; }
             
@@ -423,7 +566,6 @@
                 fetchAddressFromLatLng(currentLat, currentLng);
             });
             
-            // Auto Locate if no location set
             if (!currentLat) {
                 locationMap.locate({setView: true, maxZoom: 16});
                 locationMap.on('locationfound', function(e) {
@@ -445,7 +587,6 @@
             } catch (err) { console.error("Address fetch failed", err); }
         }
 
-        // HELPERS
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
             var R = 6371; 
