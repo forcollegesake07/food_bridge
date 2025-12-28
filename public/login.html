@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login | FoodBridge</title>
     
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +20,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { brand: { orange: '#F97316', green: '#10B981', dark: '#1F2937' } }
+                    colors: { brand: { orange: '#F97316', green: '#10B981', blue: '#3B82F6', dark: '#1F2937' } }
                 }
             }
         }
@@ -52,7 +51,6 @@
         </div>
     </nav>
 
-    <!-- Auth Container -->
     <div class="flex-grow flex items-center justify-center p-4 pt-24 pb-10 overflow-y-auto">
         <div class="bg-white w-full max-w-md rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border border-gray-100 animate-fade-in-up mx-auto">
             <div class="bg-brand-orange p-6 md:p-8 text-center text-white relative overflow-hidden">
@@ -65,7 +63,6 @@
                 <button onclick="toggleView('signup')" id="tab-signup" class="w-1/2 py-3 md:py-4 font-bold text-sm text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50">SIGN UP</button>
             </div>
             <div class="p-5 md:p-8">
-                <!-- Login Form -->
                 <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 md:space-y-5 block">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Email Address</label>
@@ -87,7 +84,6 @@
                     <button type="submit" id="btn-login" class="w-full bg-brand-dark hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg mt-2 transform hover:scale-[1.01] active:scale-[0.99] text-base">Sign In</button>
                 </form>
                 
-                <!-- Forgot Password Form -->
                 <form id="forgot-password-form" onsubmit="handleForgotPassword(event)" class="space-y-4 md:space-y-5 hidden">
                     <div class="text-center mb-2">
                         <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -107,27 +103,35 @@
                     <button type="button" onclick="toggleView('login')" class="w-full bg-transparent hover:bg-gray-50 text-gray-500 font-bold py-3 rounded-xl transition text-sm">Back to Login</button>
                 </form>
 
-                <!-- Signup Form -->
                 <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
-                    <div class="grid grid-cols-2 gap-3 mb-2">
+                    <div class="grid grid-cols-3 gap-2 mb-2">
                         <div class="relative h-full">
                             <input type="radio" name="role" value="restaurant" id="role-rest" class="peer hidden" checked>
-                            <label for="role-rest" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-orange peer-checked:bg-orange-50 transition hover:bg-gray-50 h-full tap-highlight-transparent">
-                                <i class="fa-solid fa-utensils text-lg mb-1 text-gray-400 peer-checked:text-brand-orange"></i>
-                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Restaurant</span>
+                            <label for="role-rest" class="flex flex-col items-center justify-center p-2 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-orange peer-checked:bg-orange-50 transition hover:bg-gray-50 h-full tap-highlight-transparent">
+                                <i class="fa-solid fa-utensils text-base mb-1 text-gray-400 peer-checked:text-brand-orange"></i>
+                                <span class="text-[10px] font-bold text-gray-600 peer-checked:text-brand-dark">Restaurant</span>
                             </label>
                         </div>
+                        
                         <div class="relative h-full">
                             <input type="radio" name="role" value="orphanage" id="role-orph" class="peer hidden">
-                            <label for="role-orph" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-green peer-checked:bg-green-50 transition hover:bg-gray-50 h-full tap-highlight-transparent">
-                                <i class="fa-solid fa-child-reaching text-lg mb-1 text-gray-400 peer-checked:text-brand-green"></i>
-                                <span class="text-xs font-bold text-gray-600 peer-checked:text-brand-dark">Orphanage</span>
+                            <label for="role-orph" class="flex flex-col items-center justify-center p-2 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-green peer-checked:bg-green-50 transition hover:bg-gray-50 h-full tap-highlight-transparent">
+                                <i class="fa-solid fa-child-reaching text-base mb-1 text-gray-400 peer-checked:text-brand-green"></i>
+                                <span class="text-[10px] font-bold text-gray-600 peer-checked:text-brand-dark">Orphanage</span>
+                            </label>
+                        </div>
+
+                        <div class="relative h-full">
+                            <input type="radio" name="role" value="volunteer" id="role-vol" class="peer hidden">
+                            <label for="role-vol" class="flex flex-col items-center justify-center p-2 border-2 border-gray-100 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition hover:bg-gray-50 h-full tap-highlight-transparent">
+                                <i class="fa-solid fa-bicycle text-base mb-1 text-gray-400 peer-checked:text-brand-blue"></i>
+                                <span class="text-[10px] font-bold text-gray-600 peer-checked:text-brand-dark">Volunteer</span>
                             </label>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Organization Name</label>
-                        <input type="text" id="signup-name" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition text-base" placeholder="e.g. Tasty Bites">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Organization / Name</label>
+                        <input type="text" id="signup-name" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition text-base" placeholder="e.g. Tasty Bites or John Doe">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Email Address</label>
@@ -155,7 +159,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-brand-dark text-white py-8 border-t border-gray-800 mt-auto relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
              <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
@@ -169,24 +172,28 @@
         </div>
     </footer>
 
-    <!-- Google Role Modal -->
     <div id="google-role-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
         <div class="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl text-center transform transition-all scale-100">
             <h3 class="text-xl font-bold text-gray-800 mb-2">Complete Profile</h3>
-            <p class="text-sm text-gray-500 mb-6">Enter your organization details to continue.</p>
+            <p class="text-sm text-gray-500 mb-6">Enter your details to continue.</p>
             <div class="mb-5 text-left">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Organization Name</label>
-                <input type="text" id="google-org-name" class="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50 focus:bg-white text-base" placeholder="e.g. Tasty Bites or Sunshine Home">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Organization / Name</label>
+                <input type="text" id="google-org-name" class="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50 focus:bg-white text-base" placeholder="e.g. Tasty Bites or John Doe">
             </div>
             <p class="text-xs text-gray-400 mb-3 font-bold uppercase tracking-wider text-left ml-1">Select Account Type</p>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="finalizeGoogleRole('restaurant')" class="p-4 border-2 border-orange-100 bg-orange-50 hover:bg-orange-100 hover:border-brand-orange rounded-xl transition group flex flex-col items-center touch-manipulation">
-                    <i class="fa-solid fa-utensils text-2xl text-brand-orange mb-2 block group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs font-bold text-gray-700">Restaurant</span>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="finalizeGoogleRole('restaurant')" class="p-3 border-2 border-orange-100 bg-orange-50 hover:bg-orange-100 hover:border-brand-orange rounded-xl transition group flex flex-col items-center touch-manipulation">
+                    <i class="fa-solid fa-utensils text-xl text-brand-orange mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[10px] font-bold text-gray-700">Restaurant</span>
                 </button>
-                <button onclick="finalizeGoogleRole('orphanage')" class="p-4 border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-brand-green rounded-xl transition group flex flex-col items-center touch-manipulation">
-                    <i class="fa-solid fa-child-reaching text-2xl text-brand-green mb-2 block group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs font-bold text-gray-700">Orphanage</span>
+                <button onclick="finalizeGoogleRole('orphanage')" class="p-3 border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-brand-green rounded-xl transition group flex flex-col items-center touch-manipulation">
+                    <i class="fa-solid fa-child-reaching text-xl text-brand-green mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[10px] font-bold text-gray-700">Orphanage</span>
+                </button>
+                 <button onclick="finalizeGoogleRole('volunteer')" class="p-3 border-2 border-blue-100 bg-blue-50 hover:bg-blue-100 hover:border-brand-blue rounded-xl transition group flex flex-col items-center touch-manipulation">
+                    <i class="fa-solid fa-bicycle text-xl text-brand-blue mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[10px] font-bold text-gray-700">Volunteer</span>
                 </button>
             </div>
         </div>
@@ -225,7 +232,6 @@
                     if (doc.exists) {
                         const userData = doc.data();
                         
-                        // SELF-HEALING: Add userId if missing
                         if (!userData.userId) {
                             await db.collection('users').doc(user.uid).update({ userId: user.uid });
                         }
@@ -304,6 +310,7 @@
             setTimeout(() => { 
                 if (role === 'restaurant') window.location.href = "restaurant"; 
                 else if (role === 'orphanage') window.location.href = "orphanages"; 
+                else if (role === 'volunteer') window.location.href = "driver.html"; // Redirect to Volunteer Dashboard
                 else if (role === 'admin') window.location.href = "admin"; 
                 else window.location.href = "index";
             }, 500); 
