@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Optimized Viewport: Disables user scaling for app-like feel -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Orphanage Dashboard | FoodBridge</title>
+    <!-- Favicon: Orange Hand Holding Heart SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%23F97316' d='M148 76.6C148 34.3 182.3 0 224.6 0c20.3 0 39.8 8.1 54.1 22.4l9.3 9.3 9.3-9.3C311.6 8.1 331.1 0 351.4 0C393.7 0 428 34.3 428 76.6c0 21.2-8.4 41.5-23.4 56.5L288 249.7 171.4 133.1C156.4 118.1 148 97.8 148 76.6zm338.9 239.3l-20.1-20.1c-4.7-4.7-12.3-4.7-17 0L288 457.6 126.1 295.8c-4.7-4.7-12.3-4.7-17 0L89 315.9c-25 25-25 65.5 0 90.5L253.3 570.8c19.1 19.1 50.3 19.1 69.4 0l164.2-164.2c25-25 25-65.5 0-90.5z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,11 +13,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -74,26 +79,17 @@
         #qr-video-container {
             position: relative;
             width: 100%;
-            height: 400px; /* Taller for better view */
+            height: 350px; /* Taller for better view */
             overflow: hidden;
             background: #000;
             border-bottom-left-radius: 1.5rem;
             border-bottom-right-radius: 1.5rem;
         }
-        
-        /* FORCE VIDEO TO FILL CONTAINER */
-        #reader {
+        #qr-video-container video {
             width: 100%;
             height: 100%;
-            border: none !important;
+            object-fit: cover;
         }
-        #reader video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            border-radius: 0 !important;
-        }
-
         .scan-overlay {
             position: absolute;
             top: 0;
@@ -105,7 +101,6 @@
             align-items: center;
             justify-content: center;
             background: rgba(0, 0, 0, 0.3); /* Slight dimming */
-            z-index: 20;
         }
         .scan-frame {
             width: 260px;
@@ -124,6 +119,11 @@
             border-radius: 4px;
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); /* Glowing corners */
         }
+        .tl { top: -2px; left: -2px; border-right: none; border-bottom: none; border-top-left-radius: 16px; }
+        .tr { top: -2px; right: -2px; border-left: none; border-bottom: none; border-top-right-radius: 16px; }
+        .bl { bottom: -2px; left: -2px; border-right: none; border-top: none; border-bottom-left-radius: 16px; }
+        .br { bottom: -2px; right: -2px; border-left: none; border-top: none; border-bottom-right-radius: 16px; }
+        
         .scan-line {
             position: absolute;
             width: 100%;
@@ -145,8 +145,10 @@
 
     <div class="fixed-bg-layer"></div>
 
+    <!-- MOBILE SIDEBAR BACKDROP -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
+    <!-- SIDEBAR NAVIGATION -->
     <aside class="fixed md:relative w-72 bg-white/95 backdrop-blur-md border-r border-gray-200 flex flex-col z-40 shadow-2xl h-full flex-shrink-0 transition-transform duration-300 transform -translate-x-full md:translate-x-0 smooth-scroll-touch" id="sidebar">
         <div class="p-6 md:p-8 flex items-center border-b border-gray-100">
             <div class="bg-brand-green/10 p-2.5 rounded-xl mr-3 shadow-sm">
@@ -187,6 +189,7 @@
         </div>
     </aside>
 
+    <!-- MOBILE HEADER -->
     <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur shadow-md z-30 flex items-center justify-between px-4 transition-all">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-hands-holding-child text-brand-green text-xl"></i>
@@ -197,8 +200,10 @@
         </button>
     </div>
 
+    <!-- MAIN CONTENT AREA -->
     <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full smooth-scroll-touch" id="main-scroll-container">
         
+        <!-- TAB: OVERVIEW -->
         <div id="tab-overview" class="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
@@ -211,10 +216,14 @@
                 </button>
             </div>
 
+            <!-- Incoming Deliveries Block (Replaces Scheduled Pickups) -->
             <div id="incoming-deliveries-container" class="space-y-4">
-                </div>
+                <!-- Dynamically Populated -->
+            </div>
 
+            <!-- Stats -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Metrics -->
                 <div class="space-y-4 md:space-y-6">
                     <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md border-l-4 border-brand-green flex items-center justify-between">
                         <div>
@@ -232,6 +241,7 @@
                     </div>
                 </div>
 
+                <!-- Chart -->
                 <div class="bg-white rounded-2xl p-5 md:p-6 shadow-md lg:col-span-2 flex flex-col justify-between">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-bold text-gray-800 text-base md:text-lg">Donation Influx</h4>
@@ -244,6 +254,7 @@
                 </div>
             </div>
 
+            <!-- Recent Activity -->
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h2 class="text-base md:text-lg font-bold text-gray-800">Recent Activity</h2>
@@ -256,6 +267,7 @@
             </div>
         </div>
 
+        <!-- TAB: AVAILABLE FOOD (Radius Filter) -->
         <div id="tab-alerts" class="max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in hidden">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Find Food</h1>
@@ -265,16 +277,21 @@
                 </div>
             </div>
 
+            <!-- 2-Column Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
+                <!-- Left Column: Available Donations (2/3 width) -->
                 <div class="lg:col-span-2 space-y-6">
                     <h3 class="text-xl font-bold text-white drop-shadow-md"><i class="fa-solid fa-utensils mr-2"></i> Available Donations</h3>
                     <div id="donations-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Donation Cards Populated JS -->
                         <p class="col-span-full text-center text-white text-lg py-10">Checking for available food nearby...</p>
                     </div>
                 </div>
 
+                <!-- Right Column: Request Food & My Requests (1/3 width) -->
                 <div class="space-y-6">
+                    <!-- Request Form -->
                     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                         <div class="p-5 border-b border-gray-100 bg-green-50/50 flex items-center justify-between">
                             <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-bullhorn text-brand-green mr-2"></i> Request Food</h2>
@@ -296,9 +313,11 @@
                         </div>
                     </div>
 
+                    <!-- My Pending Requests List -->
                     <div class="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-5">
                         <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-hourglass-half mr-2"></i> My Active Requests</h3>
                         <div id="my-requests-list" class="space-y-3">
+                            <!-- Populated by JS -->
                             <p class="text-gray-200 text-sm text-center">No active requests.</p>
                         </div>
                     </div>
@@ -307,15 +326,18 @@
             </div>
         </div>
 
+        <!-- TAB: HISTORY (Updated with Bell Icon) -->
         <div id="tab-history" class="hidden max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
             <div class="flex items-center justify-between relative">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white drop-shadow-md">Full History</h1>
                 <div class="flex items-center gap-3">
+                    <!-- Notification Bell -->
                     <div class="relative">
                         <button onclick="toggleNotifications()" class="bg-white p-3 rounded-xl shadow-md text-gray-600 hover:text-brand-green transition relative z-20 active:bg-gray-100 touch-manipulation" id="notif-btn">
                             <i class="fa-solid fa-bell text-xl"></i>
                             <span id="notif-badge" class="absolute top-2 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-pulse"></span>
                         </button>
+                        <!-- Dropdown -->
                         <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-100 origin-top-right transition-all transform scale-95 opacity-0">
                             <div class="p-3 border-b border-gray-100 bg-gray-50 font-bold text-gray-700 text-sm flex justify-between items-center">
                                 <span>Notifications</span>
@@ -326,6 +348,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Records Count -->
                     <div class="bg-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md">
                         <span class="text-brand-green font-bold text-lg md:text-xl" id="history-count">0</span> <span class="text-xs md:text-sm text-gray-600 font-medium">Records</span>
                     </div>
@@ -350,6 +373,7 @@
             </div>
         </div>
 
+        <!-- TAB: DETAILS -->
         <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-6 md:pt-10">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
                 <div class="h-24 md:h-32 bg-gradient-to-r from-emerald-800 to-teal-900 relative">
@@ -367,6 +391,7 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Orphanage Name</label><input type="text" id="detail-name" enterkeyhint="next" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label><input type="tel" id="detail-phone" inputmode="tel" enterkeyhint="next" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base"></div>
                     
+                    <!-- Address & Map -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pin Location & Address</label>
                         <textarea id="detail-address" rows="2" enterkeyhint="done" class="w-full px-4 py-3.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:bg-white outline-none transition-all font-medium text-gray-800 text-base md:text-base mb-3" placeholder="Type address or use map below..."></textarea>
@@ -380,6 +405,7 @@
         </div>
     </main>
 
+    <!-- CONFIRMATION MODAL -->
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300 transform-gpu" id="confirm-modal-content">
             <div class="text-center">
@@ -396,9 +422,11 @@
         </div>
     </div>
     
+    <!-- SCANNER MODAL (UPDATED UI) -->
     <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative transform scale-95 transition-all duration-300 transform-gpu flex flex-col border border-gray-100/20">
             
+            <!-- Header -->
             <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10 relative">
                 <div>
                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 tracking-tight">
@@ -412,35 +440,46 @@
                 </button>
             </div>
 
-            <div class="relative bg-black w-full" id="qr-video-container">
-                <div id="reader"></div>
+            <!-- Scanner Viewport -->
+            <div class="relative bg-black h-96 w-full overflow-hidden" id="qr-video-container">
+                <div id="reader" class="w-full h-full object-cover"></div>
                 
-                <div class="scan-overlay">
-                    <div class="scan-frame">
+                <!-- Overlay Guide -->
+                <div class="scan-overlay absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <!-- Darkened Background with transparent center -->
+                    <div class="absolute inset-0 bg-black/50 mask-image-scan"></div>
+                    
+                    <!-- The Frame -->
+                    <div class="scan-frame relative z-10 w-64 h-64">
+                        <!-- Corners -->
                         <div class="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-brand-green rounded-tl-xl shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                         <div class="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-brand-green rounded-tr-xl shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                         <div class="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-brand-green rounded-bl-xl shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                         <div class="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-brand-green rounded-br-xl shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                         
+                        <!-- Animated Line -->
                         <div class="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80 shadow-[0_0_15px_#10B981] animate-scan-line"></div>
                         
-                        <div class="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
-                            <i class="fa-solid fa-expand text-white text-3xl"></i>
+                        <!-- Pulsing Center Helper -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-30">
+                            <i class="fa-solid fa-plus text-white text-4xl"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Status Footer -->
             <div class="p-6 bg-white border-t border-gray-100 text-center relative z-10">
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-brand-green rounded-full text-xs font-bold mb-2 animate-pulse">
                     <div class="w-2 h-2 bg-brand-green rounded-full"></div>
                     Camera Active
                 </div>
-                <p class="text-sm text-gray-500 font-medium">Align the QR code within the frame.</p>
+                <p class="text-sm text-gray-500 font-medium">Align the QR code within the frame to automatically confirm receipt.</p>
             </div>
         </div>
     </div>
     
+    <!-- REPORT MODAL -->
     <div id="report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full transform scale-95 transition-all duration-300 transform-gpu" id="report-modal-content">
             <div class="text-center">
@@ -458,8 +497,10 @@
         </div>
     </div>
 
+    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-6 right-6 left-6 md:left-auto bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50"><i class="fa-solid fa-circle-check text-green-400 text-lg"></i><p class="text-sm" id="toast-message">Success</p></div>
 
+    <!-- IN-APP NOTIFICATION CONTAINER -->
     <div id="notification-container" class="fixed top-4 right-4 z-[100] space-y-3 w-full max-w-sm px-4 md:px-0 pointer-events-none"></div>
 
     <script>
@@ -470,7 +511,7 @@
         let pendingAction = null; let reportDonationId = null;
         const API_BASE = "https://food-bridge-fzvr.onrender.com";
         
-        let html5QrCode = null; // Changed to simple instance
+        let html5QrcodeScanner = null;
 
         // Notifications
         let broadcastNotifs = [];
@@ -495,9 +536,15 @@
                     }
                     updateUIWithUserData();
                     
+                    // Init Lat/Lng
                     if(userData.location) { currentLat = userData.location.lat; currentLng = userData.location.lng; }
-                    if(!userData.userId) { await db.collection('users').doc(user.uid).update({ userId: user.uid }); }
 
+                    // Self-healing: Ensure userId field exists
+                    if(!userData.userId) {
+                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
+                    }
+
+                    // START BROADCAST LISTENER
                     listenForBroadcasts(user.uid, userData.role);
 
                     document.getElementById('tab-overview').classList.remove('hidden');
@@ -520,18 +567,26 @@
             } else { window.location.href = 'https://foodbridge.qzz.io/login'; }
         });
 
+        // --- NEW BROADCAST LISTENER ---
         function listenForBroadcasts(userId, role) {
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); 
-            db.collection('notifications').where('createdAt', '>', oneHourAgo).onSnapshot(snapshot => {
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'added') {
-                        const note = change.doc.data();
-                        if (note.targetAudience === 'all' || note.targetAudience === role || (note.targetAudience === 'specific' && note.targetUserId === userId)) {
-                            showInAppNotification(note.title, note.message);
+            
+            db.collection('notifications')
+                .where('createdAt', '>', oneHourAgo)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const note = change.doc.data();
+                            const isForAll = note.targetAudience === 'all';
+                            const isForRole = note.targetAudience === role;
+                            const isForMe = note.targetAudience === 'specific' && note.targetUserId === userId;
+
+                            if (isForAll || isForRole || isForMe) {
+                                showInAppNotification(note.title, note.message);
+                            }
                         }
-                    }
+                    });
                 });
-            });
         }
 
         function showInAppNotification(title, message) {
@@ -539,10 +594,21 @@
             if(!container) return;
             const el = document.createElement('div');
             el.className = "bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto flex items-start gap-3 w-full";
-            el.innerHTML = `<div class="text-green-500 mt-1 flex-shrink-0"><i class="fa-solid fa-bell"></i></div><div class="flex-grow"><h4 class="font-bold text-gray-800 text-sm">${title}</h4><p class="text-gray-600 text-xs mt-1 leading-relaxed">${message}</p></div><button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0"><i class="fa-solid fa-xmark"></i></button>`;
+            el.innerHTML = `
+                <div class="text-green-500 mt-1 flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
+                <div class="flex-grow">
+                    <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
+                    <p class="text-gray-600 text-xs mt-1 leading-relaxed">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0"><i class="fa-solid fa-xmark"></i></button>
+            `;
             container.appendChild(el);
+            
             requestAnimationFrame(() => el.classList.remove('translate-x-full'));
-            setTimeout(() => { el.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => el.remove(), 300); }, 6000); 
+            setTimeout(() => {
+                el.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => el.remove(), 300);
+            }, 6000); 
         }
 
         function updateUIWithUserData() {
@@ -553,6 +619,7 @@
             if(document.getElementById('detail-address')) document.getElementById('detail-address').value = userData.address || "";
         }
 
+        // Fixed Toggle Logic
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
@@ -560,83 +627,176 @@
             else { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); }
         }
 
+        // ============================================================
+        //  FIXED TAB LOGIC
+        // ============================================================
         window.currentTab = "overview"; 
 
         function switchTab(tab, fromPopState = false) {
             if (!fromPopState) { history.pushState({ tab }, "", "#" + tab); }
-            ['overview', 'history', 'details', 'alerts'].forEach(t => { const el = document.getElementById('tab-' + t); if(el) el.classList.add('hidden'); });
+            ['overview', 'history', 'details', 'alerts'].forEach(t => {
+                const el = document.getElementById('tab-' + t);
+                if(el) el.classList.add('hidden');
+            });
             const buttons = ['overview', 'alerts', 'history', 'details'];
             buttons.forEach(b => {
-                const btn = document.getElementById('btn-' + b); if (!btn) return;
+                const btn = document.getElementById('btn-' + b);
+                if (!btn) return;
                 btn.classList.remove('bg-brand-green', 'bg-brand-orange', 'text-white', 'shadow-md');
                 btn.classList.add('text-gray-500', 'border', 'border-transparent');
-                if (b === 'alerts') { btn.classList.add('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100'); btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900'); } 
-                else { btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900'); btn.classList.remove('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100'); }
+                if (b === 'alerts') {
+                    btn.classList.add('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
+                    btn.classList.remove('hover:bg-gray-50', 'hover:text-gray-900');
+                } else {
+                    btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900');
+                    btn.classList.remove('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
+                }
                 if (b === tab) {
                     btn.classList.remove('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
                     if (b === 'alerts') btn.classList.add('bg-brand-orange', 'text-white', 'shadow-md');
                     else btn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
                 }
             });
-            const activeContent = document.getElementById('tab-' + tab); if(activeContent) activeContent.classList.remove('hidden');
+            const activeContent = document.getElementById('tab-' + tab);
+            if(activeContent) activeContent.classList.remove('hidden');
             window.currentTab = tab;
             if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) { toggleSidebar(); }
             if (tab === 'details') { setTimeout(initMap, 200); }
         }
 
-        window.addEventListener("popstate", function (e) { if (e.state && e.state.tab) switchTab(e.state.tab, true); else switchTab("overview", true); });
-        document.addEventListener("DOMContentLoaded", function () { const initialTab = location.hash.replace("#", "") || "overview"; switchTab(initialTab, true); });
+        window.addEventListener("popstate", function (e) {
+            if (e.state && e.state.tab) switchTab(e.state.tab, true);
+            else switchTab("overview", true);
+        });
 
+        document.addEventListener("DOMContentLoaded", function () {
+            const initialTab = location.hash.replace("#", "") || "overview";
+            switchTab(initialTab, true);
+        });
+
+        // --- MAP ---
         function initMap() {
             if (map) { map.invalidateSize(); return; }
-            const lat = currentLat || 20.5937; const lng = currentLng || 78.9629; const zoom = currentLat ? 13 : 5;
+            const lat = currentLat || 20.5937;
+            const lng = currentLng || 78.9629;
+            const zoom = currentLat ? 13 : 5;
             map = L.map('map-container').setView([lat, lng], zoom);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            marker.on('dragend', function () { const position = marker.getLatLng(); currentLat = position.lat; currentLng = position.lng; fetchAddressFromLatLng(currentLat, currentLng); });
-            if (!currentLat) { map.locate({setView: true, maxZoom: 16}); map.on('locationfound', function(e) { currentLat = e.latlng.lat; currentLng = e.latlng.lng; marker.setLatLng(e.latlng); }); }
+           marker.on('dragend', function () {
+              const position = marker.getLatLng();
+              currentLat = position.lat;
+              currentLng = position.lng;
+              fetchAddressFromLatLng(currentLat, currentLng);
+            });
+            if (!currentLat) {
+                map.locate({setView: true, maxZoom: 16});
+                map.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat; currentLng = e.latlng.lng; marker.setLatLng(e.latlng);
+                });
+            }
         }
 
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { if(!lat1 || !lon1 || !lat2 || !lon2) return 99999; var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
+            var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; 
+        }
         function deg2rad(deg) { return deg * (Math.PI/180); }
 
+        // --- NOTIFICATIONS LOGIC ---
         function loadBroadcasts() {
-            db.collection('notifications').where('targetAudience', 'in', ['all', 'orphanage', 'specific']).orderBy('createdAt', 'desc').limit(10).onSnapshot(snap => {
+            db.collection('notifications')
+              .where('targetAudience', 'in', ['all', 'orphanage', 'specific']) // Include specific targeting
+              .orderBy('createdAt', 'desc')
+              .limit(10)
+              .onSnapshot(snap => {
                   broadcastNotifs = [];
-                  snap.forEach(doc => { const d = doc.data(); if (d.targetAudience === 'all' || d.targetAudience === 'orphanage' || (d.targetAudience === 'specific' && d.targetUserId === currentUser.uid)) { broadcastNotifs.push({ type: 'broadcast', title: d.title || 'System Broadcast', message: d.message, time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date() }); } });
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      // Filter on client side for 'specific' target
+                      if (d.targetAudience === 'all' || d.targetAudience === 'orphanage' || (d.targetAudience === 'specific' && d.targetUserId === currentUser.uid)) {
+                          broadcastNotifs.push({
+                              type: 'broadcast',
+                              title: d.title || 'System Broadcast',
+                              message: d.message,
+                              time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
+                          });
+                      }
+                  });
                   renderAllNotifs();
-            });
+              });
         }
 
         function toggleNotifications() {
             const dropdown = document.getElementById('notif-dropdown');
-            if (dropdown.classList.contains('hidden')) { dropdown.classList.remove('hidden'); setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10); } 
-            else { dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95'); setTimeout(() => { dropdown.classList.add('hidden'); }, 300); }
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            }
         }
 
         function renderAllNotifs() {
-            const list = document.getElementById('notif-list'); const badge = document.getElementById('notif-badge');
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            
             const all = [...broadcastNotifs, ...operationalNotifs].sort((a,b) => b.time - a.time);
+            
+            // CLEAR THE LIST BEFORE APPENDING
             list.innerHTML = '';
-            if (all.length === 0) { list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>'; badge.classList.add('hidden'); } 
-            else {
+
+            if (all.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
+                badge.classList.add('hidden');
+            } else {
                 all.forEach(n => {
                     let iconClass = 'fa-circle-info'; let iconColor = 'text-blue-500';
                     if(n.type === 'broadcast') { iconClass = 'fa-tower-broadcast'; iconColor = 'text-brand-orange'; }
                     if(n.type === 'fulfilled') { iconClass = 'fa-circle-check'; iconColor = 'text-green-500'; }
+                    
                     const timeString = n.time instanceof Date ? n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-                    list.innerHTML += `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition"><div class="flex items-start gap-3"><div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.title || 'Notification'}</p><p class="text-xs text-gray-600 line-clamp-2">${n.message || ''}</p><p class="text-[10px] text-gray-400 mt-1">${timeString}</p></div></div></div>`;
+
+                    list.innerHTML += `
+                        <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">${n.title || 'Notification'}</p>
+                                    <p class="text-xs text-gray-600 line-clamp-2">${n.message || ''}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">${timeString}</p>
+                                </div>
+                            </div>
+                        </div>`;
                 });
-                badge.classList.remove('hidden');
+                badge.classList.remove('hidden'); // Show badge if count > 0
+                
+                // Add shake animation to bell for attention
+                const bellBtn = document.querySelector('button[onclick="toggleNotifications()"] i');
+                if(bellBtn) {
+                     bellBtn.classList.add('animate-wiggle');
+                     setTimeout(() => bellBtn.classList.remove('animate-wiggle'), 1000);
+                }
             }
         }
 
         function loadAvailableDonations() {
             db.collection('donations').where('status', '==', 'Available').orderBy('createdAt', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('donations-container'); if(!container) return; container.innerHTML = ''; let visibleCount = 0; const myLat = userData.location?.lat; const myLng = userData.location?.lng;
-                if (!myLat) { container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Needed</p><p class='text-sm'>Please set your location in 'Details' to find nearby food.</p></div>"; return; }
+                const container = document.getElementById('donations-container');
+                if(!container) return;
+                container.innerHTML = '';
+                let visibleCount = 0;
+                const myLat = userData.location?.lat; const myLng = userData.location?.lng;
+                if (!myLat) {
+                    container.innerHTML = "<div class='col-span-full text-center py-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white'><i class='fa-solid fa-location-dot text-4xl mb-2'></i><p class='font-bold'>Location Needed</p><p class='text-sm'>Please set your location in 'Details' to find nearby food.</p></div>";
+                    return;
+                }
                 snap.forEach(doc => {
-                    const d = doc.data(); const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
+                    const d = doc.data();
+                    const dist = getDistanceFromLatLonInKm(myLat, myLng, d.location?.lat, d.location?.lng);
                     if(dist <= 10) {
                         visibleCount++;
                         const distStr = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
@@ -650,20 +810,26 @@
         
         function loadMyRequests() {
              db.collection('requests').where('orphanageId', '==', currentUser.uid).where('status', '==', 'Pending').orderBy('createdAt', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('my-requests-list'); if(!container) return; container.innerHTML = '';
+                const container = document.getElementById('my-requests-list');
+                if(!container) return;
+                container.innerHTML = '';
                 if(snap.empty) { container.innerHTML = `<p class="text-gray-200 text-sm text-center italic">No active requests.</p>`; return; }
                 snap.forEach(doc => {
-                    const d = doc.data(); container.innerHTML += `<div class="bg-white/90 rounded-xl p-3 shadow-sm border border-white/20"><div class="flex justify-between items-center mb-1"><h5 class="font-bold text-gray-800">${d.itemNeeded}</h5><div class="flex items-center gap-2"><span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Pending</span><button onclick="confirmDeleteRequest('${doc.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash-can"></i></button></div></div><p class="text-xs text-gray-600">Qty: ${d.quantity} • Waiting for restaurant...</p></div>`;
+                    const d = doc.data();
+                    container.innerHTML += `<div class="bg-white/90 rounded-xl p-3 shadow-sm border border-white/20"><div class="flex justify-between items-center mb-1"><h5 class="font-bold text-gray-800">${d.itemNeeded}</h5><div class="flex items-center gap-2"><span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Pending</span><button onclick="confirmDeleteRequest('${doc.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash-can"></i></button></div></div><p class="text-xs text-gray-600">Qty: ${d.quantity} • Waiting for restaurant...</p></div>`;
                 });
              });
         }
 
         function loadIncomingDeliveries() {
             db.collection('donations').where('claimedBy', '==', currentUser.uid).where('status', '==', 'Claimed').onSnapshot(snap => {
-                const container = document.getElementById('incoming-deliveries-container'); if(!container) return; container.innerHTML = '';
+                const container = document.getElementById('incoming-deliveries-container');
+                if(!container) return;
+                container.innerHTML = '';
                 if(snap.empty) { container.innerHTML = `<div class="bg-green-50 border border-green-100 rounded-xl p-4 text-center text-green-700 text-sm">No incoming deliveries. Request food or claim a donation!</div>`; return; }
                 snap.forEach(doc => {
-                    const d = doc.data(); container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> On The Way</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Incoming Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Donor</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-store text-brand-orange mr-2"></i> ${d.restaurantName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.restaurantPhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.restaurantAddress || 'N/A'}</p></div></div><div class="flex gap-3"><button onclick="openReportModal('${doc.id}')" class="flex-1 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm flex items-center justify-center active:scale-95 touch-manipulation"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Report</button><button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-base flex items-center justify-center touch-manipulation"><i class="fa-solid fa-check-circle mr-2"></i> Confirm Receipt</button></div></div>`;
+                    const d = doc.data();
+                    container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> On The Way</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Incoming Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Donor</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-store text-brand-orange mr-2"></i> ${d.restaurantName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.restaurantPhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.restaurantAddress || 'N/A'}</p></div></div><div class="flex gap-3"><button onclick="openReportModal('${doc.id}')" class="flex-1 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl border border-red-100 transition-colors text-sm flex items-center justify-center active:scale-95 touch-manipulation"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Report</button><button onclick="confirmReceipt('${doc.id}', '${d.foodName}')" class="flex-[2] py-4 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-md transition-all active:scale-95 text-base flex items-center justify-center touch-manipulation"><i class="fa-solid fa-check-circle mr-2"></i> Confirm Receipt</button></div></div>`;
                 });
             });
         }
@@ -675,8 +841,16 @@
                     if (recentList) recentList.innerHTML = ""; if (historyBody) historyBody.innerHTML = "";
                     let allItems = []; operationalNotifs = []; 
                     donSnap.forEach(doc => { allItems.push({ type: 'Donation', data: doc.data(), date: doc.data().createdAt ? doc.data().createdAt.seconds : 0 }); });
-                    reqSnap.forEach(doc => { const d = doc.data(); allItems.push({ type: 'Request', data: d, date: d.createdAt ? d.createdAt.seconds : 0 }); if (d.status === 'Fulfilled') { operationalNotifs.push({ type: 'fulfilled', title: 'Request Accepted', message: `${d.restaurantName || 'A restaurant'} accepted your request for ${d.itemNeeded}`, time: d.fulfilledAt ? new Date(d.fulfilledAt.seconds * 1000) : new Date() }); } });
-                    renderAllNotifs(); allItems.sort((a, b) => b.date - a.date); totalReceived = 0; let count = 0;
+                    reqSnap.forEach(doc => { 
+                        const d = doc.data();
+                        allItems.push({ type: 'Request', data: d, date: d.createdAt ? d.createdAt.seconds : 0 }); 
+                        if (d.status === 'Fulfilled') {
+                            operationalNotifs.push({ type: 'fulfilled', title: 'Request Accepted', message: `${d.restaurantName || 'A restaurant'} accepted your request for ${d.itemNeeded}`, time: d.fulfilledAt ? new Date(d.fulfilledAt.seconds * 1000) : new Date() });
+                        }
+                    });
+                    renderAllNotifs();
+                    allItems.sort((a, b) => b.date - a.date);
+                    totalReceived = 0; let count = 0;
                     if (allItems.length === 0) { if (recentList) recentList.innerHTML = "<p class='text-center text-gray-400 py-4'>No history yet.</p>"; if (historyBody) historyBody.innerHTML = "<tr><td colspan='6' class='text-center p-4 text-gray-400'>No history found.</td></tr>"; return; }
                     allItems.forEach(item => {
                         const data = item.data; const isDonation = item.type === 'Donation';
@@ -701,6 +875,7 @@
             });
         }
 
+        // --- ACTIONS ---
         function initiateRequest(e) {
             e.preventDefault();
             const item = document.getElementById('req-item').value; const qty = document.getElementById('req-qty').value;
@@ -716,12 +891,14 @@
             showConfirmModal("Claim Donation", `Claim ${servings} servings of ${foodName} from ${restName}?`, 'claim');
         }
 
+        // --- UPDATED CONFIRM RECEIPT (QR CODE SCAN) ---
         function confirmReceipt(donationId, foodName) { 
             pendingAction = { type: 'receive', data: { donationId, foodName } }; 
+            // Instead of showing the text modal, open the scanner
             openScannerModal();
         }
 
-        // --- SCANNER MODAL LOGIC (FIXED TO REMOVE UPLOAD BUTTON) ---
+        // --- SCANNER MODAL LOGIC (UPDATED) ---
         function openScannerModal() {
             const modal = document.getElementById('scanner-modal');
             modal.classList.remove('hidden');
@@ -731,22 +908,11 @@
                 modal.querySelector('div').classList.add('scale-100'); 
             }, 10);
 
-            if (!html5QrCode) {
-                // Use Html5Qrcode class directly instead of Html5QrcodeScanner
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                
-                // Start scanning with back camera
-                html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    config, 
-                    onScanSuccess,
-                    onScanFailure
-                ).catch(err => {
-                    console.error("Error starting scanner", err);
-                    showToast("Camera access denied or error.", "error");
-                    closeScannerModal();
-                });
+            if (!html5QrcodeScanner) {
+                // Config specifically for UI
+                const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", config, false);
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
             }
         }
 
@@ -758,13 +924,9 @@
             
             setTimeout(() => {
                 modal.classList.add('hidden');
-                if(html5QrCode) {
-                    html5QrCode.stop().then(() => {
-                        html5QrCode.clear();
-                        html5QrCode = null;
-                    }).catch(err => {
-                        console.error("Failed to stop scanner", err);
-                    });
+                if(html5QrcodeScanner) {
+                    html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+                    html5QrcodeScanner = null;
                 }
             }, 300);
         }
@@ -772,14 +934,14 @@
         function onScanSuccess(decodedText, decodedResult) {
             if (pendingAction && pendingAction.type === 'receive') {
                 if (decodedText === pendingAction.data.donationId) {
-                    if(html5QrCode) {
-                        html5QrCode.stop().then(() => {
-                            html5QrCode.clear();
-                            html5QrCode = null;
+                    // Match found
+                    if(html5QrcodeScanner) {
+                        html5QrcodeScanner.clear().then(() => {
+                            html5QrcodeScanner = null;
                             const modal = document.getElementById('scanner-modal');
-                            modal.classList.add('hidden'); 
-                            executeAction(); 
-                        }).catch(err => console.error(err));
+                            modal.classList.add('hidden'); // Hide immediately
+                            executeAction(); // Process the receipt logic
+                        });
                     }
                 } else {
                     showToast("Wrong QR Code! Please scan the bill for " + pendingAction.data.foodName, 'error');
@@ -800,6 +962,7 @@
             const name = document.getElementById('detail-name').value;
             const phone = document.getElementById('detail-phone').value;
             const address = document.getElementById('detail-address').value;
+            
             pendingAction = { type: 'saveProfile', data: { name, phone, address } };
             showConfirmModal("Save Changes", "Are you sure you want to update your profile details?", 'saveProfile');
         }
@@ -811,6 +974,9 @@
             try { await db.collection('donations').doc(reportDonationId).update({ status: 'Issue', reportReason: reason, reportedAt: firebase.firestore.FieldValue.serverTimestamp() }); showToast("Report submitted."); closeReportModal(); } catch(e) { console.error(e); showToast("Error: " + e.message, 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
+        // ============================================
+        //  UPDATED EXECUTE ACTION FOR FCM (CORRECTED)
+        // ============================================
         async function executeAction() {
             if (!pendingAction) return;
             closeConfirmModal();
@@ -839,13 +1005,14 @@
                         status: 'Claimed', claimedBy: currentUser.uid, orphanageName: userData.name, orphanagePhone: userData.phone, orphanageAddress: userData.address, claimedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
+                    // [UPDATED] Send restaurantId so they get a Push Notification
                     await fetch(`${API_BASE}/api/claim-food`, {
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             food: { name: donationData.foodName, quantity: donationData.servings },
                             restaurant: { name: donationData.restaurantName, email: donationData.restaurantEmail, phone: donationData.restaurantPhone, address: donationData.restaurantAddress, location: donationData.location },
                             orphanage: { name: userData.name, email: currentUser.email, phone: userData.phone, address: userData.address, location: userData.location },
-                            restaurantId: donationData.restaurantId
+                            restaurantId: donationData.restaurantId // <--- CRITICAL FCM ADDITION
                         })
                     });
                     showToast("Donation claimed! Contact details sent by email 📧"); switchTab('overview');
@@ -858,13 +1025,14 @@
 
                     await donationRef.update({ status: 'Completed', completedAt: firebase.firestore.FieldValue.serverTimestamp() });
 
+                    // [UPDATED] Send restaurantId so they get a Push Notification
                     await fetch(`${API_BASE}/api/confirm-receipt`, {
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             food: { name: donationData.foodName, quantity: donationData.servings },
                             restaurant: { name: donationData.restaurantName, email: donationData.restaurantEmail },
                             orphanage: { name: userData.name, email: currentUser.email },
-                            restaurantId: donationData.restaurantId
+                            restaurantId: donationData.restaurantId // <--- CRITICAL FCM ADDITION
                         })
                     });
                     showToast("Order completed! Confirmation email sent 📧");
@@ -890,10 +1058,11 @@
             if (type === 'receive' || type === 'request' || type === 'claim' || type === 'saveProfile') {
                 btn.className = "flex-1 py-3.5 bg-brand-green text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
+                
                 if (type === 'saveProfile') icon.className = "fa-solid fa-floppy-disk";
                 else icon.className = "fa-solid fa-check";
 
-            } else { 
+            } else { // Delete
                 btn.className = "flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg transition-all transform active:scale-95 text-base md:text-base touch-manipulation";
                 icon.className = "fa-solid fa-trash"; iconContainer.className = "w-14 h-14 md:w-16 md:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5 text-xl md:text-2xl shadow-sm";
             }
@@ -903,7 +1072,11 @@
         function closeConfirmModal() { const modal = document.getElementById('confirm-modal'); modal.classList.add('opacity-0'); modal.querySelector('div').classList.remove('scale-100'); modal.querySelector('div').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); pendingAction = null; }, 300); }
 
         function showToast(msg, type = 'success') { const t = document.getElementById('toast'); if (t) { const icon = t.querySelector('i'); t.classList.remove('bg-red-600', 'bg-brand-dark'); icon.classList.remove('fa-circle-check', 'fa-triangle-exclamation', 'text-green-400', 'text-red-400'); if (type === 'error') { t.classList.add('bg-red-600'); icon.classList.add('fa-triangle-exclamation', 'text-red-400'); } else { t.classList.add('bg-brand-dark'); icon.classList.add('fa-circle-check', 'text-green-400'); } document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000); } }
-        function logout() { auth.signOut().then(() => { window.location.href = 'https://foodbridge.qzz.io/login'; }); }
+        function logout() { 
+            auth.signOut().then(() => { 
+                window.location.href = 'https://foodbridge.qzz.io/login'; 
+            }); 
+        }
 
         let myChart; function updateChart(total) { const ctxElem = document.getElementById('motivationChart'); if (!ctxElem) return; const ctx = ctxElem.getContext('2d'); const avg = 500; if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: ['City Avg.', 'You'], datasets: [{ label: 'Meals Received', data: [avg, total], backgroundColor: ['#E5E7EB', '#10B981'], borderRadius: 6, barThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, grid: { display: false } }, x: { grid: { display: false } } } } }); }
         
