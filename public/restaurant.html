@@ -755,36 +755,77 @@
 
         // --- UPDATED LOAD ACTIVE PICKUPS (With View Receipt) ---
         function loadActivePickups() {
-            db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
-                const container = document.getElementById('scheduled-pickups-container'); if(!container) return; container.innerHTML = '';
-                let activeCount = 0;
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    if(d.status === 'Available') {
-                        activeCount++;
-                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-brand-orange relative mb-4"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-box-open text-brand-orange mr-2"></i> Available Listing</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div></div><div class="text-sm text-gray-500 italic bg-orange-50 p-2 rounded text-center border border-orange-100 mb-3">Waiting for claim...</div><button onclick="confirmDeleteDonation('${doc.id}')" class="w-full py-2 bg-red-100 text-red-600 font-bold rounded-xl hover:bg-red-200 transition-colors flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-trash-can"></i> Delete Listing</button></div>`;
-                    } else if(d.status === 'Claimed') {
-                        activeCount++;
-                        // Pass a serializable object or primitive values to the showBillModal function
-                        // We need: docId, item, qty, restName, restPhone, orphName, orphPhone
-                        const billParams = `'${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}', '${d.restaurantPhone || ""}', '${d.orphanageName}', '${d.orphanagePhone || ""}'`;
-                        
-                        container.innerHTML += `<div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative mb-4"><h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> Pickup Scheduled</h3><div class="grid md:grid-cols-2 gap-4 mb-4"><div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div><div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div><div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100"><p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p><p class="font-bold text-gray-800 flex items-center"><i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}</p><p class="text-sm text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.orphanageAddress || 'N/A'}</p></div></div><div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center border border-green-100 mb-3">Waiting for orphanage confirmation...</div><button onclick="showBillModal(${billParams})" class="w-full py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-receipt"></i> View Receipt & QR</button></div>`;
-                        /* In loadActivePickups function, inside the 'Claimed' block HTML generation */
-<div class="flex gap-3 mt-4">
-    <button onclick="openChat('${d.claimedBy}', '${d.orphanageName}')" class="w-14 h-12 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-100 flex items-center justify-center transition active:scale-95 shadow-sm border border-blue-100 font-bold">
-        <i class="fa-solid fa-comment-dots text-xl"></i>
-    </button>
+    db.collection('donations').where('restaurantId', '==', currentUser.uid).orderBy('createdAt', 'desc').onSnapshot(snap => {
+        const container = document.getElementById('scheduled-pickups-container'); 
+        if(!container) return; 
+        container.innerHTML = '';
+        
+        let activeCount = 0;
+        snap.forEach(doc => {
+            const d = doc.data();
+            
+            if(d.status === 'Available') {
+                activeCount++;
+                container.innerHTML += `
+                <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-brand-orange relative mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-box-open text-brand-orange mr-2"></i> Available Listing
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
+                        <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
+                    </div>
+                    <div class="text-sm text-gray-500 italic bg-orange-50 p-2 rounded text-center border border-orange-100 mb-3">Waiting for claim...</div>
+                    <button onclick="confirmDeleteDonation('${doc.id}')" class="w-full py-2 bg-red-100 text-red-600 font-bold rounded-xl hover:bg-red-200 transition-colors flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-trash-can"></i> Delete Listing
+                    </button>
+                </div>`;
+            } 
+            else if(d.status === 'Claimed') {
+                activeCount++;
+                const billParams = `'${doc.id}', '${d.foodName}', '${d.servings}', '${d.restaurantName}', '${d.restaurantPhone || ""}', '${d.orphanageName}', '${d.orphanagePhone || ""}'`;
+                
+                container.innerHTML += `
+                <div class="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-green-500 relative mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-truck-fast text-green-500 mr-2"></i> Pickup Scheduled
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div><p class="text-xs text-gray-500 uppercase">Item</p><p class="font-bold text-gray-800">${d.foodName}</p></div>
+                        <div><p class="text-xs text-gray-500 uppercase">Quantity</p><p class="font-bold text-gray-800">${d.servings} Servings</p></div>
+                        <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <p class="text-xs text-gray-500 uppercase mb-1">Claimed By</p>
+                            <p class="font-bold text-gray-800 flex items-center">
+                                <i class="fa-solid fa-hands-holding-child text-brand-orange mr-2"></i> ${d.orphanageName}
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <i class="fa-solid fa-phone text-gray-400 mr-2"></i> ${d.orphanagePhone || 'N/A'}
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <i class="fa-solid fa-location-dot text-gray-400 mr-2"></i> ${d.orphanageAddress || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 italic bg-green-50 p-2 rounded text-center border border-green-100 mb-3">Waiting for orphanage confirmation...</div>
+                    
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="openChat('${d.claimedBy}', '${d.orphanageName}')" class="w-14 h-12 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-100 flex items-center justify-center transition active:scale-95 shadow-sm border border-blue-100 font-bold">
+                            <i class="fa-solid fa-comment-dots text-xl"></i>
+                        </button>
 
-    <button onclick="showBillModal(${billParams})" class="flex-1 py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm shadow-md active:scale-95">
-        <i class="fa-solid fa-receipt"></i> View Receipt
-    </button>
-</div>
-                    }
-                });
-                if(activeCount === 0) container.innerHTML = `<div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center text-orange-600 text-sm font-medium">No active listings. Post a donation!</div>`;
-            });
+                        <button onclick="showBillModal(${billParams})" class="flex-1 py-3 bg-brand-dark text-white font-bold rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm shadow-md active:scale-95">
+                            <i class="fa-solid fa-receipt"></i> View Receipt
+                        </button>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        if(activeCount === 0) {
+            container.innerHTML = `<div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center text-orange-600 text-sm font-medium">No active listings. Post a donation!</div>`;
         }
+    });
+}
 
         function confirmDeleteDonation(id) { pendingAction = { type: 'deleteDonation', data: { id } }; showConfirmModal("Delete Listing", "Are you sure you want to delete this available food listing?", 'delete'); }
 
