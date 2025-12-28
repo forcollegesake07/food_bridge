@@ -6,7 +6,8 @@ const urlsToCache = [
   "restaurant.html",
   "orphanage.html",
   "admin.html",
-  "manifest.json"
+  "manifest.json",
+  "icon.png"  // <--- ADD THIS LINE
 ];
 
 // Install SW
