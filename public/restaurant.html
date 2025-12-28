@@ -1093,10 +1093,14 @@ let chatAttachmentBase64 = null; // Store base64 string
 let chatListener = null;
 let currentChatId = null;
 
+/* UPDATED CHAT LOGIC FOR RESTAURANT (Shows Names) */
+let chatListener = null;
+let currentChatId = null;
+
 function openChat(chatId, title) {
     if (!currentUser) return;
     document.getElementById('chat-header-name').innerText = title;
-    currentChatId = chatId;
+    currentChatId = chatId; // Using Donation ID as the Room ID
 
     const modal = document.getElementById('chat-modal');
     const container = document.getElementById('chat-container');
@@ -1108,6 +1112,7 @@ function openChat(chatId, title) {
 
     if (chatListener) chatListener();
     
+    // Listen to messages
     const messagesRef = db.collection('chats').doc(currentChatId).collection('messages').orderBy('timestamp', 'asc');
 
     chatListener = messagesRef.onSnapshot(snapshot => {
@@ -1115,7 +1120,7 @@ function openChat(chatId, title) {
         chatBox.innerHTML = ''; 
 
         if (snapshot.empty) {
-            chatBox.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-2"><i class="fa-solid fa-comments text-3xl opacity-20"></i><p class="text-xs">Start coordinating...</p></div>`;
+            chatBox.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-2"><i class="fa-solid fa-comments text-3xl opacity-20"></i><p class="text-xs">Start coordinating with the team.</p></div>`;
             return;
         }
 
@@ -1129,15 +1134,20 @@ function openChat(chatId, title) {
                 ? 'bg-brand-orange text-white rounded-l-2xl rounded-tr-2xl' 
                 : 'bg-white text-gray-800 border border-gray-100 rounded-r-2xl rounded-tl-2xl';
 
-            const nameLabel = !isMe ? `<p class="text-[10px] text-gray-400 ml-1 mb-1 font-bold">${msg.senderName || 'User'}</p>` : '';
-            const attachmentHtml = msg.attachment ? `<img src="${msg.attachment}" class="rounded-lg mb-2 max-w-full h-auto cursor-pointer" onclick="window.open(this.src)">` : '';
+            // Show Sender Name for others
+            const nameLabel = !isMe ? `<p class="text-[10px] text-gray-400 ml-1 mb-1 font-bold">${msg.senderName || 'Partner'}</p>` : '';
+            
+            // Image handling
+            let contentHtml = msg.text ? `<p>${msg.text}</p>` : '';
+            if (msg.attachment) {
+                contentHtml = `<img src="${msg.attachment}" class="rounded-lg mb-1 max-w-full h-auto cursor-pointer border border-black/10" onclick="window.open(this.src)">` + contentHtml;
+            }
 
             msgDiv.innerHTML = `
                 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
                     ${nameLabel}
-                    <div class="px-4 py-2 text-sm ${bubbleClass} shadow-sm relative group">
-                        ${attachmentHtml}
-                        ${msg.text ? `<p>${msg.text}</p>` : ''}
+                    <div class="px-4 py-2 text-sm ${bubbleClass} shadow-sm relative">
+                        ${contentHtml}
                         <span class="text-[10px] opacity-70 ${isMe ? 'text-orange-100' : 'text-gray-400'} block text-right mt-1">
                             ${msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
                         </span>
@@ -1154,31 +1164,37 @@ async function sendChatMessage(e) {
     e.preventDefault();
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
+    
+    // Check if we have text OR an image to send
     if ((!text && !chatAttachmentBase64) || !currentChatId) return;
 
     const textToSend = text;
-    const attachmentToSend = chatAttachmentBase64;
-    input.value = ''; 
+    const imageToSend = chatAttachmentBase64;
+    
+    // Clear UI immediately
+    input.value = '';
     if(typeof clearChatAttachment === 'function') clearChatAttachment();
 
     try {
         await db.collection('chats').doc(currentChatId).collection('messages').add({
             text: textToSend,
-            attachment: attachmentToSend || null,
+            attachment: imageToSend || null,
             senderId: currentUser.uid,
-            senderName: userData.name || 'Restaurant', // Added Name
+            senderName: userData.name || 'Restaurant', // Sends your name!
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        // Update main chat doc for list views
+        // Update room metadata
         await db.collection('chats').doc(currentChatId).set({
-            lastMessage: attachmentToSend ? '📷 Image' : textToSend,
+            lastMessage: imageToSend ? '📷 Image' : textToSend,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error("Chat Error:", err);
+        alert("Message failed to send.");
+    }
 }
-
 function closeChatModal() {
     const modal = document.getElementById('chat-modal');
     const container = document.getElementById('chat-container');
