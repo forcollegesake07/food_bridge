@@ -207,6 +207,29 @@
         </div>
     </div>
 </div>
+    <div id="chat-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 pointer-events-none">
+    <div id="chat-container" class="bg-gray-50 w-full sm:w-[400px] h-[85vh] sm:h-[600px] sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col transform translate-y-full sm:translate-y-10 transition-transform duration-300 pointer-events-auto overflow-hidden border border-gray-200">
+        <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold text-lg shadow-inner">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-base leading-tight" id="chat-header-name">Group Chat</h3>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span><p class="text-xs text-gray-500 font-medium">Live</p></div>
+                </div>
+            </div>
+            <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 transition active:scale-95"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-50 scroll-smooth"></div>
+        <div class="p-3 bg-white border-t border-gray-200">
+            <form onsubmit="sendChatMessage(event)" class="relative flex items-end gap-2">
+                <input type="text" id="chat-input" class="w-full pl-4 pr-4 py-3 bg-gray-100 border-0 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all outline-none text-sm font-medium" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="bg-brand-blue text-white w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg hover:bg-blue-600 active:scale-95 transition-all"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
@@ -381,96 +404,68 @@ let pendingScanDocId = null;
 
         // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
         // 1. LOAD AVAILABLE JOBS (Fixed: Finds jobs with missing deliveryStatus)
-        function loadActiveJob() {
+        // 1. LOAD AVAILABLE JOBS (Corrected Name & Query)
+function loadAvailableJobs() {
     db.collection('donations')
-        .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
-        .where('deliveredBy', '==', currentUser.uid)
-        .limit(1)
+        .where('status', '==', 'Claimed')
+        // We filter out assigned jobs manually below
         .onSnapshot(snap => {
-            const container = document.getElementById('active-job-card');
-            if (snap.empty) {
-                container.innerHTML = `<div class="text-center p-10"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fa-solid fa-route"></i></div><p class="text-gray-500 font-medium">You have no active deliveries.</p><button onclick="switchTab('jobs')" class="mt-4 text-brand-blue font-bold text-sm hover:underline">Find a Job</button></div>`;
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = '';
+            
+            if (!currentLat || !currentLng) {
+                container.innerHTML = `<div class="bg-red-500/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-red-500/20"><i class="fa-solid fa-location-dot text-4xl mb-3 opacity-80"></i><p class="font-bold">Location Required</p><p class="text-sm opacity-80">Please go to 'Details' tab and set your location.</p></div>`;
                 return;
             }
-
-            const doc = snap.docs[0];
-            const d = doc.data();
-            const isPickedUp = d.deliveryStatus === 'PickedUp';
             
-            // Coordinates
-            const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
-            const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 }; // Simulated if missing
+            let count = 0;
+            snap.forEach(doc => {
+                const d = doc.data();
+                
+                // Skip if already assigned (not null and not empty string)
+                if (d.deliveryStatus) return; 
 
-            // NAVIGATION LOGIC
-            let navUrl = "";
-            let navLabel = "";
-            
-            if (!isPickedUp) {
-                // Navigate to Restaurant
-                navUrl = `https://www.google.com/maps/dir/?api=1&destination=${restLoc.lat},${restLoc.lng}`;
-                navLabel = "Navigate to Restaurant";
-            } else {
-                // Navigate to Orphanage
-                // Use address if available, else coords
-                const destQuery = d.orphanageAddress ? encodeURIComponent(d.orphanageAddress) : `${orphLoc.lat},${orphLoc.lng}`;
-                navUrl = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
-                navLabel = "Navigate to Orphanage";
-            }
+                const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
+                
+                if (dist <= 10) { 
+                    count++;
+                    const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
 
-            container.innerHTML = `
-                <div class="w-full h-full flex flex-col">
-                    <div id="route-map-container" class="w-full h-64 bg-gray-200 relative"></div>
-                    <div class="p-6 flex-grow flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-bold text-gray-800">Current Route</h2>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold ${isPickedUp ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}">
-                                    ${isPickedUp ? 'Heading to Dropoff' : 'Heading to Pickup'}
-                                </span>
-                            </div>
-                            
-                            <div class="flex gap-3 mb-4">
-                                <a href="${navUrl}" target="_blank" class="flex-1 py-3 bg-white border-2 border-blue-500 text-blue-600 font-bold rounded-xl shadow-sm hover:bg-blue-50 flex items-center justify-center gap-2 text-sm transition text-center no-underline">
-                                    <i class="fa-solid fa-location-arrow"></i> ${navLabel}
-                                </a>
-
-                                ${!isPickedUp ? 
-                                    `<button onclick="openScanner('${doc.id}')" class="flex-1 py-3 bg-brand-orange text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition text-sm flex items-center justify-center gap-2">
-                                        <i class="fa-solid fa-qrcode"></i> Scan Pickup
-                                    </button>` : 
-                                    `<button onclick="updateStatus('${doc.id}', 'Completed')" class="flex-1 py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition text-sm flex items-center justify-center gap-2">
-                                        <i class="fa-solid fa-check"></i> Mark Delivered
-                                    </button>`
-                                }
-                            </div>
-
-                            <div class="space-y-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-orange"></div><div class="w-0.5 h-full bg-gray-200 min-h-[30px]"></div></div>
-                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Pickup</p><p class="font-bold text-gray-800">${d.restaurantName}</p><p class="text-xs text-gray-500">${d.restaurantAddress}</p></div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-green"></div></div>
-                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Dropoff</p><p class="font-bold text-gray-800">${d.orphanageName}</p><p class="text-xs text-gray-500">${d.orphanageAddress}</p></div>
-                                </div>
+                    container.innerHTML += `
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                        <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10">
+                            <i class="fa-solid fa-location-arrow mr-1"></i>${distDisplay}
+                        </div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
+                                <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
+                        
+                        <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
+                            <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">From</p>
+                                <p class="font-bold text-gray-800 text-sm">${d.restaurantName}</p>
+                                <p class="text-xs text-gray-500 truncate">${d.restaurantAddress || 'Address N/A'}</p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">To</p>
+                                <p class="font-bold text-gray-800 text-sm">${d.orphanageName}</p>
+                                <p class="text-xs text-gray-500 truncate">${d.orphanageAddress || 'Address N/A'}</p>
+                            </div>
+                        </div>
 
-            // Initialize Leaflet Map (Existing Logic + Resize Fix)
-            setTimeout(() => {
-                if(routeMap) { routeMap.remove(); }
-                routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
-                L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Pickup");
-                L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Dropoff");
-                L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
-                
-                // IMPORTANT: Fix grey map issue
-                routeMap.invalidateSize();
-            }, 200);
+                        <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition flex items-center justify-center gap-2">
+                            <span>Accept Delivery</span>
+                        </button>
+                    </div>`;
+                }
+            });
+            
+            if (count === 0) {
+                 container.innerHTML = `<div class="bg-white/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-white/20"><i class="fa-solid fa-check-circle text-4xl mb-3 opacity-50"></i><p>No jobs found within 10km.</p></div>`;
+            }
         });
 }
         // 2. LOAD ACTIVE JOB
@@ -743,6 +738,70 @@ function onScanSuccess(decodedText) {
     } else {
         alert("Incorrect QR Code! Please scan the correct order.");
     }
+}
+        // --- CHAT VARIABLES & FUNCTIONS ---
+let chatListener = null;
+let currentChatId = null;
+
+function openChat(chatId, title) {
+    if (!currentUser) return;
+    document.getElementById('chat-header-name').innerText = title;
+    currentChatId = chatId;
+
+    const modal = document.getElementById('chat-modal');
+    const container = document.getElementById('chat-container');
+    modal.classList.remove('hidden', 'pointer-events-none');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        container.classList.remove('translate-y-full', 'sm:translate-y-10');
+    }, 10);
+
+    if (chatListener) chatListener();
+    
+    // Use the donation ID as the chat document ID
+    const messagesRef = db.collection('chats').doc(currentChatId).collection('messages').orderBy('timestamp', 'asc');
+
+    chatListener = messagesRef.onSnapshot(snapshot => {
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.innerHTML = '';
+        if (snapshot.empty) { chatBox.innerHTML = `<div class="text-center text-gray-400 mt-10 text-xs">Start coordinating...</div>`; return; }
+        
+        snapshot.forEach(doc => {
+            const msg = doc.data();
+            const isMe = msg.senderId === currentUser.uid;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} mt-2`;
+            const bubbleClass = isMe ? 'bg-brand-blue text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 border border-gray-100 rounded-r-2xl rounded-tl-2xl';
+            msgDiv.innerHTML = `<div class="max-w-[75%] px-4 py-2 text-sm ${bubbleClass} shadow-sm"><p>${msg.text}</p></div>`;
+            chatBox.appendChild(msgDiv);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+}
+
+function sendChatMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || !currentChatId) return;
+    input.value = '';
+    db.collection('chats').doc(currentChatId).collection('messages').add({
+        text: text, 
+        senderId: currentUser.uid, 
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+function closeChatModal() {
+    const modal = document.getElementById('chat-modal');
+    const container = document.getElementById('chat-container');
+    container.classList.add('translate-y-full', 'sm:translate-y-10');
+    modal.classList.add('opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden', 'pointer-events-none');
+        if (chatListener) chatListener();
+        chatListener = null;
+    }, 300);
 }
     </script>
 </body>
