@@ -63,50 +63,29 @@
         #map-container { height: 300px; z-index: 1; touch-action: pan-x pan-y; }
 
         /* PROFESSIONAL QR SCANNER STYLES */
-        #qr-video-container {
-            position: relative;
-            width: 100%;
-            height: 400px; /* Specific height for better camera view */
-            overflow: hidden;
-            background: #000;
-            border-bottom-left-radius: 2rem;
-            border-bottom-right-radius: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Force Video to Fill Container */
-        #reader { 
-            width: 100%; 
-            height: 100%; 
-            border: none !important; 
-            overflow: hidden;
-        }
-        
-        /* Target the video element injected by library */
-        #reader video { 
-            width: 100% !important; 
-            height: 100% !important; 
-            object-fit: cover !important; 
-            border-radius: 0 !important;
-            /* Removed transform: scaleX(-1) to fix mirroring issue */
-        }
-
-        /* Custom Overlay on top of video */
-        .scan-overlay {
-            position: absolute; inset: 0; pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.4); /* Dimmed background */
-            z-index: 20;
-        }
-        .scan-frame {
-            width: 260px; height: 260px; position: relative;
-            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5); /* Dark mask around frame */
-            border-radius: 24px;
-            overflow: hidden;
-        }
-        
+        /* SIMPLIFIED SCANNER STYLES (Matches Driver.html) */
+/* REPLACE THE "PROFESSIONAL SCANNER STYLES" WITH THIS SIMPLE VERSION */
+#qr-video-container { 
+    position: relative; 
+    width: 100%; 
+    height: 300px; 
+    overflow: hidden; 
+    background: #000; 
+    border-radius: 1.5rem; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+#reader { 
+    width: 100%; 
+    height: 100%; 
+    border: none !important; 
+}
+#reader video { 
+    width: 100% !important; 
+    height: 100% !important; 
+    object-fit: cover !important; 
+}
         /* Hide specific elements if library tries to inject them */
         #reader__dashboard_section_csr button { display: none !important; } 
         #reader__dashboard_section_swaplink { display: none !important; }
@@ -348,20 +327,21 @@
     
     <!-- PROFESSIONAL SCANNER MODAL (Fixed UI) -->
     <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative transform scale-95 transition-all duration-300 transform-gpu flex flex-col border border-gray-100/20">
-            
-            <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10 relative">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 tracking-tight">
-                        <span class="w-8 h-8 rounded-full bg-green-100 text-brand-green flex items-center justify-center text-sm"><i class="fa-solid fa-qrcode"></i></span>
-                        Verify Receipt
-                    </h3>
-                    <p class="text-xs text-gray-400 mt-0.5 ml-1">Scan QR from restaurant bill</p>
-                </div>
-                <button onclick="closeScannerModal()" class="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 transition active:scale-95 border border-gray-100">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative transform scale-95 transition-all duration-300 flex flex-col">
+        <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Scan QR</h3>
+                <p class="text-xs text-gray-400">Scan code at Restaurant</p>
             </div>
+            <button onclick="closeScannerModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="relative w-full bg-black" id="qr-video-container">
+            <div id="reader"></div>
+        </div>
+    </div>
+</div>
 
             <!-- Sleek Video Container -->
             <div class="relative w-full bg-black" id="qr-video-container">
@@ -777,66 +757,74 @@ async function confirmSelfPickup(docId) {
             openScannerModal();
         }
 
-        function openScannerModal() {
-            const modal = document.getElementById('scanner-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); modal.children[0].classList.add('scale-100'); }, 10);
+        /* --- FIXED SCANNER LOGIC (Matches Driver.html) --- */
 
-            if (!html5QrCode) {
-                // Use Html5Qrcode (Pro API) to avoid the default UI with upload button
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                
-                html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    config, 
-                    onScanSuccess,
-                    onScanFailure
-                ).catch(err => {
-                    console.error("Scanner Error", err);
-                    showToast("Camera error or permission denied.", "error");
-                    closeScannerModal();
-                });
+function openScannerModal() {
+    const modal = document.getElementById('scanner-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => { 
+        modal.classList.remove('opacity-0'); 
+        modal.querySelector('div').classList.remove('scale-95'); 
+        modal.querySelector('div').classList.add('scale-100'); 
+    }, 10);
+
+    // Initialize Scanner if not active
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess
+        ).catch(err => {
+            console.error("Scanner Error", err);
+            showToast("Camera permission denied.", "error");
+            closeScannerModal();
+        });
+    }
+}
+
+function closeScannerModal() {
+    const modal = document.getElementById('scanner-modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('div').classList.remove('scale-100');
+    modal.querySelector('div').classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        if(html5QrCode) {
+            html5QrCode.stop().then(() => { 
+                html5QrCode.clear(); 
+                html5QrCode = null; 
+            }).catch(console.error);
+        }
+    }, 300);
+}
+
+function onScanSuccess(decodedText) {
+    // Check if we have a pending receive action
+    if (pendingAction && pendingAction.type === 'receive') {
+        const scannedId = decodedText.trim();
+        const expectedId = pendingAction.data.donationId.trim();
+
+        if (scannedId === expectedId) {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                    // Hide modal immediately
+                    document.getElementById('scanner-modal').classList.add('hidden'); 
+                    document.getElementById('scanner-modal').classList.add('opacity-0');
+                    executeAction(); // Verify & Complete
+                }).catch(err => console.error(err));
             }
+        } else {
+            // Wrong QR code
+            showToast("Incorrect QR Code! Please scan the correct receipt.", 'error');
         }
-
-        function closeScannerModal() {
-            const modal = document.getElementById('scanner-modal');
-            modal.classList.add('opacity-0');
-            modal.children[0].classList.remove('scale-100');
-            modal.children[0].classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                if(html5QrCode) {
-                    html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(console.error);
-                }
-            }, 300);
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log("Scanned:", decodedText);
-            if (pendingAction && pendingAction.type === 'receive') {
-                // FIXED: Added .trim() to handle whitespace issues that cause verification failure
-                const scannedId = decodedText.trim();
-                const expectedId = pendingAction.data.donationId.trim();
-
-                if (scannedId === expectedId) {
-                    if(html5QrCode) {
-                        html5QrCode.stop().then(() => {
-                            html5QrCode.clear();
-                            html5QrCode = null;
-                            document.getElementById('scanner-modal').classList.add('hidden'); // Hide immediately
-                            executeAction(); 
-                        }).catch(err => console.error(err));
-                    }
-                } else {
-                    // Only show toast if it's definitely the wrong code (prevent spamming)
-                    console.warn("Mismatch:", scannedId, "vs", expectedId);
-                    showToast("Incorrect QR Code. Please scan the receipt for " + pendingAction.data.foodName, 'error');
-                }
-            }
-        }
+    }
+}
         function onScanFailure(error) { /* Quiet failure */ }
 
         // Execution Logic
@@ -965,6 +953,7 @@ function openChat(chatId, title) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} mt-3`;
             
+            // GREEN THEME for Orphanage
             // GREEN THEME for Orphanage
             const bubbleClass = isMe 
                 ? 'bg-brand-green text-white rounded-l-2xl rounded-tr-2xl' 
