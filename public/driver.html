@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -230,185 +230,95 @@
         </div>
     </div>
 </div>
+    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 px-4">
+    <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative flex flex-col">
+        <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10">
+            <div><h3 class="text-xl font-bold text-gray-800">Scan Receipt QR</h3><p class="text-xs text-gray-400">Ask restaurant for QR code</p></div>
+            <button onclick="closeScannerModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="relative w-full bg-black h-64 flex justify-center items-center" id="qr-video-container"><div id="reader" style="width:100%;"></div></div>
+    </div>
+</div>
+
+<div id="chat-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 pointer-events-none">
+    <div id="chat-container" class="bg-gray-50 w-full sm:w-[400px] h-[85vh] sm:h-[600px] sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col transform translate-y-full sm:translate-y-10 transition-transform duration-300 pointer-events-auto overflow-hidden border border-gray-200">
+        <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center shadow-sm z-10">
+            <h3 class="font-bold text-gray-800" id="chat-header-name">Chat</h3>
+            <button onclick="closeChatModal()" class="text-gray-500 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-50"></div>
+        <div class="p-3 bg-white border-t"><form onsubmit="sendChatMessage(event)" class="flex gap-2"><input id="chat-input" class="flex-1 bg-gray-100 p-3 rounded-xl outline-none" placeholder="Type..."><button type="submit" class="bg-blue-600 text-white p-3 rounded-xl"><i class="fa-solid fa-paper-plane"></i></button></form></div>
+    </div>
+</div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let currentUser = null;
-        let userData = {};
-        
-        let broadcastNotifs = [];
-        
-        // Maps
-        let routeMap = null;
-        let locationMap = null, locationMarker = null;
-        let currentLat = 0, currentLng = 0;
-        // Add these variables at the top of your script
+        /* =========================================
+   VOLUNTEER DASHBOARD LOGIC (CORRECTED)
+   ========================================= */
+
+const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+let userData = {};
+let broadcastNotifs = [];
+
+// Maps & Location
+let routeMap = null;
+let locationMap = null, locationMarker = null;
+let currentLat = 0, currentLng = 0;
+
+// Scanner & Chat
 let html5QrCode = null;
 let pendingScanDocId = null;
+let chatListener = null;
+let currentChatId = null;
 
-        // AUTH CHECK
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                const doc = await db.collection('users').doc(user.uid).get();
-                if (doc.exists && doc.data().role === 'volunteer') {
-                    userData = doc.data();
-                    
-                    // UI Updates
-                    document.getElementById('sidebar-name').innerText = userData.name || "Volunteer";
-                    document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
-                    document.getElementById('detail-name').value = userData.name || "";
-                    document.getElementById('detail-phone').value = userData.phone || "";
-                    document.getElementById('detail-address').value = userData.address || "";
-                    
-                    if(userData.location) {
-                        currentLat = userData.location.lat;
-                        currentLng = userData.location.lng;
-                    }
-
-                    // Ensure userId exists
-                    if(!userData.userId) {
-                        await db.collection('users').doc(user.uid).update({ userId: user.uid });
-                    }
-
-                    // Start Listeners
-                    listenForBroadcasts(user.uid, userData.role);
-                    loadBroadcasts();
-                    loadAvailableJobs();
-                    loadActiveJob();
-                    loadHistory();
-                } else {
-                    window.location.href = 'login.html';
-                }
-            } else {
-                window.location.href = 'login.html';
+// --- AUTH CHECK ---
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        currentUser = user;
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().role === 'volunteer') {
+            userData = doc.data();
+            
+            // UI Updates
+            document.getElementById('sidebar-name').innerText = userData.name || "Volunteer";
+            document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
+            document.getElementById('detail-name').value = userData.name || "";
+            document.getElementById('detail-phone').value = userData.phone || "";
+            document.getElementById('detail-address').value = userData.address || "";
+            
+            if(userData.location) {
+                currentLat = userData.location.lat;
+                currentLng = userData.location.lng;
             }
-        });
 
-        // --- NOTIFICATION LOGIC ---
-        
-        function listenForBroadcasts(userId, role) {
-            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); 
-            
-            db.collection('notifications')
-                .where('createdAt', '>', oneHourAgo)
-                .onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            const note = change.doc.data();
-                            const isForAll = note.targetAudience === 'all';
-                            const isForRole = note.targetAudience === role; // role is 'volunteer'
-                            const isForMe = note.targetAudience === 'specific' && note.targetUserId === userId;
-
-                            if (isForAll || isForRole || isForMe) {
-                                showInAppNotification(note.title, note.message);
-                            }
-                        }
-                    });
-                });
-        }
-
-        function loadBroadcasts() {
-            db.collection('notifications')
-              .where('targetAudience', 'in', ['all', 'volunteer', 'specific'])
-              .orderBy('createdAt', 'desc')
-              .limit(10)
-              .onSnapshot(snap => {
-                  broadcastNotifs = [];
-                  snap.forEach(doc => {
-                      const d = doc.data();
-                      // Double check specific user ID match for 'specific' type
-                      if(d.targetAudience === 'all' || d.targetAudience === 'volunteer' || (d.targetAudience === 'specific' && d.targetUserId === currentUser.uid)) {
-                          broadcastNotifs.push({
-                              type: 'broadcast',
-                              title: d.title || 'System Broadcast',
-                              message: d.message,
-                              time: d.createdAt ? new Date(d.createdAt.seconds * 1000) : new Date()
-                          });
-                      }
-                  });
-                  renderAllNotifs();
-              });
-        }
-
-        function showInAppNotification(title, message) {
-            const container = document.getElementById('notification-container');
-            if(!container) return;
-            const el = document.createElement('div');
-            el.className = "bg-white border-l-4 border-blue-500 rounded-lg p-4 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto flex items-start gap-3 w-full";
-            el.innerHTML = `
-                <div class="text-blue-500 mt-1 flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
-                <div class="flex-grow">
-                    <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
-                    <p class="text-gray-600 text-xs mt-1 leading-relaxed">${message}</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0"><i class="fa-solid fa-xmark"></i></button>
-            `;
-            container.appendChild(el);
-            
-            requestAnimationFrame(() => el.classList.remove('translate-x-full'));
-            setTimeout(() => {
-                el.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => el.remove(), 300);
-            }, 6000); 
-        }
-
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notif-dropdown');
-            if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                setTimeout(() => { dropdown.classList.remove('opacity-0', 'scale-95'); dropdown.classList.add('opacity-100', 'scale-100'); }, 10);
-            } else {
-                dropdown.classList.remove('opacity-100', 'scale-100'); dropdown.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => { dropdown.classList.add('hidden'); }, 300);
+            if(!userData.userId) {
+                await db.collection('users').doc(user.uid).update({ userId: user.uid });
             }
+
+            // Start Logic
+            listenForBroadcasts(user.uid, userData.role);
+            loadBroadcasts();
+            loadAvailableJobs(); // Call the corrected function name
+            loadActiveJob();
+            loadHistory();
+        } else {
+            window.location.href = 'login.html';
         }
+    } else {
+        window.location.href = 'login.html';
+    }
+});
 
-        function renderAllNotifs() {
-            const list = document.getElementById('notif-list');
-            const badge = document.getElementById('notif-badge');
-            
-            // For now, only broadcasts are in the list for drivers. 
-            // You can add delivery updates here later if needed.
-            const all = [...broadcastNotifs].sort((a,b) => b.time - a.time);
-            
-            if (all.length === 0) {
-                list.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No new notifications.</p>';
-                badge.classList.add('hidden');
-            } else {
-                list.innerHTML = '';
-                all.forEach(n => {
-                    let iconClass = 'fa-tower-broadcast';
-                    let iconColor = 'text-brand-orange';
-                    
-                    list.innerHTML += `
-                        <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition">
-                            <div class="flex items-start gap-3">
-                                <div class="mt-1 ${iconColor}"><i class="fa-solid ${iconClass}"></i></div>
-                                <div>
-                                    <p class="text-xs font-bold text-gray-800">${n.title}</p>
-                                    <p class="text-xs text-gray-600 line-clamp-2">${n.message}</p>
-                                    <p class="text-[10px] text-gray-400 mt-1">${n.time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                badge.classList.remove('hidden');
-            }
-        }
-
-        // --- EXISTING LOGIC ---
-
-        // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
-        // 1. LOAD AVAILABLE JOBS (Fixed: Finds jobs with missing deliveryStatus)
-        // 1. LOAD AVAILABLE JOBS (Corrected Name & Query)
+// --- 1. LOAD AVAILABLE JOBS (Nearby, Unassigned) ---
+// THIS WAS PREVIOUSLY NAMED WRONG. IT IS NOW CORRECT.
 function loadAvailableJobs() {
     db.collection('donations')
         .where('status', '==', 'Claimed')
-        // We filter out assigned jobs manually below
         .onSnapshot(snap => {
             const container = document.getElementById('jobs-container');
             container.innerHTML = '';
@@ -422,7 +332,7 @@ function loadAvailableJobs() {
             snap.forEach(doc => {
                 const d = doc.data();
                 
-                // Skip if already assigned (not null and not empty string)
+                // Skip if already assigned
                 if (d.deliveryStatus) return; 
 
                 const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
@@ -436,11 +346,9 @@ function loadAvailableJobs() {
                         <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10">
                             <i class="fa-solid fa-location-arrow mr-1"></i>${distDisplay}
                         </div>
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
-                                <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
-                            </div>
+                        <div class="mb-4">
+                            <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
+                            <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
                         </div>
                         
                         <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
@@ -468,247 +376,131 @@ function loadAvailableJobs() {
             }
         });
 }
-        // 2. LOAD ACTIVE JOB
-        function loadActiveJob() {
-            db.collection('donations')
-                .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
-                .where('deliveredBy', '==', currentUser.uid)
-                .limit(1)
-                .onSnapshot(snap => {
-                    const container = document.getElementById('active-job-card');
-                    if (snap.empty) {
-                        container.innerHTML = `<div class="text-center p-10"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fa-solid fa-route"></i></div><p class="text-gray-500 font-medium">You have no active deliveries.</p><button onclick="switchTab('jobs')" class="mt-4 text-brand-blue font-bold text-sm hover:underline">Find a Job</button></div>`;
-                        return;
-                    }
 
-                    const doc = snap.docs[0];
-                    const d = doc.data();
-                    const isPickedUp = d.deliveryStatus === 'PickedUp';
-                    const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
-                    const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 };
+// --- 2. LOAD ACTIVE JOB (With Navigation & Chat) ---
+function loadActiveJob() {
+    db.collection('donations')
+        .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
+        .where('deliveredBy', '==', currentUser.uid)
+        .limit(1)
+        .onSnapshot(snap => {
+            const container = document.getElementById('active-job-card');
+            if (snap.empty) {
+                container.innerHTML = `<div class="text-center p-10"><p class="text-gray-500">No active delivery.</p></div>`;
+                return;
+            }
 
-                    container.innerHTML = `
-                        <div class="w-full h-full flex flex-col">
-                            <div id="route-map-container" class="w-full h-64 bg-gray-200"></div>
-                            <div class="p-6 flex-grow flex flex-col justify-between">
-                                <div>
-                                    <div class="flex justify-between items-center mb-4">
-                                        <h2 class="text-xl font-bold text-gray-800">Current Route</h2>
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${isPickedUp ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}">
-                                            ${isPickedUp ? 'On the way to Dropoff' : 'On the way to Pickup'}
-                                        </span>
-                                    </div>
-                                    <div class="space-y-4">
-                                        <div class="flex items-start gap-3">
-                                            <div class="flex flex-col items-center">
-                                                <div class="w-3 h-3 rounded-full bg-brand-orange"></div>
-                                                <div class="w-0.5 h-full bg-gray-200 min-h-[30px]"></div>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs text-gray-400 uppercase font-bold">Pickup</p>
-                                                <p class="font-bold text-gray-800">${d.restaurantName}</p>
-                                                <p class="text-xs text-gray-500">${d.restaurantAddress}</p>
-                                                ${!isPickedUp ? `<button onclick="updateStatus('${doc.id}', 'PickedUp')" class="mt-2 px-4 py-2 bg-brand-orange text-white text-xs font-bold rounded-lg shadow-md hover:bg-orange-600">Mark Picked Up</button>` : '<p class="text-green-500 text-xs font-bold mt-1"><i class="fa-solid fa-check"></i> Completed</p>'}
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start gap-3">
-                                            <div class="flex flex-col items-center">
-                                                <div class="w-3 h-3 rounded-full bg-brand-green"></div>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs text-gray-400 uppercase font-bold">Dropoff</p>
-                                                <p class="font-bold text-gray-800">${d.orphanageName}</p>
-                                                <p class="text-xs text-gray-500">${d.orphanageAddress}</p>
-                                                ${isPickedUp ? `<button onclick="updateStatus('${doc.id}', 'Completed')" class="mt-2 px-4 py-2 bg-brand-green text-white text-xs font-bold rounded-lg shadow-md hover:bg-green-600">Mark Delivered</button>` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
+            const doc = snap.docs[0];
+            const d = doc.data();
+            const isPickedUp = d.deliveryStatus === 'PickedUp';
+            
+            const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
+            const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 };
+
+            // NAVIGATION LOGIC (Google Maps App Link)
+            const destLat = isPickedUp ? orphLoc.lat : restLoc.lat;
+            const destLng = isPickedUp ? orphLoc.lng : restLoc.lng;
+            const query = isPickedUp ? (d.orphanageAddress || `${destLat},${destLng}`) : (d.restaurantAddress || `${destLat},${destLng}`);
+            const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+            const navLabel = isPickedUp ? "Navigate to Orphanage" : "Navigate to Restaurant";
+
+            // ACTION BUTTON (Scan vs Complete)
+            let actionButton = "";
+            if (!isPickedUp) {
+                actionButton = `<button onclick="openScanner('${doc.id}')" class="flex-1 py-3 bg-brand-orange text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-qrcode"></i> Scan Pickup</button>`;
+            } else {
+                actionButton = `<button onclick="updateStatus('${doc.id}', 'Completed')" class="flex-1 py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-check"></i> Complete</button>`;
+            }
+
+            container.innerHTML = `
+                <div class="w-full h-full flex flex-col">
+                    <div id="route-map-container" class="w-full h-64 bg-gray-200 relative"></div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-bold text-gray-800">Current Task</h2>
+                                <button onclick="openChat('${doc.id}', 'Group Chat')" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-100 flex items-center gap-2 hover:bg-blue-100 transition">
+                                    <i class="fa-solid fa-comments"></i> Chat
+                                </button>
+                            </div>
+                            
+                            <div class="flex gap-3 mb-4">
+                                <a href="${navUrl}" target="_blank" class="flex-1 py-3 bg-white border-2 border-blue-600 text-blue-600 font-bold rounded-xl shadow-sm hover:bg-blue-50 flex items-center justify-center gap-2 text-sm no-underline">
+                                    <i class="fa-solid fa-diamond-turn-right"></i> ${navLabel}
+                                </a>
+                                
+                                ${actionButton}
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-orange"></div><div class="w-0.5 h-full bg-gray-200 min-h-[30px]"></div></div>
+                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Pickup</p><p class="font-bold text-gray-800">${d.restaurantName}</p><p class="text-xs text-gray-500">${d.restaurantAddress}</p></div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-green"></div></div>
+                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Dropoff</p><p class="font-bold text-gray-800">${d.orphanageName}</p><p class="text-xs text-gray-500">${d.orphanageAddress}</p></div>
                                 </div>
                             </div>
                         </div>
-                    `;
+                    </div>
+                </div>
+            `;
 
-                    setTimeout(() => {
-                        if(routeMap) { routeMap.remove(); }
-                        routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
-                        L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Restaurant").openPopup();
-                        L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Orphanage");
-                        L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
-                    }, 100);
-                });
-        }
+            // Initialize Map
+            setTimeout(() => {
+                if(routeMap) { routeMap.remove(); }
+                routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
+                L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Pickup");
+                L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Dropoff");
+                L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
+                routeMap.invalidateSize();
+            }, 200);
+        });
+}
 
-        // 3. LOAD HISTORY
-        function loadHistory() {
-            db.collection('donations')
-                .where('deliveredBy', '==', currentUser.uid)
-                .where('deliveryStatus', '==', 'Completed')
-                .orderBy('completedAt', 'desc')
-                .onSnapshot(snap => {
-                    const list = document.getElementById('history-list');
-                    list.innerHTML = '';
-                    if (snap.empty) {
-                        list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No completed deliveries yet.</td></tr>';
-                        return;
-                    }
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        const date = d.completedAt ? new Date(d.completedAt.seconds * 1000).toLocaleDateString() : '-';
-                        list.innerHTML += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">${date}</td>
-                                <td class="px-6 py-4 text-gray-500">${d.restaurantName}</td>
-                                <td class="px-6 py-4 text-gray-500">${d.orphanageName}</td>
-                                <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Delivered</span></td>
-                            </tr>
-                        `;
-                    });
-                });
-        }
-
-        // 4. SAVE PROFILE
-        async function saveProfile(e) {
-            e.preventDefault();
-            const name = document.getElementById('detail-name').value;
-            const phone = document.getElementById('detail-phone').value;
-            const address = document.getElementById('detail-address').value;
-
-            try {
-                await db.collection('users').doc(currentUser.uid).update({
-                    name, phone, address,
-                    location: { lat: currentLat, lng: currentLng }
-                });
-                userData.name = name; 
-                userData.location = { lat: currentLat, lng: currentLng };
-                
-                document.getElementById('sidebar-name').innerText = name;
-                showToast("Profile & Location Updated!");
-                loadAvailableJobs();
-            } catch (err) {
-                console.error(err);
-                showToast("Error updating profile", "error");
+// --- 3. LOAD HISTORY ---
+function loadHistory() {
+    db.collection('donations')
+        .where('deliveredBy', '==', currentUser.uid)
+        .where('deliveryStatus', '==', 'Completed')
+        .orderBy('completedAt', 'desc')
+        .onSnapshot(snap => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            if (snap.empty) {
+                list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No completed deliveries yet.</td></tr>';
+                return;
             }
-        }
-
-        // MAP LOGIC
-        function initLocationMap() {
-            if (locationMap) { locationMap.invalidateSize(); return; }
-            
-            const lat = currentLat || 20.5937;
-            const lng = currentLng || 78.9629;
-            const zoom = currentLat ? 13 : 5;
-
-            locationMap = L.map('location-map-container').setView([lat, lng], zoom);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locationMap);
-            
-            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
-
-            locationMarker.on('dragend', function () {
-                const position = locationMarker.getLatLng();
-                currentLat = position.lat;
-                currentLng = position.lng;
-                fetchAddressFromLatLng(currentLat, currentLng);
+            snap.forEach(doc => {
+                const d = doc.data();
+                const date = d.completedAt ? new Date(d.completedAt.seconds * 1000).toLocaleDateString() : '-';
+                list.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${date}</td>
+                        <td class="px-6 py-4 text-gray-500">${d.restaurantName}</td>
+                        <td class="px-6 py-4 text-gray-500">${d.orphanageName}</td>
+                        <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Delivered</span></td>
+                    </tr>`;
             });
-            
-            if (!currentLat) {
-                locationMap.locate({setView: true, maxZoom: 16});
-                locationMap.on('locationfound', function(e) {
-                    currentLat = e.latlng.lat;
-                    currentLng = e.latlng.lng;
-                    locationMarker.setLatLng(e.latlng);
-                    fetchAddressFromLatLng(currentLat, currentLng);
-                });
-            }
-        }
+        });
+}
 
-        async function fetchAddressFromLatLng(lat, lng) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                const data = await res.json();
-                if (data && data.display_name) {
-                    document.getElementById("detail-address").value = data.display_name;
-                }
-            } catch (err) { console.error("Address fetch failed", err); }
-        }
-
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
-            var R = 6371; 
-            var dLat = deg2rad(lat2-lat1); 
-            var dLon = deg2rad(lon2-lon1); 
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            return R * c;
-        }
-        function deg2rad(deg) { return deg * (Math.PI/180); }
-
-        async function acceptDelivery(docId) {
-            try {
-                await db.collection('donations').doc(docId).update({
-                    deliveryStatus: 'Assigned',
-                    deliveredBy: currentUser.uid,
-                    driverName: userData.name || 'Volunteer',
-                    driverPhone: userData.phone || ''
-                });
-                showToast("Delivery Accepted!");
-                switchTab('active');
-            } catch (err) { console.error(err); showToast("Error", "error"); }
-        }
-
-        async function updateStatus(docId, status) {
-            try {
-                const updates = { deliveryStatus: status };
-                if (status === 'Completed') {
-                    updates.status = 'Completed';
-                    updates.completedAt = firebase.firestore.FieldValue.serverTimestamp();
-                }
-                await db.collection('donations').doc(docId).update(updates);
-                showToast("Status Updated");
-                if (status === 'Completed') switchTab('history');
-            } catch (err) { console.error(err); showToast("Error", "error"); }
-        }
-
-        function switchTab(tab) {
-            ['jobs', 'active', 'history', 'details'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('btn-' + t).classList.remove('bg-brand-blue', 'text-white', 'shadow-md');
-                document.getElementById('btn-' + t).classList.add('text-gray-500', 'hover:bg-gray-50');
-            });
-            
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            document.getElementById('btn-' + tab).classList.add('bg-brand-blue', 'text-white', 'shadow-md');
-            document.getElementById('btn-' + tab).classList.remove('text-gray-500', 'hover:bg-gray-50');
-
-            if (tab === 'details') { setTimeout(initLocationMap, 200); }
-            // *** THIS FIXES THE MAP DISPLAY ***
-    if (tab === 'active' && routeMap) {
-        setTimeout(() => routeMap.invalidateSize(), 200);
-    }
-        }
-
-        function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
-        function showToast(msg, type='success') {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            t.classList.remove('translate-y-32', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
-        }
-        // --- SCANNER FUNCTIONS ---
+// --- 4. SCANNER LOGIC ---
 function openScanner(docId) {
     pendingScanDocId = docId;
     const modal = document.getElementById('scanner-modal');
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.remove('opacity-0'), 10);
 
-    // Start Camera
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
         .catch(err => { 
             console.error(err); 
-            alert("Camera permission denied or error."); 
+            alert("Camera permission denied. Please allow access."); 
             closeScannerModal(); 
         });
     }
@@ -726,23 +518,20 @@ function closeScannerModal() {
 }
 
 function onScanSuccess(decodedText) {
-    // Check if scanned code matches the Donation ID
     if (decodedText === pendingScanDocId) {
         if(html5QrCode) {
             html5QrCode.stop().then(() => {
                 html5QrCode.clear(); html5QrCode = null;
                 document.getElementById('scanner-modal').classList.add('hidden');
-                updateStatus(pendingScanDocId, 'PickedUp'); // Mark as picked up
+                updateStatus(pendingScanDocId, 'PickedUp');
             });
         }
     } else {
-        alert("Incorrect QR Code! Please scan the correct order.");
+        alert("Wrong QR Code! Please scan the receipt for this order.");
     }
 }
-        // --- CHAT VARIABLES & FUNCTIONS ---
-let chatListener = null;
-let currentChatId = null;
 
+// --- 5. CHAT LOGIC ---
 function openChat(chatId, title) {
     if (!currentUser) return;
     document.getElementById('chat-header-name').innerText = title;
@@ -757,8 +546,6 @@ function openChat(chatId, title) {
     }, 10);
 
     if (chatListener) chatListener();
-    
-    // Use the donation ID as the chat document ID
     const messagesRef = db.collection('chats').doc(currentChatId).collection('messages').orderBy('timestamp', 'asc');
 
     chatListener = messagesRef.onSnapshot(snapshot => {
@@ -786,9 +573,7 @@ function sendChatMessage(e) {
     if (!text || !currentChatId) return;
     input.value = '';
     db.collection('chats').doc(currentChatId).collection('messages').add({
-        text: text, 
-        senderId: currentUser.uid, 
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        text: text, senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 }
 
@@ -803,6 +588,60 @@ function closeChatModal() {
         chatListener = null;
     }, 300);
 }
-    </script>
+
+// --- 6. UTILS & MAPS ---
+async function saveProfile(e) {
+    e.preventDefault();
+    const name = document.getElementById('detail-name').value;
+    const phone = document.getElementById('detail-phone').value;
+    const address = document.getElementById('detail-address').value;
+    await db.collection('users').doc(currentUser.uid).update({ name, phone, address, location: { lat: currentLat, lng: currentLng } });
+    userData.name = name; userData.location = { lat: currentLat, lng: currentLng };
+    document.getElementById('sidebar-name').innerText = name;
+    showToast("Profile Updated!");
+    loadAvailableJobs();
+}
+
+async function acceptDelivery(docId) {
+    await db.collection('donations').doc(docId).update({ deliveryStatus: 'Assigned', deliveredBy: currentUser.uid, driverName: userData.name, driverPhone: userData.phone });
+    showToast("Accepted!"); switchTab('active');
+}
+
+async function updateStatus(docId, status) {
+    const up = { deliveryStatus: status };
+    if (status === 'Completed') { up.status = 'Completed'; up.completedAt = firebase.firestore.FieldValue.serverTimestamp(); }
+    await db.collection('donations').doc(docId).update(up);
+    showToast(status === 'PickedUp' ? "Picked Up!" : "Completed!");
+    if (status === 'Completed') switchTab('history');
+}
+
+function initLocationMap() {
+    if (locationMap) { locationMap.invalidateSize(); return; }
+    const lat = currentLat || 20.5937; const lng = currentLng || 78.9629;
+    locationMap = L.map('location-map-container').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locationMap);
+    locationMarker = L.marker([lat, lng], {draggable:true}).addTo(locationMap);
+    locationMarker.on('dragend', function(){ const p = locationMarker.getLatLng(); currentLat = p.lat; currentLng = p.lng; fetchAddressFromLatLng(p.lat, p.lng); });
+}
+
+async function fetchAddressFromLatLng(lat, lng) {
+    try { const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`); const data = await res.json(); if(data.display_name) document.getElementById("detail-address").value = data.display_name; } catch(e){}
+}
+
+function switchTab(tab) {
+    ['jobs', 'active', 'history', 'details'].forEach(t => { document.getElementById('tab-'+t).classList.add('hidden'); document.getElementById('btn-'+t).classList.remove('bg-brand-blue','text-white'); document.getElementById('btn-'+t).classList.add('text-gray-500'); });
+    document.getElementById('tab-'+tab).classList.remove('hidden'); document.getElementById('btn-'+tab).classList.add('bg-brand-blue','text-white');
+    if(tab === 'details') setTimeout(initLocationMap, 200);
+    if(tab === 'active' && routeMap) setTimeout(() => routeMap.invalidateSize(), 200);
+}
+
+// Helpers
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { if(!lat1) return 999; var R=6371; var dLat=deg2rad(lat2-lat1); var dLon=deg2rad(lon2-lon1); var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2); var c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); return R*c; }
+function deg2rad(deg) { return deg * (Math.PI/180); }
+function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
+function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32','opacity-0'); setTimeout(() => t.classList.add('translate-y-32','opacity-0'), 3000); }
+function toggleNotifications() { document.getElementById('notif-dropdown').classList.toggle('hidden'); }
+// Notification stubs
+function listenForBroadcasts() {} function loadBroadcasts() {}
 </body>
 </html>
