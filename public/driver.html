@@ -512,8 +512,11 @@
                     // NAVIGATION LOGIC (Google Maps App Link)
                     const destLat = isPickedUp ? orphLoc.lat : restLoc.lat;
                     const destLng = isPickedUp ? orphLoc.lng : restLoc.lng;
-                    const query = isPickedUp ? (d.orphanageAddress || `${destLat},${destLng}`) : (d.restaurantAddress || `${destLat},${destLng}`);
-                    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+                    
+                    // FIXED: Always use coordinates for precise location
+                    const query = `${destLat},${destLng}`; 
+                    // FIXED: Standard Google Maps Direction URL
+                    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
                     const navLabel = isPickedUp ? "Navigate to Orphanage" : "Navigate to Restaurant";
 
                     // ACTION BUTTON (Scan vs Complete)
