@@ -32,7 +32,9 @@
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517520287167-4bbf64a00d66?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
-        #map-container { height: 350px; z-index: 1; border-radius: 1rem; }
+        /* Map containers */
+        #route-map-container { height: 350px; z-index: 1; border-radius: 1rem; }
+        #location-map-container { height: 300px; z-index: 1; border-radius: 1rem; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
@@ -59,8 +61,18 @@
             <button onclick="switchTab('history')" id="btn-history" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all">
                 <i class="fa-solid fa-clock-rotate-left w-6 text-lg mr-3"></i> My History
             </button>
+            <button onclick="switchTab('details')" id="btn-details" class="w-full flex items-center px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 rounded-xl transition-all">
+                <i class="fa-solid fa-id-card w-6 text-lg mr-3"></i> Details & Location
+            </button>
         </nav>
-        <div class="p-6 border-t border-gray-100">
+        <div class="p-6 border-t border-gray-100 bg-gray-50/50">
+            <div class="flex items-center gap-3 mb-5 px-1">
+                <div class="w-10 h-10 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold shadow-md">V</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-gray-800 truncate" id="sidebar-name">Loading...</p>
+                    <p class="text-xs text-gray-500 truncate" id="sidebar-id">ID: ...</p>
+                </div>
+            </div>
              <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-sm font-bold text-red-500 bg-white border border-red-100 rounded-xl hover:bg-red-50 transition-all shadow-sm">
                 <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
             </button>
@@ -75,7 +87,7 @@
         <button onclick="logout()" class="text-gray-500"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
 
-    <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full">
+    <main class="flex-grow overflow-y-auto p-4 pt-20 md:p-10 relative z-10 w-full" id="main-scroll-container">
         
         <div id="tab-jobs" class="max-w-4xl mx-auto space-y-6 animate-fade-in">
             <div class="flex flex-col md:flex-row justify-between items-end gap-4">
@@ -84,12 +96,12 @@
                     <p class="text-gray-100 text-sm mt-1">Help transport food from Restaurant to Orphanage.</p>
                 </div>
                 <div class="bg-blue-600 px-4 py-2 rounded-full text-white text-xs font-bold shadow-lg animate-pulse">
-                    <i class="fa-solid fa-satellite-dish mr-2"></i> Live Feed
+                    <i class="fa-solid fa-satellite-dish mr-2"></i> Live Feed (10km Radius)
                 </div>
             </div>
 
             <div id="jobs-container" class="space-y-4">
-                <p class="text-white text-center py-10">Searching for donations needing delivery...</p>
+                <p class="text-white text-center py-10">Searching for donations near you...</p>
             </div>
         </div>
 
@@ -118,6 +130,40 @@
             </div>
         </div>
 
+        <div id="tab-details" class="hidden max-w-2xl mx-auto animate-fade-in pt-6">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+                <div class="h-24 md:h-32 bg-gradient-to-r from-blue-700 to-blue-900 relative">
+                    <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
+                        <div class="w-20 h-20 bg-white p-1.5 rounded-full shadow-lg">
+                            <div class="w-full h-full bg-brand-blue text-white rounded-full flex items-center justify-center text-2xl font-bold"><i class="fa-solid fa-user-gear"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-14 pb-6 px-6 text-center">
+                    <h2 class="text-xl font-bold text-gray-800">Volunteer Profile</h2>
+                    <p class="text-gray-500 text-xs mt-1">Set your location to find nearby jobs.</p>
+                </div>
+                <form onsubmit="saveProfile(event)" class="px-6 pb-8 space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Full Name</label>
+                        <input type="text" id="detail-name" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Phone Number</label>
+                        <input type="tel" id="detail-phone" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Current Location (For 10km Radius)</label>
+                        <textarea id="detail-address" rows="2" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none font-medium text-gray-800 mb-3" placeholder="Drag marker to set location..."></textarea>
+                        <div id="location-map-container" class="w-full rounded-xl border border-gray-300 overflow-hidden relative"></div>
+                        <p class="text-xs text-gray-400 mt-1 italic"><i class="fa-solid fa-circle-info"></i> Drag the blue marker to your waiting spot.</p>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-blue-600 transition-all shadow-lg transform active:scale-[0.99]">Save & Update Feed</button>
+                </form>
+            </div>
+        </div>
+
     </main>
 
     <div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-4 z-50">
@@ -131,7 +177,12 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         let currentUser = null;
-        let map, routingControl;
+        let userData = {};
+        
+        // Maps
+        let routeMap = null;
+        let locationMap = null, locationMarker = null;
+        let currentLat = 0, currentLng = 0;
 
         // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
@@ -139,6 +190,20 @@
                 currentUser = user;
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists && doc.data().role === 'volunteer') {
+                    userData = doc.data();
+                    
+                    // UI Updates
+                    document.getElementById('sidebar-name').innerText = userData.name || "Volunteer";
+                    document.getElementById('sidebar-id').innerText = "ID: " + user.uid.slice(0, 6);
+                    document.getElementById('detail-name').value = userData.name || "";
+                    document.getElementById('detail-phone').value = userData.phone || "";
+                    document.getElementById('detail-address').value = userData.address || "";
+                    
+                    if(userData.location) {
+                        currentLat = userData.location.lat;
+                        currentLng = userData.location.lng;
+                    }
+
                     loadAvailableJobs();
                     loadActiveJob();
                     loadHistory();
@@ -150,59 +215,72 @@
             }
         });
 
-        // 1. LOAD AVAILABLE JOBS (Claimed by Orphanage, but no Driver yet)
+        // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
         function loadAvailableJobs() {
             db.collection('donations')
                 .where('status', '==', 'Claimed')
-                .where('deliveryStatus', '==', null) // Only show if not yet picked up
+                .where('deliveryStatus', '==', null)
                 .onSnapshot(snap => {
                     const container = document.getElementById('jobs-container');
                     container.innerHTML = '';
                     
-                    if (snap.empty) {
-                        container.innerHTML = `<div class="bg-white/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-white/20"><i class="fa-solid fa-mug-hot text-4xl mb-3 opacity-50"></i><p>No pending deliveries nearby.</p></div>`;
+                    if (!currentLat || !currentLng) {
+                        container.innerHTML = `<div class="bg-red-500/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-red-500/20"><i class="fa-solid fa-location-dot text-4xl mb-3 opacity-80"></i><p class="font-bold">Location Required</p><p class="text-sm opacity-80">Please go to 'Details' tab and set your location to find nearby jobs.</p></div>`;
                         return;
                     }
-
+                    
+                    let count = 0;
                     snap.forEach(doc => {
                         const d = doc.data();
-                        const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
                         
-                        container.innerHTML += `
-                        <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative overflow-hidden group hover:scale-[1.01] transition-transform">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
-                                    <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-xs text-gray-400 font-bold">${time}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
-                                <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">From (Restaurant)</p>
-                                    <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-store text-brand-orange mr-1"></i> ${d.restaurantName}</p>
-                                    <p class="text-xs text-gray-500 truncate">${d.restaurantAddress || 'Address N/A'}</p>
-                                </div>
-                                <div class="bg-green-50 p-3 rounded-xl border border-green-100">
-                                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">To (Orphanage)</p>
-                                    <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-hands-holding-child text-brand-green mr-1"></i> ${d.orphanageName}</p>
-                                    <p class="text-xs text-gray-500 truncate">${d.orphanageAddress || 'Address N/A'}</p>
-                                </div>
-                            </div>
+                        // Distance Filter
+                        const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
+                        
+                        if (dist <= 10) { // 10km Filter
+                            count++;
+                            const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
+                            const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
 
-                            <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition flex items-center justify-center gap-2">
-                                <span>Accept Delivery</span>
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </button>
-                        </div>`;
+                            container.innerHTML += `
+                            <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                                <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10">
+                                    <i class="fa-solid fa-location-arrow mr-1"></i>${distDisplay}
+                                </div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
+                                        <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
+                                    <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">From (Restaurant)</p>
+                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-store text-brand-orange mr-1"></i> ${d.restaurantName}</p>
+                                        <p class="text-xs text-gray-500 truncate">${d.restaurantAddress || 'Address N/A'}</p>
+                                    </div>
+                                    <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">To (Orphanage)</p>
+                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-hands-holding-child text-brand-green mr-1"></i> ${d.orphanageName}</p>
+                                        <p class="text-xs text-gray-500 truncate">${d.orphanageAddress || 'Address N/A'}</p>
+                                    </div>
+                                </div>
+
+                                <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition flex items-center justify-center gap-2">
+                                    <span>Accept Delivery</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>`;
+                        }
                     });
+                    
+                    if (count === 0) {
+                         container.innerHTML = `<div class="bg-white/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-white/20"><i class="fa-solid fa-check-circle text-4xl mb-3 opacity-50"></i><p>No jobs found within 10km.</p></div>`;
+                    }
                 });
         }
 
-        // 2. LOAD ACTIVE JOB (Current User assigned)
+        // 2. LOAD ACTIVE JOB
         function loadActiveJob() {
             db.collection('donations')
                 .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
@@ -210,7 +288,6 @@
                 .limit(1)
                 .onSnapshot(snap => {
                     const container = document.getElementById('active-job-card');
-                    
                     if (snap.empty) {
                         container.innerHTML = `<div class="text-center p-10"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fa-solid fa-route"></i></div><p class="text-gray-500 font-medium">You have no active deliveries.</p><button onclick="switchTab('jobs')" class="mt-4 text-brand-blue font-bold text-sm hover:underline">Find a Job</button></div>`;
                         return;
@@ -219,16 +296,12 @@
                     const doc = snap.docs[0];
                     const d = doc.data();
                     const isPickedUp = d.deliveryStatus === 'PickedUp';
-
-                    // Coordinates for Map
-                    const restLoc = d.location || { lat: 20.5937, lng: 78.9629 }; // Default or Real
-                    // Note: Orphanage location would ideally be saved in the donation doc during claim. 
-                    // For now, we simulate orphanage location slightly offset if missing.
-                    const orphLoc = { lat: restLoc.lat + 0.01, lng: restLoc.lng + 0.01 };
+                    const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
+                    const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 }; // Simulating dest if missing
 
                     container.innerHTML = `
                         <div class="w-full h-full flex flex-col">
-                            <div id="map-container" class="w-full h-64 bg-gray-200"></div>
+                            <div id="route-map-container" class="w-full h-64 bg-gray-200"></div>
                             <div class="p-6 flex-grow flex flex-col justify-between">
                                 <div>
                                     <div class="flex justify-between items-center mb-4">
@@ -267,18 +340,13 @@
                         </div>
                     `;
 
-                    // Initialize Map after DOM update
                     setTimeout(() => {
-                        if(map) { map.remove(); }
-                        map = L.map('map-container').setView([restLoc.lat, restLoc.lng], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                        
-                        // Markers
-                        L.marker([restLoc.lat, restLoc.lng]).addTo(map).bindPopup("Restaurant").openPopup();
-                        L.marker([orphLoc.lat, orphLoc.lng]).addTo(map).bindPopup("Orphanage");
-                        
-                        // Simple Line
-                        L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(map);
+                        if(routeMap) { routeMap.remove(); }
+                        routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
+                        L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Restaurant").openPopup();
+                        L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Orphanage");
+                        L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
                     }, 100);
                 });
         }
@@ -311,7 +379,84 @@
                 });
         }
 
-        // ACTIONS
+        // 4. SAVE PROFILE
+        async function saveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('detail-name').value;
+            const phone = document.getElementById('detail-phone').value;
+            const address = document.getElementById('detail-address').value;
+
+            try {
+                await db.collection('users').doc(currentUser.uid).update({
+                    name, phone, address,
+                    location: { lat: currentLat, lng: currentLng }
+                });
+                userData.name = name; 
+                userData.location = { lat: currentLat, lng: currentLng };
+                
+                document.getElementById('sidebar-name').innerText = name;
+                showToast("Profile & Location Updated!");
+                loadAvailableJobs(); // Refresh feed with new location
+            } catch (err) {
+                console.error(err);
+                showToast("Error updating profile", "error");
+            }
+        }
+
+        // MAP LOGIC (LOCATION SETTING)
+        function initLocationMap() {
+            if (locationMap) { locationMap.invalidateSize(); return; }
+            
+            const lat = currentLat || 20.5937;
+            const lng = currentLng || 78.9629;
+            const zoom = currentLat ? 13 : 5;
+
+            locationMap = L.map('location-map-container').setView([lat, lng], zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locationMap);
+            
+            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+
+            locationMarker.on('dragend', function () {
+                const position = locationMarker.getLatLng();
+                currentLat = position.lat;
+                currentLng = position.lng;
+                fetchAddressFromLatLng(currentLat, currentLng);
+            });
+            
+            // Auto Locate if no location set
+            if (!currentLat) {
+                locationMap.locate({setView: true, maxZoom: 16});
+                locationMap.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat;
+                    currentLng = e.latlng.lng;
+                    locationMarker.setLatLng(e.latlng);
+                    fetchAddressFromLatLng(currentLat, currentLng);
+                });
+            }
+        }
+
+        async function fetchAddressFromLatLng(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                if (data && data.display_name) {
+                    document.getElementById("detail-address").value = data.display_name;
+                }
+            } catch (err) { console.error("Address fetch failed", err); }
+        }
+
+        // HELPERS
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 99999;
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1); 
+            var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c;
+        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
         async function acceptDelivery(docId) {
             try {
                 await db.collection('donations').doc(docId).update({
@@ -320,46 +465,36 @@
                     driverName: userData.name || 'Volunteer',
                     driverPhone: userData.phone || ''
                 });
-                showToast("Delivery Accepted! Go to Active Tab.");
+                showToast("Delivery Accepted!");
                 switchTab('active');
-            } catch (err) {
-                console.error(err);
-                showToast("Error accepting job", "error");
-            }
+            } catch (err) { console.error(err); showToast("Error", "error"); }
         }
 
         async function updateStatus(docId, status) {
             try {
+                const updates = { deliveryStatus: status };
                 if (status === 'Completed') {
-                    // Finalize the whole donation cycle
-                    await db.collection('donations').doc(docId).update({
-                        deliveryStatus: 'Completed',
-                        status: 'Completed', // Mark main status as completed too
-                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    showToast("Great Job! Delivery Completed.");
-                    switchTab('history');
-                } else {
-                    await db.collection('donations').doc(docId).update({
-                        deliveryStatus: status
-                    });
-                    showToast("Status Updated");
+                    updates.status = 'Completed';
+                    updates.completedAt = firebase.firestore.FieldValue.serverTimestamp();
                 }
-            } catch (err) {
-                console.error(err);
-                showToast("Error updating status", "error");
-            }
+                await db.collection('donations').doc(docId).update(updates);
+                showToast("Status Updated");
+                if (status === 'Completed') switchTab('history');
+            } catch (err) { console.error(err); showToast("Error", "error"); }
         }
 
         function switchTab(tab) {
-            ['jobs', 'active', 'history'].forEach(t => {
+            ['jobs', 'active', 'history', 'details'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 document.getElementById('btn-' + t).classList.remove('bg-brand-blue', 'text-white', 'shadow-md');
                 document.getElementById('btn-' + t).classList.add('text-gray-500', 'hover:bg-gray-50');
             });
+            
             document.getElementById('tab-' + tab).classList.remove('hidden');
             document.getElementById('btn-' + tab).classList.add('bg-brand-blue', 'text-white', 'shadow-md');
             document.getElementById('btn-' + tab).classList.remove('text-gray-500', 'hover:bg-gray-50');
+
+            if (tab === 'details') { setTimeout(initLocationMap, 200); }
         }
 
         function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
