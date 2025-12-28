@@ -430,7 +430,7 @@
         
         <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center shadow-sm z-10">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brand-light text-brand-orange flex items-center justify-center font-bold text-lg shadow-inner border border-orange-100">
+                <div class="w-10 h-10 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center font-bold text-lg shadow-inner border border-orange-100">
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div>
@@ -447,18 +447,35 @@
         </div>
 
         <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-50 scroll-smooth">
-            <div class="flex flex-col items-center justify-center h-full text-gray-400 opacity-50 space-y-2">
-                <i class="fa-solid fa-comments text-4xl"></i>
-                <p class="text-sm">Start the conversation</p>
             </div>
+
+        <div id="chat-attachment-preview" class="hidden px-4 py-2 bg-gray-100 border-t border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <div class="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                    <img id="chat-preview-img" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span class="text-xs font-bold text-gray-700 truncate">Image Selected</span>
+                    <span class="text-[10px] text-gray-500 truncate" id="chat-file-size">0 KB</span>
+                </div>
+            </div>
+            <button onclick="clearChatAttachment()" class="w-8 h-8 rounded-full bg-white hover:bg-red-50 text-gray-500 hover:text-red-500 flex items-center justify-center transition shadow-sm">
+                <i class="fa-solid fa-trash-can text-sm"></i>
+            </button>
         </div>
 
         <div class="p-3 bg-white border-t border-gray-200">
             <form onsubmit="sendChatMessage(event)" class="relative flex items-end gap-2">
+                <input type="file" id="chat-file-input" accept="image/*" class="hidden" onchange="handleChatFileSelect(this)">
+                
                 <div class="relative flex-grow">
                     <input type="text" id="chat-input" class="w-full pl-4 pr-10 py-3 bg-gray-100 border-0 rounded-2xl focus:ring-2 focus:ring-brand-orange focus:bg-white transition-all outline-none text-sm font-medium" placeholder="Type a message..." autocomplete="off">
-                    <button type="button" class="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition"><i class="fa-solid fa-paperclip"></i></button>
+                    
+                    <button type="button" onclick="document.getElementById('chat-file-input').click()" class="absolute right-3 bottom-3 text-gray-400 hover:text-brand-orange transition active:scale-95">
+                        <i class="fa-solid fa-paperclip text-lg"></i>
+                    </button>
                 </div>
+                
                 <button type="submit" class="bg-brand-orange text-white w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
                     <i class="fa-solid fa-paper-plane text-sm"></i>
                 </button>
@@ -466,7 +483,6 @@
         </div>
     </div>
 </div>
-
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
@@ -1064,11 +1080,12 @@
             } catch (error) { console.error("❌ Claim Email Error:", error); }
         }
         /* =========================================
-   IN-APP CHAT LOGIC (Real-time Firestore)
+   IN-APP CHAT LOGIC (Text + Image Attachment)
    ========================================= */
 let chatListener = null;
 let currentChatId = null;
 let currentReceiverId = null;
+let chatAttachmentBase64 = null; // Store base64 string
 
 // 1. Open Chat Modal & Setup Listener
 function openChat(receiverId, receiverName) {
@@ -1077,12 +1094,14 @@ function openChat(receiverId, receiverName) {
     currentReceiverId = receiverId;
     document.getElementById('chat-header-name').innerText = receiverName;
     document.getElementById('chat-messages').innerHTML = '<div class="flex justify-center mt-10"><i class="fa-solid fa-circle-notch fa-spin text-brand-orange"></i></div>';
+    
+    // Clear previous inputs
+    document.getElementById('chat-input').value = '';
+    clearChatAttachment();
 
-    // Generate unique Chat ID (sort UIDs to ensure same ID for both users)
     const uids = [currentUser.uid, receiverId].sort();
     currentChatId = `${uids[0]}_${uids[1]}`;
 
-    // UI Animation to Open
     const modal = document.getElementById('chat-modal');
     const container = document.getElementById('chat-container');
     modal.classList.remove('hidden', 'pointer-events-none');
@@ -1091,16 +1110,17 @@ function openChat(receiverId, receiverName) {
         container.classList.remove('translate-y-full', 'sm:translate-y-10');
     }, 10);
 
-    // Listen for Messages
-    if (chatListener) chatListener(); // Unsubscribe previous
+    if (chatListener) chatListener();
+    
+    // Listen to Messages
     const messagesRef = db.collection('chats').doc(currentChatId).collection('messages').orderBy('timestamp', 'asc');
 
     chatListener = messagesRef.onSnapshot(snapshot => {
         const chatBox = document.getElementById('chat-messages');
-        chatBox.innerHTML = ''; // Clear loading
+        chatBox.innerHTML = ''; 
 
         if (snapshot.empty) {
-            chatBox.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-2"><i class="fa-solid fa-comments text-3xl opacity-20"></i><p class="text-xs">Say Hi to ${receiverName} 👋</p></div>`;
+            chatBox.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-2"><i class="fa-solid fa-comments text-3xl opacity-20"></i><p class="text-xs">Start messaging ${receiverName}</p></div>`;
             return;
         }
 
@@ -1108,22 +1128,26 @@ function openChat(receiverId, receiverName) {
         snapshot.forEach(doc => {
             const msg = doc.data();
             const isMe = msg.senderId === currentUser.uid;
-            
-            // Check if we need to group messages visually
             const isSequence = lastSender === msg.senderId;
             lastSender = msg.senderId;
 
             const msgDiv = document.createElement('div');
             msgDiv.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} ${isSequence ? 'mt-1' : 'mt-3'}`;
             
-            // Style based on sender
             const bubbleClass = isMe 
                 ? 'bg-brand-orange text-white rounded-l-2xl rounded-tr-2xl rounded-br-sm' 
                 : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-r-2xl rounded-tl-2xl rounded-bl-sm';
 
+            // Check for Attachment
+            let attachmentHtml = '';
+            if (msg.attachment) {
+                attachmentHtml = `<img src="${msg.attachment}" class="rounded-lg mb-2 max-w-full h-auto border border-black/10 block cursor-pointer" onclick="window.open(this.src)">`;
+            }
+
             msgDiv.innerHTML = `
                 <div class="max-w-[75%] px-4 py-2 text-sm ${bubbleClass} relative group">
-                    <p>${msg.text}</p>
+                    ${attachmentHtml}
+                    ${msg.text ? `<p>${msg.text}</p>` : ''}
                     <span class="text-[10px] opacity-70 ${isMe ? 'text-orange-100' : 'text-gray-400'} block text-right mt-1">
                         ${msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
                     </span>
@@ -1132,53 +1156,89 @@ function openChat(receiverId, receiverName) {
             chatBox.appendChild(msgDiv);
         });
         
-        // Auto-scroll to bottom
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 }
 
-// 2. Close Chat
-function closeChatModal() {
-    const modal = document.getElementById('chat-modal');
-    const container = document.getElementById('chat-container');
-    
-    container.classList.add('translate-y-full', 'sm:translate-y-10');
-    modal.classList.add('opacity-0');
-    
-    setTimeout(() => {
-        modal.classList.add('hidden', 'pointer-events-none');
-        if (chatListener) chatListener(); // Stop listening to save data
-        chatListener = null;
-    }, 300);
+// 2. Handle File Selection
+function handleChatFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Simple size check (Max 1MB for Firestore safety)
+        if (file.size > 1048576) {
+            alert("File is too large! Please select an image under 1MB.");
+            input.value = ''; // Reset
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            chatAttachmentBase64 = e.target.result;
+            
+            // Show Preview
+            document.getElementById('chat-preview-img').src = chatAttachmentBase64;
+            document.getElementById('chat-file-size').innerText = (file.size / 1024).toFixed(1) + " KB";
+            document.getElementById('chat-attachment-preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
-// 3. Send Message
+// 3. Clear Attachment
+function clearChatAttachment() {
+    chatAttachmentBase64 = null;
+    document.getElementById('chat-file-input').value = '';
+    document.getElementById('chat-attachment-preview').classList.add('hidden');
+    document.getElementById('chat-preview-img').src = '';
+}
+
+// 4. Send Message (Text + Attachment)
 async function sendChatMessage(e) {
     e.preventDefault();
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
-    if (!text || !currentChatId) return;
 
-    input.value = ''; // Clear input immediately for UX
+    // Don't send if both text and attachment are empty
+    if ((!text && !chatAttachmentBase64) || !currentChatId) return;
+
+    // Temporary vars to clear UI immediately
+    const textToSend = text;
+    const attachmentToSend = chatAttachmentBase64;
+
+    input.value = ''; 
+    clearChatAttachment(); // Clear preview immediately for UX
 
     try {
-        // Add message to subcollection
         await db.collection('chats').doc(currentChatId).collection('messages').add({
-            text: text,
+            text: textToSend,
+            attachment: attachmentToSend || null, // Save Base64 to Firestore
             senderId: currentUser.uid,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Update main chat doc (for "Last Message" lists in future)
         await db.collection('chats').doc(currentChatId).set({
             participants: [currentUser.uid, currentReceiverId],
-            lastMessage: text,
+            lastMessage: attachmentToSend ? '📷 Image' : textToSend,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
     } catch (err) {
         console.error("Chat Error:", err);
+        alert("Failed to send message. If attaching an image, ensure it is under 1MB.");
     }
+}
+
+function closeChatModal() {
+    const modal = document.getElementById('chat-modal');
+    const container = document.getElementById('chat-container');
+    container.classList.add('translate-y-full', 'sm:translate-y-10');
+    modal.classList.add('opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden', 'pointer-events-none');
+        if (chatListener) chatListener();
+        chatListener = null;
+    }, 300);
 }
     </script>
 </body>
