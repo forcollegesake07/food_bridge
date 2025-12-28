@@ -361,10 +361,11 @@
         // --- EXISTING LOGIC ---
 
         // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
+        // 1. LOAD AVAILABLE JOBS (Fixed: Finds jobs with missing deliveryStatus)
         function loadAvailableJobs() {
             db.collection('donations')
                 .where('status', '==', 'Claimed')
-                .where('deliveryStatus', '==', null)
+                // REMOVED .where('deliveryStatus', '==', null) because it filters out missing fields
                 .onSnapshot(snap => {
                     const container = document.getElementById('jobs-container');
                     container.innerHTML = '';
@@ -377,9 +378,14 @@
                     let count = 0;
                     snap.forEach(doc => {
                         const d = doc.data();
+                        
+                        // Manual Filter: Skip if delivery is already assigned, picked up, or self-pickup
+                        if (d.deliveryStatus) return; 
+
+                        // Distance Filter
                         const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
                         
-                        if (dist <= 10) { 
+                        if (dist <= 10) { // 10km Filter
                             count++;
                             const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
                             const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
