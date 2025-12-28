@@ -11,7 +11,7 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -35,6 +35,10 @@
         /* Map containers */
         #route-map-container { height: 350px; z-index: 1; border-radius: 1rem; }
         #location-map-container { height: 300px; z-index: 1; border-radius: 1rem; }
+        /* Add inside <style> */
+#qr-video-container { position: relative; width: 100%; height: 300px; overflow: hidden; background: #000; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; }
+#reader { width: 100%; height: 100%; border: none !important; }
+#reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
@@ -192,6 +196,18 @@
 
     <div id="notification-container" class="fixed top-4 right-4 z-[100] space-y-3 w-full max-w-sm px-4 md:px-0 pointer-events-none"></div>
 
+    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 px-4">
+    <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden w-full max-w-sm relative transform scale-95 transition-all duration-300 flex flex-col">
+        <div class="bg-white p-5 flex items-center justify-between border-b border-gray-100 z-10">
+            <div><h3 class="text-xl font-bold text-gray-800">Scan QR</h3><p class="text-xs text-gray-400">Scan code at Restaurant</p></div>
+            <button onclick="closeScannerModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="relative w-full bg-black" id="qr-video-container">
+            <div id="reader"></div>
+        </div>
+    </div>
+</div>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         firebase.initializeApp(firebaseConfig);
@@ -206,6 +222,9 @@
         let routeMap = null;
         let locationMap = null, locationMarker = null;
         let currentLat = 0, currentLng = 0;
+        // Add these variables at the top of your script
+let html5QrCode = null;
+let pendingScanDocId = null;
 
         // AUTH CHECK
         auth.onAuthStateChanged(async (user) => {
@@ -362,73 +381,98 @@
 
         // 1. LOAD AVAILABLE JOBS (10KM Radius Logic)
         // 1. LOAD AVAILABLE JOBS (Fixed: Finds jobs with missing deliveryStatus)
-        function loadAvailableJobs() {
-            db.collection('donations')
-                .where('status', '==', 'Claimed')
-                // REMOVED .where('deliveryStatus', '==', null) because it filters out missing fields
-                .onSnapshot(snap => {
-                    const container = document.getElementById('jobs-container');
-                    container.innerHTML = '';
-                    
-                    if (!currentLat || !currentLng) {
-                        container.innerHTML = `<div class="bg-red-500/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-red-500/20"><i class="fa-solid fa-location-dot text-4xl mb-3 opacity-80"></i><p class="font-bold">Location Required</p><p class="text-sm opacity-80">Please go to 'Details' tab and set your location to find nearby jobs.</p></div>`;
-                        return;
-                    }
-                    
-                    let count = 0;
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        
-                        // Manual Filter: Skip if delivery is already assigned, picked up, or self-pickup
-                        if (d.deliveryStatus) return; 
+        function loadActiveJob() {
+    db.collection('donations')
+        .where('deliveryStatus', 'in', ['Assigned', 'PickedUp'])
+        .where('deliveredBy', '==', currentUser.uid)
+        .limit(1)
+        .onSnapshot(snap => {
+            const container = document.getElementById('active-job-card');
+            if (snap.empty) {
+                container.innerHTML = `<div class="text-center p-10"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl"><i class="fa-solid fa-route"></i></div><p class="text-gray-500 font-medium">You have no active deliveries.</p><button onclick="switchTab('jobs')" class="mt-4 text-brand-blue font-bold text-sm hover:underline">Find a Job</button></div>`;
+                return;
+            }
 
-                        // Distance Filter
-                        const dist = getDistanceFromLatLonInKm(currentLat, currentLng, d.location?.lat, d.location?.lng);
-                        
-                        if (dist <= 10) { // 10km Filter
-                            count++;
-                            const time = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleString() : 'Just now';
-                            const distDisplay = dist < 1 ? "< 1 km" : dist.toFixed(1) + " km";
+            const doc = snap.docs[0];
+            const d = doc.data();
+            const isPickedUp = d.deliveryStatus === 'PickedUp';
+            
+            // Coordinates
+            const restLoc = d.location || { lat: 20.5937, lng: 78.9629 };
+            const orphLoc = { lat: restLoc.lat + 0.02, lng: restLoc.lng + 0.02 }; // Simulated if missing
 
-                            container.innerHTML += `
-                            <div class="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-brand-blue relative overflow-hidden group hover:scale-[1.01] transition-transform">
-                                <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm z-10">
-                                    <i class="fa-solid fa-location-arrow mr-1"></i>${distDisplay}
+            // NAVIGATION LOGIC
+            let navUrl = "";
+            let navLabel = "";
+            
+            if (!isPickedUp) {
+                // Navigate to Restaurant
+                navUrl = `https://www.google.com/maps/dir/?api=1&destination=${restLoc.lat},${restLoc.lng}`;
+                navLabel = "Navigate to Restaurant";
+            } else {
+                // Navigate to Orphanage
+                // Use address if available, else coords
+                const destQuery = d.orphanageAddress ? encodeURIComponent(d.orphanageAddress) : `${orphLoc.lat},${orphLoc.lng}`;
+                navUrl = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
+                navLabel = "Navigate to Orphanage";
+            }
+
+            container.innerHTML = `
+                <div class="w-full h-full flex flex-col">
+                    <div id="route-map-container" class="w-full h-64 bg-gray-200 relative"></div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-bold text-gray-800">Current Route</h2>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${isPickedUp ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}">
+                                    ${isPickedUp ? 'Heading to Dropoff' : 'Heading to Pickup'}
+                                </span>
+                            </div>
+                            
+                            <div class="flex gap-3 mb-4">
+                                <a href="${navUrl}" target="_blank" class="flex-1 py-3 bg-white border-2 border-blue-500 text-blue-600 font-bold rounded-xl shadow-sm hover:bg-blue-50 flex items-center justify-center gap-2 text-sm transition text-center no-underline">
+                                    <i class="fa-solid fa-location-arrow"></i> ${navLabel}
+                                </a>
+
+                                ${!isPickedUp ? 
+                                    `<button onclick="openScanner('${doc.id}')" class="flex-1 py-3 bg-brand-orange text-white font-bold rounded-xl shadow-md hover:bg-orange-600 transition text-sm flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-qrcode"></i> Scan Pickup
+                                    </button>` : 
+                                    `<button onclick="updateStatus('${doc.id}', 'Completed')" class="flex-1 py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-green-600 transition text-sm flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-check"></i> Mark Delivered
+                                    </button>`
+                                }
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-orange"></div><div class="w-0.5 h-full bg-gray-200 min-h-[30px]"></div></div>
+                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Pickup</p><p class="font-bold text-gray-800">${d.restaurantName}</p><p class="text-xs text-gray-500">${d.restaurantAddress}</p></div>
                                 </div>
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <span class="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pickup Request</span>
-                                        <h3 class="text-lg font-bold text-gray-800 mt-1">${d.foodName} <span class="text-gray-400 font-normal">(${d.servings} Servings)</span></h3>
-                                    </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full bg-brand-green"></div></div>
+                                    <div><p class="text-xs text-gray-400 uppercase font-bold">Dropoff</p><p class="font-bold text-gray-800">${d.orphanageName}</p><p class="text-xs text-gray-500">${d.orphanageAddress}</p></div>
                                 </div>
-                                
-                                <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
-                                    <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">From (Restaurant)</p>
-                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-store text-brand-orange mr-1"></i> ${d.restaurantName}</p>
-                                        <p class="text-xs text-gray-500 truncate">${d.restaurantAddress || 'Address N/A'}</p>
-                                    </div>
-                                    <div class="bg-green-50 p-3 rounded-xl border border-green-100">
-                                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">To (Orphanage)</p>
-                                        <p class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-hands-holding-child text-brand-green mr-1"></i> ${d.orphanageName}</p>
-                                        <p class="text-xs text-gray-500 truncate">${d.orphanageAddress || 'Address N/A'}</p>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-                                <button onclick="acceptDelivery('${doc.id}')" class="w-full py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition flex items-center justify-center gap-2">
-                                    <span>Accept Delivery</span>
-                                    <i class="fa-solid fa-arrow-right"></i>
-                                </button>
-                            </div>`;
-                        }
-                    });
-                    
-                    if (count === 0) {
-                         container.innerHTML = `<div class="bg-white/10 backdrop-blur rounded-2xl p-8 text-center text-white border border-white/20"><i class="fa-solid fa-check-circle text-4xl mb-3 opacity-50"></i><p>No jobs found within 10km.</p></div>`;
-                    }
-                });
-        }
-
+            // Initialize Leaflet Map (Existing Logic + Resize Fix)
+            setTimeout(() => {
+                if(routeMap) { routeMap.remove(); }
+                routeMap = L.map('route-map-container').setView([restLoc.lat, restLoc.lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(routeMap);
+                L.marker([restLoc.lat, restLoc.lng]).addTo(routeMap).bindPopup("Pickup");
+                L.marker([orphLoc.lat, orphLoc.lng]).addTo(routeMap).bindPopup("Dropoff");
+                L.polyline([[restLoc.lat, restLoc.lng], [orphLoc.lat, orphLoc.lng]], {color: 'blue'}).addTo(routeMap);
+                
+                // IMPORTANT: Fix grey map issue
+                routeMap.invalidateSize();
+            }, 200);
+        });
+}
         // 2. LOAD ACTIVE JOB
         function loadActiveJob() {
             db.collection('donations')
@@ -642,6 +686,10 @@
             document.getElementById('btn-' + tab).classList.remove('text-gray-500', 'hover:bg-gray-50');
 
             if (tab === 'details') { setTimeout(initLocationMap, 200); }
+            // *** THIS FIXES THE MAP DISPLAY ***
+    if (tab === 'active' && routeMap) {
+        setTimeout(() => routeMap.invalidateSize(), 200);
+    }
         }
 
         function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
@@ -651,6 +699,51 @@
             t.classList.remove('translate-y-32', 'opacity-0');
             setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
         }
+        // --- SCANNER FUNCTIONS ---
+function openScanner(docId) {
+    pendingScanDocId = docId;
+    const modal = document.getElementById('scanner-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+    // Start Camera
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => { 
+            console.error(err); 
+            alert("Camera permission denied or error."); 
+            closeScannerModal(); 
+        });
+    }
+}
+
+function closeScannerModal() {
+    const modal = document.getElementById('scanner-modal');
+    modal.classList.add('opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        if(html5QrCode) { 
+            html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }); 
+        }
+    }, 300);
+}
+
+function onScanSuccess(decodedText) {
+    // Check if scanned code matches the Donation ID
+    if (decodedText === pendingScanDocId) {
+        if(html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear(); html5QrCode = null;
+                document.getElementById('scanner-modal').classList.add('hidden');
+                updateStatus(pendingScanDocId, 'PickedUp'); // Mark as picked up
+            });
+        }
+    } else {
+        alert("Incorrect QR Code! Please scan the correct order.");
+    }
+}
     </script>
 </body>
 </html>
