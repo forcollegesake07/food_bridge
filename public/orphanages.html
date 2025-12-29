@@ -430,17 +430,21 @@ body.app-mode #main-scroll-container { padding-top: 20px !important; }
     </div>
 </div>
     <div class="app-bottom-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 justify-around items-center py-2 z-50 shadow-[0_-5px_10px_rgba(0,0,0,0.05)] hidden">
-    <button onclick="switchTab('jobs')" class="flex flex-col items-center p-2 text-blue-600">
-        <i class="fa-solid fa-map-location-dot text-xl mb-1"></i><span class="text-[10px] font-bold">Jobs</span>
+    <button onclick="switchTab('overview')" id="nav-btn-overview" class="flex flex-col items-center p-2 text-brand-green">
+        <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Overview</span>
     </button>
-    <button onclick="switchTab('active')" class="flex flex-col items-center p-2 text-gray-400">
-        <i class="fa-solid fa-route text-xl mb-1"></i><span class="text-[10px] font-bold">Active</span>
+    <button onclick="switchTab('alerts')" id="nav-btn-alerts" class="flex flex-col items-center p-2 text-gray-400">
+        <i class="fa-solid fa-utensils text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Food</span>
     </button>
-    <button onclick="switchTab('history')" class="flex flex-col items-center p-2 text-gray-400">
-        <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[10px] font-bold">History</span>
+    <button onclick="switchTab('history')" id="nav-btn-history" class="flex flex-col items-center p-2 text-gray-400">
+        <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">History</span>
     </button>
-    <button onclick="switchTab('details')" class="flex flex-col items-center p-2 text-gray-400">
-        <i class="fa-solid fa-user-gear text-xl mb-1"></i><span class="text-[10px] font-bold">Profile</span>
+    <button onclick="switchTab('details')" id="nav-btn-details" class="flex flex-col items-center p-2 text-gray-400">
+        <i class="fa-solid fa-hands-holding-child text-xl mb-1"></i>
+        <span class="text-[10px] font-bold">Details</span>
     </button>
 </div>
     <script>
@@ -523,25 +527,43 @@ body.app-mode #main-scroll-container { padding-top: 20px !important; }
 
         window.currentTab = "overview"; 
         function switchTab(tab, fromPopState = false) {
-            if (!fromPopState) { history.pushState({ tab }, "", "#" + tab); }
-            ['overview', 'history', 'details', 'alerts'].forEach(t => { const el = document.getElementById('tab-' + t); if(el) el.classList.add('hidden'); });
-            const buttons = ['overview', 'alerts', 'history', 'details'];
-            buttons.forEach(b => {
-                const btn = document.getElementById('btn-' + b); if (!btn) return;
-                btn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-95 touch-manipulation";
-                if (b === tab) {
-                   btn.classList.add(b === 'alerts' ? 'bg-brand-orange' : 'bg-brand-green', 'text-white', 'shadow-md');
-                } else {
-                   btn.classList.add('text-gray-500', 'border', 'border-transparent');
-                   if (b === 'alerts') btn.classList.add('hover:bg-orange-50', 'hover:text-brand-orange', 'hover:border-orange-100');
-                   else btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900');
-                }
-            });
-            const activeContent = document.getElementById('tab-' + tab); if(activeContent) activeContent.classList.remove('hidden');
-            window.currentTab = tab;
-            if (window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) { toggleSidebar(); }
-            if (tab === 'details') { setTimeout(initMap, 200); }
+    if (!fromPopState) history.pushState({ tab }, "", "#" + tab);
+    
+    document.querySelectorAll('[id^="tab-"]').forEach(el => { el.classList.add('hidden'); });
+
+    const tabs = ['overview', 'alerts', 'history', 'details'];
+    tabs.forEach(t => {
+        // --- SIDEBAR ---
+        const sbBtn = document.getElementById('btn-' + t);
+        if (sbBtn) {
+            sbBtn.className = "w-full flex items-center px-5 py-3.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-95 touch-manipulation";
+            if (t === tab) {
+                sbBtn.classList.add('bg-brand-green', 'text-white', 'shadow-md');
+            } else {
+                sbBtn.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900');
+            }
         }
+
+        // --- BOTTOM BAR (The Fix) ---
+        const navBtn = document.getElementById('nav-btn-' + t);
+        if (navBtn) {
+            navBtn.className = "flex flex-col items-center p-2 transition active:scale-95";
+            if (t === tab) {
+                // Active (Green)
+                navBtn.classList.add('text-brand-green', 'transform', 'scale-110');
+            } else {
+                // Inactive (Gray)
+                navBtn.classList.add('text-gray-400');
+            }
+        }
+    });
+
+    const activeContent = document.getElementById('tab-' + tab);
+    if(activeContent) activeContent.classList.remove('hidden');
+    
+    window.currentTab = tab;
+    if (tab === 'details') { setTimeout(initMap, 200); }
+}
 
         window.addEventListener("popstate", function (e) { if (e.state && e.state.tab) switchTab(e.state.tab, true); else switchTab("overview", true); });
         document.addEventListener("DOMContentLoaded", function () { const initialTab = location.hash.replace("#", "") || "overview"; switchTab(initialTab, true); });
