@@ -847,50 +847,50 @@ body.app-mode #main-scroll-container { padding-top: 20px !important; }
         }
 
         function switchTab(tab) {
-            // 1. Hide all tab contents
-            ['jobs', 'active', 'history', 'details'].forEach(t => {
-                const content = document.getElementById('tab-' + t);
-                if (content) content.classList.add('hidden');
-            });
+    // 1. Hide all tab contents
+    ['jobs', 'active', 'history', 'details'].forEach(t => {
+        const content = document.getElementById('tab-' + t);
+        if (content) content.classList.add('hidden');
+    });
 
-            // 2. Update Sidebar Buttons (Robust Class Reset)
-            const buttons = ['jobs', 'active', 'history', 'details'];
-            buttons.forEach(b => {
-                const btn = document.getElementById('btn-' + b);
-                if (btn) {
-                    // Remove ACTIVE classes
-                    btn.classList.remove('bg-brand-blue', 'text-white', 'shadow-md');
-                    
-                    // Remove INACTIVE/HOVER classes (Clean slate)
-                    btn.classList.remove('text-gray-500', 'hover:bg-blue-50', 'hover:text-brand-blue', 'hover:bg-gray-50', 'hover:text-gray-900');
-
-                    if (b === tab) {
-                        // Apply ACTIVE style
-                        btn.classList.add('bg-brand-blue', 'text-white', 'shadow-md');
-                    } else {
-                        // Apply INACTIVE style
-                        btn.classList.add('text-gray-500');
-                        
-                        // Specific hover for 'Current Delivery' vs others
-                        if (b === 'active') {
-                            btn.classList.add('hover:bg-blue-50', 'hover:text-brand-blue');
-                        } else {
-                            btn.classList.add('hover:bg-gray-50', 'hover:text-gray-900');
-                        }
-                    }
-                }
-            });
-
-            // 3. Show selected tab content
-            const activeContent = document.getElementById('tab-' + tab);
-            if (activeContent) activeContent.classList.remove('hidden');
-
-            // 4. Handle Map Resizing
-            if (tab === 'details') { setTimeout(initLocationMap, 200); }
-            if (tab === 'active' && typeof routeMap !== 'undefined' && routeMap) { 
-                setTimeout(() => routeMap.invalidateSize(), 200); 
+    // 2. Loop tabs to update buttons
+    const tabs = ['jobs', 'active', 'history', 'details'];
+    tabs.forEach(t => {
+        // --- SIDEBAR ---
+        const sbBtn = document.getElementById('btn-' + t);
+        if (sbBtn) {
+            sbBtn.className = "w-full flex items-center px-4 py-3.5 text-sm font-semibold rounded-xl transition-all touch-manipulation";
+            if (t === tab) {
+                sbBtn.classList.add('bg-brand-blue', 'text-white', 'shadow-md');
+            } else {
+                sbBtn.classList.add('text-gray-500', 'hover:bg-blue-50', 'hover:text-brand-blue');
             }
         }
+
+        // --- BOTTOM BAR (The Fix) ---
+        const navBtn = document.getElementById('nav-btn-' + t);
+        if (navBtn) {
+            navBtn.className = "flex flex-col items-center p-2 transition active:scale-95";
+            if (t === tab) {
+                // Active (Blue)
+                navBtn.classList.add('text-brand-blue', 'transform', 'scale-110');
+            } else {
+                // Inactive (Gray)
+                navBtn.classList.add('text-gray-400');
+            }
+        }
+    });
+
+    // 3. Show selected tab content
+    const activeContent = document.getElementById('tab-' + tab);
+    if (activeContent) activeContent.classList.remove('hidden');
+
+    // 4. Handle Map Resizing
+    if (tab === 'details') { setTimeout(initLocationMap, 200); }
+    if (tab === 'active' && typeof routeMap !== 'undefined' && routeMap) { 
+        setTimeout(() => routeMap.invalidateSize(), 200); 
+    }
+}
 
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
