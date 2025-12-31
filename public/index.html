@@ -556,13 +556,53 @@
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
-        const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Auth Logic - Must come before data fetching
+        // Data Fetching Logic (Centralized)
+        let unsubscribe = null;
+        
+        function startDataListener() {
+            if (unsubscribe) return; // Already listening
+
+            const donationsRef = collection(db, 'artifacts', appId, 'public', 'data', 'donations');
+            
+            unsubscribe = onSnapshot(donationsRef, (snapshot) => {
+                // Success! We have live data (or empty data)
+                const donations = [];
+                snapshot.forEach(doc => {
+                    donations.push({ id: doc.id, ...doc.data() });
+                });
+                
+                donations.sort((a, b) => {
+                    const timeA = a.timestamp || a.createdAt || a.date || a.orderedAt || 0;
+                    const timeB = b.timestamp || b.createdAt || b.date || b.orderedAt || 0;
+                    return new Date(timeB) - new Date(timeA); 
+                });
+
+                // Remove Demo Badge if it exists
+                const badge = document.getElementById('demo-mode-badge');
+                if (badge) badge.remove();
+
+                if (donations.length > 0) {
+                    updateHeroSection(donations[0]);
+                } else {
+                    updateHeroSection({
+                         foodName: "Waiting for donations...",
+                         quantity: "-",
+                         timestamp: new Date().toISOString()
+                    });
+                }
+            }, (error) => {
+                console.error("Snapshot error:", error);
+                // Only now do we fallback to demo mode
+                setFallbackData();
+            });
+        }
+
         async function initAuth() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -570,54 +610,34 @@
                 } else {
                     await signInAnonymously(auth);
                 }
+                // If successful, onAuthStateChanged will handle the listener
             } catch (error) {
-                console.warn("Authentication failed, using fallback data:", error);
-                setFallbackData();
+                console.warn("Auth failed (likely admin-restricted-operation). Attempting unauthenticated read...");
+                // Attempt to read without auth
+                startDataListener();
             }
         }
+        
         initAuth();
 
-        // Listen for auth state, then fetch data
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Fetch donations from Firestore
-                const donationsRef = collection(db, 'artifacts', appId, 'public', 'data', 'donations');
-                
-                onSnapshot(donationsRef, (snapshot) => {
-                    const donations = [];
-                    snapshot.forEach(doc => {
-                        donations.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    // Client-side Sort (Descending by timestamp/date)
-                    donations.sort((a, b) => {
-                        // Support various field names users might use
-                        const timeA = a.timestamp || a.createdAt || a.date || a.orderedAt || 0;
-                        const timeB = b.timestamp || b.createdAt || b.date || b.orderedAt || 0;
-                        return new Date(timeB) - new Date(timeA); 
-                    });
-
-                    if (donations.length > 0) {
-                        updateHeroSection(donations[0]);
-                    } else {
-                        // Fallback UI if no data
-                        setFallbackData();
-                    }
-                }, (error) => {
-                    console.error("Error fetching donations:", error);
-                    setFallbackData();
-                });
+                startDataListener();
             }
         });
 
         function updateHeroSection(data) {
+            // FIX: Remove Demo Mode Badge if we successfully got data
+            const badge = document.getElementById('demo-mode-badge');
+            if (badge) badge.remove();
+
             // Update Hero Image
             const heroImage = document.getElementById('hero-image');
             if (heroImage && (data.image || data.imageUrl || data.photo)) {
                  heroImage.src = data.image || data.imageUrl || data.photo;
             }
 
-            // Update Widget 1 (Food Name & Quantity)
+            // Update Widget 1
             const w1Value = document.getElementById('widget-1-value');
             if (w1Value) {
                 const name = data.foodItem || data.foodName || data.name || "Donation";
@@ -625,14 +645,13 @@
                 w1Value.textContent = `${name}${qty}`;
             }
 
-            // Update Widget 2 (Time)
+            // Update Widget 2
             const w2Value = document.getElementById('widget-2-value');
             if (w2Value) {
                 const timestamp = data.timestamp || data.createdAt || data.date || data.orderedAt;
                 if (timestamp) {
                      const dateObj = new Date(timestamp);
                      if (!isNaN(dateObj.getTime())) {
-                         // Format: "10:30 AM, 12 Oct"
                          const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                          const dateStr = dateObj.toLocaleDateString([], { day: 'numeric', month: 'short' });
                          w2Value.textContent = `${timeStr}, ${dateStr}`;
@@ -646,7 +665,6 @@
         }
 
         function setFallbackData() {
-            // If fetching fails or no data, keep defaults or set placeholders
             const w1Value = document.getElementById('widget-1-value');
             if (w1Value) w1Value.textContent = "Fresh Meals (50kg)";
             
@@ -659,7 +677,7 @@
                 const badge = document.createElement('div');
                 badge.id = 'demo-mode-badge';
                 badge.className = 'fixed bottom-4 right-4 bg-orange-600/90 text-white px-4 py-2 rounded-full shadow-lg z-50 font-bold text-xs backdrop-blur-md animate-bounce';
-                badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-2"></i> Demo Mode (Offline)';
+                badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-2"></i> Demo Mode';
                 document.body.appendChild(badge);
             }
         }
