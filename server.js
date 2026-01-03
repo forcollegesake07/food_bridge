@@ -7,16 +7,20 @@ const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-// --- ADD THIS AI SETUP ---
-const OpenAI = require("openai");
-let openai;
-if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    console.log("✅ OpenAI Agent Initialized");
+require("dotenv").config(); // Load environment variables first
+
+// --- GEMINI AI SETUP ---
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+let genAI;
+let model;
+
+if (process.env.GEMINI_API_KEY) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    console.log("✅ Google Gemini AI Initialized");
 } else {
-    console.log("⚠️ OPENAI_API_KEY missing. AI running in Mock Mode.");
+    console.log("⚠️ GEMINI_API_KEY missing. AI running in Mock Mode.");
 }
-// -------------------------
 
 /* ============================
    FIREBASE SETUP
@@ -115,42 +119,38 @@ app.post("/api/confirm-receipt", async (req, res) => {
     res.status(500).json({ error: "Email failed" });
   }
 });
-// --- NEW AI CHAT ENDPOINT ---
+// --- GEMINI CHAT ENDPOINT ---
 app.post("/api/chat", async (req, res) => {
     try {
         const { message, role } = req.body;
         
         // 1. Mock Mode (Fallback if no key)
-        if (!openai) {
-            let reply = "I am a basic bot (Add OpenAI Key to enable real AI).";
+        if (!model) {
+            let reply = "I am a basic bot (Add GEMINI_API_KEY to enable real AI).";
             if (message.toLowerCase().includes("hello")) reply = "Hello! How can I help you with FoodBridge?";
-            if (message.toLowerCase().includes("donate")) reply = "You can donate food by clicking the 'Donate' button in your dashboard.";
             return res.json({ reply });
         }
 
-        // 2. Real AI Mode
-        const systemPrompts = {
-            restaurant: "You are a helpful assistant for Restaurant staff using FoodBridge. Help them donate food and track waste.",
-            orphanage: "You are a caring assistant for Orphanage staff. Help them find food donations and manage requests.",
-            driver: "You are a logistics assistant for Drivers. Help them navigate to pickups and deliveries."
+        // 2. Real Gemini AI Mode
+        const personas = {
+            restaurant: "You are a helpful assistant for Restaurant staff using FoodBridge. Help them donate excess food and track waste. Keep answers short and professional.",
+            orphanage: "You are a caring assistant for Orphanage staff. Help them find nearby food donations and manage requests. Be empathetic and concise.",
+            driver: "You are a logistics assistant for Drivers. Help them navigate to pickups and deliveries. Be efficient and clear."
         };
 
-        const completion = await openai.chat.completions.create({
-            messages: [
-                { role: "system", content: systemPrompts[role] || "You are a helpful assistant." },
-                { role: "user", content: message }
-            ],
-            model: "gpt-3.5-turbo",
-        });
+        const systemInstruction = personas[role] || "You are a helpful assistant for FoodBridge.";
+        const fullPrompt = `${systemInstruction}\n\nUser Question: ${message}\nAnswer:`;
 
-        res.json({ reply: completion.choices[0].message.content });
+        const result = await model.generateContent(fullPrompt);
+        const response = await result.response;
+        
+        res.json({ reply: response.text() });
 
     } catch (error) {
-        console.error("AI Error:", error);
-        res.status(500).json({ reply: "Sorry, I'm having trouble connecting to the brain." });
+        console.error("Gemini Error:", error);
+        res.status(500).json({ reply: "Sorry, I'm having trouble thinking right now." });
     }
 });
-// -----------------------------
 
 app.listen(PORT, () => {
   console.log(`🚀 FoodBridge backend running on port ${PORT}`);
