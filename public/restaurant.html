@@ -519,9 +519,11 @@ body.app-mode #main-scroll-container { padding-top: 20px !important; }
             <div class="flex justify-start"><div class="bg-white border border-gray-200 text-gray-800 p-3 rounded-r-xl rounded-bl-xl shadow-sm max-w-[85%]">Hello! Need help donating food?</div></div>
         </div>
         <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-gray-100 flex gap-2">
-            <input type="text" id="chat-input" class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Ask about donations..." autocomplete="off">
-            <button type="submit" class="bg-orange-600 text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-orange-700 transition"><i class="fa-solid fa-paper-plane"></i></button>
-        </form>
+        <input type="text" id="bot-input" class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Ask about..." autocomplete="off">
+        <button type="submit" class="...">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </form>
     </div>
     <button onclick="toggleChat()" class="bg-orange-600 text-white w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl border-4 border-white"><i class="fa-solid fa-headset"></i></button>
 </div>
