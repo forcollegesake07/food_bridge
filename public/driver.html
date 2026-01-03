@@ -309,22 +309,6 @@ body.app-mode #main-scroll-container { padding-top: 20px !important; }
         <span class="text-[10px] font-bold">Profile</span>
     </button>
 </div>
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-    <div id="chat-window" class="hidden bg-white w-80 h-96 rounded-2xl shadow-2xl border border-gray-200 mb-4 flex flex-col overflow-hidden">
-        <div class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
-            <h3 class="font-bold flex items-center gap-2"><i class="fa-solid fa-truck-fast"></i> Driver Support</h3>
-            <button onclick="toggleChat()" class="hover:bg-blue-700 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50 text-sm">
-            <div class="flex justify-start"><div class="bg-white border border-gray-200 text-gray-800 p-3 rounded-r-xl rounded-bl-xl shadow-sm max-w-[85%]">Hello! Need help with a route?</div></div>
-        </div>
-        <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-gray-100 flex gap-2">
-            <input type="text" id="chat-input" class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask about jobs..." autocomplete="off">
-            <button type="submit" class="bg-blue-600 text-white w-10 h-10 rounded-lg flex items-center justify-center hover:bg-blue-700 transition"><i class="fa-solid fa-paper-plane"></i></button>
-        </form>
-    </div>
-    <button onclick="toggleChat()" class="bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl border-4 border-white"><i class="fa-solid fa-headset"></i></button>
-</div>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDB-qF6Ac93Tj3LR3DI6aTuUtkFNRMDai0", authDomain: "panel-9e1a6.firebaseapp.com", projectId: "panel-9e1a6", storageBucket: "panel-9e1a6.firebasestorage.app", messagingSenderId: "491001640513", appId: "1:491001640513:web:ddbf48cf060ae10d0e38c0" };
@@ -906,24 +890,6 @@ function loadActiveJob() {
         function deg2rad(deg) { return deg * (Math.PI/180); }
         function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
         function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-32','opacity-0'); setTimeout(() => t.classList.add('translate-y-32','opacity-0'), 3000); }
-    const ROLE = 'driver';
-    function toggleChat() { document.getElementById('chat-window').classList.toggle('hidden'); }
-    async function sendMessage(e) {
-        e.preventDefault();
-        const input = document.getElementById('chat-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        const box = document.getElementById('chat-messages');
-        box.innerHTML += `<div class="flex justify-end mb-2"><div class="bg-blue-600 text-white p-3 rounded-l-xl rounded-tr-xl shadow-sm max-w-[85%]">${msg}</div></div>`;
-        input.value = ''; box.scrollTop = box.scrollHeight;
-        
-        try {
-            const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, role: ROLE }) });
-            const data = await res.json();
-            box.innerHTML += `<div class="flex justify-start mb-2"><div class="bg-white border border-gray-200 text-gray-800 p-3 rounded-r-xl rounded-bl-xl shadow-sm max-w-[85%]">${data.reply}</div></div>`;
-        } catch (err) { box.innerHTML += `<div class="text-red-500 text-xs mt-2">Error connecting.</div>`; }
-        box.scrollTop = box.scrollHeight;
-    }
     </script>
 </body>
 </html>
